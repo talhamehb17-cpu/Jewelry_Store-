@@ -261,9 +261,9 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
             <div className="flex flex-col justify-between rounded-theme bg-surface p-7 md:col-span-2 md:p-10">
               <p className="text-[0.8rem] text-muted">{first.eyebrow ?? 'Collection 2026'}</p>
               <div>
-                <h1 className="t-display slide-up text-balance">{first.heading}</h1>
-                {first.subheading && <p className="mt-5 max-w-md text-muted">{first.subheading}</p>}
-                <Ctas s={first} light={false} />
+                <h1 className="font-heading slide-up text-balance leading-[0.98]" style={{ fontSize: 'calc(clamp(2.3rem, 3.7vw, 3.9rem) * var(--h-scale))', fontWeight: 'var(--h-weight)', letterSpacing: 'var(--h-tracking)' }}>{first.heading}</h1>
+                {first.subheading && <p className="mt-4 max-w-md text-muted">{first.subheading}</p>}
+                <Ctas s={first} light={false} className="!mt-6" />
               </div>
             </div>
             <div className="relative aspect-[4/5] overflow-hidden rounded-theme bg-surface md:col-span-2 md:row-span-2 md:aspect-auto">

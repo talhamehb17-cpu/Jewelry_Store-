@@ -58,7 +58,7 @@ export const UNSPLASH_CREDITS: { image: string; photographer: string; profile: s
   { image: IMG.opaline2, photographer: 'Ruan Richard Rodrigues', profile: 'https://unsplash.com/@ricdeoliveira', page: 'https://unsplash.com/photos/s9idT2PQUt4' },
   { image: IMG.elara1, photographer: 'Sabrianna', profile: 'https://unsplash.com/@sabrinnaringquist', page: 'https://unsplash.com/photos/Y_bxfTa_iUA' },
   { image: IMG.elara2, photographer: 'Shoham Avisrur', profile: 'https://unsplash.com/@shoham_avisrur', page: 'https://unsplash.com/photos/SBSeFdJouZU' },
-  { image: IMG.aurora, photographer: 'Sabrianna', profile: 'https://unsplash.com/@sabrinnaringquist', page: 'https://unsplash.com/photos/silver-diamond-studded-ring-on-black-textile' },
+  { image: IMG.aurora, photographer: 'Sabrianna', profile: 'https://unsplash.com/@sabrinnaringquist', page: 'https://unsplash.com/@sabrinnaringquist' },
   { image: IMG.celine, photographer: 'Peter Muniz', profile: 'https://unsplash.com/@petepxl', page: 'https://unsplash.com/photos/EsjkVKMdN_I' },
   { image: IMG.rosalie, photographer: 'Sabrianna', profile: 'https://unsplash.com/@sabrinnaringquist', page: 'https://unsplash.com/photos/yEJwDxAoHc0' },
   { image: IMG.lyra, photographer: 'Cornelia Ng', profile: 'https://unsplash.com/@corneliang', page: 'https://unsplash.com/photos/zZLhoEwGCeM' },

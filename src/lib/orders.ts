@@ -62,7 +62,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     const [order] = await tx
       .insert(orders)
       .values({
-        number: `TMP-${crypto.randomUUID()}`,
+        number: `TMP-${crypto.randomBytes(8).toString('hex')}`,
         userId: input.userId ?? null,
         email: input.email.toLowerCase(),
         phone: input.phone,

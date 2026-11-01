@@ -96,7 +96,7 @@ export function SearchOverlay({ popular }: { popular: string[] }) {
   const completion = res?.products.find((p) => p.name.toLowerCase().startsWith(q.trim().toLowerCase()))?.name;
 
   return (
-    <div className={cn('fixed inset-0 z-[75]', searchOpen ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!searchOpen}>
+    <div className={cn('fixed inset-0 z-[75] transition-[visibility] duration-500', searchOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none')} aria-hidden={!searchOpen}>
       <div className={cn('absolute inset-0 bg-black/35 transition-opacity duration-500', searchOpen ? 'opacity-100' : 'opacity-0')} onClick={() => setSearchOpen(false)} />
       <div role="dialog" aria-modal="true" aria-label="Search" className={cn('absolute inset-x-0 top-0 max-h-[92vh] overflow-y-auto bg-bg text-ink shadow-2xl transition duration-500 ease-[cubic-bezier(.2,.7,.2,1)]', searchOpen ? 'translate-y-0' : '-translate-y-full')}>
         <div className="container-x py-6 md:py-10">

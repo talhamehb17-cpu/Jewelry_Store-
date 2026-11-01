@@ -731,4 +731,16 @@ input[type='radio'].checkbox:checked::after {
   body {
     background: #fff !important;
   }
+  body:has(.print-area) * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100%;
+  }
 }

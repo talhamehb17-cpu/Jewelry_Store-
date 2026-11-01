@@ -41,7 +41,7 @@ export function Drawer({
     bottom: 'bottom-0 left-0 max-h-[88vh] w-full translate-y-full rounded-t-2xl',
   }[side];
   return (
-    <div className={cn('fixed inset-0 z-[70]', open ? 'pointer-events-auto' : 'pointer-events-none')} aria-hidden={!open}>
+    <div className={cn('fixed inset-0 z-[70] transition-[visibility] duration-500', open ? 'visible pointer-events-auto' : 'invisible pointer-events-none')} aria-hidden={!open}>
       <div className={cn('absolute inset-0 bg-black/35 backdrop-blur-[2px] transition-opacity duration-500', open ? 'opacity-100' : 'opacity-0')} onClick={onClose} />
       <div
         ref={panel}

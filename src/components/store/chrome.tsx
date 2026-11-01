@@ -87,7 +87,7 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
                   className={cn('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[.04]', current === t.id && 'bg-black/[.05]')}
                 >
                   <span className="flex shrink-0 overflow-hidden rounded-full border border-black/10">
-                    {t.swatch.map((c) => <span key={c} className="h-6 w-3" style={{ background: c }} />)}
+                    {t.swatch.map((c, i) => <span key={i} className="h-6 w-3" style={{ background: c }} />)}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[0.82rem] font-medium">{t.name}{t.id === activeId && <span className="ml-1.5 text-[0.65rem] font-normal text-[#a8844a]">· live</span>}</span>
@@ -124,13 +124,25 @@ export function PreviewBanner({ themeName, mode }: { themeName: string; mode: st
 export function LivePreviewBridge() {
   useEffect(() => {
     if (window.self === window.top) return;
+    let last: { desktop: Record<string, string>; mobile: Record<string, string> } | null = null;
+    const ok = (k: string, v: unknown) => /^--[a-z0-9-]+$/.test(k) && typeof v === 'string' && !/[<>{};]/.test(v);
+    const apply = () => {
+      if (!last) return;
+      const root = document.documentElement.style;
+      for (const [k, v] of Object.entries(last.desktop)) if (ok(k, v)) root.setProperty(k, v);
+      if (window.innerWidth < 768) for (const [k, v] of Object.entries(last.mobile)) if (ok(k, v)) root.setProperty(k, v);
+    };
     const onMsg = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || !e.data || e.data.type !== 'aurelle:vars') return;
-      const vars = e.data.vars as Record<string, string>;
-      for (const [k, v] of Object.entries(vars)) if (/^--[a-z0-9-]+$/.test(k) && typeof v === 'string' && !/[<>{};]/.test(v)) document.documentElement.style.setProperty(k, v);
+      last = { desktop: e.data.desktop ?? {}, mobile: e.data.mobile ?? {} };
+      apply();
     };
     window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
+    window.addEventListener('resize', apply);
+    return () => {
+      window.removeEventListener('message', onMsg);
+      window.removeEventListener('resize', apply);
+    };
   }, []);
   return null;
 }

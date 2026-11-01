@@ -95,7 +95,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
       return (
         <article className="group rounded-theme bg-surface p-2.5 transition duration-500 hover:-translate-y-1 hover:shadow-[0_18px_40px_-24px_rgba(120,60,70,.45)]">
           <div className="relative overflow-hidden rounded-[calc(var(--radius)*0.75)] ratio-product">
-            <Link href={href} aria-label={p.name}>
+            <Link href={href} aria-label={p.name} className="absolute inset-0 block">
               <Images p={p} priority={priority} />
             </Link>
             <Badges p={p} className="[&>span]:rounded-full" />
@@ -206,7 +206,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
       return (
         <article className="group flex flex-col rounded-theme border border-accent/25 bg-bg p-2 transition duration-500 hover:border-accent/70 hover:shadow-[0_20px_40px_-28px_rgba(168,124,42,.6)]">
           <div className="relative overflow-hidden rounded-[calc(var(--radius)*0.7)] ratio-product">
-            <Link href={href} aria-label={p.name}>
+            <Link href={href} aria-label={p.name} className="absolute inset-0 block">
               <Images p={p} priority={priority} />
             </Link>
             <Badges p={p} className="[&>span]:rounded-sm" />
@@ -247,7 +247,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
       return (
         <article className="group">
           <div className="relative overflow-hidden bg-surface ratio-product rounded-theme-sm">
-            <Link href={href} aria-label={p.name}>
+            <Link href={href} aria-label={p.name} className="absolute inset-0 block">
               <Images p={p} priority={priority} />
             </Link>
             <Badges p={p} />
