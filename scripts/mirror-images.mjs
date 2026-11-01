@@ -8,7 +8,10 @@ import path from 'node:path';
 
 const root = process.cwd();
 const src = fs.readFileSync(path.join(root, 'src/lib/images.ts'), 'utf8');
-const ids = [...new Set([...src.matchAll(/photo-([A-Za-z0-9_-]+)/g)].map((m) => m[1]))];
+const ids = [...new Set([
+  ...[...src.matchAll(/photo-([A-Za-z0-9_-]+)/g)].map((m) => m[1]),
+  ...[...src.matchAll(/U\('([A-Za-z0-9_-]+)'\)/g)].map((m) => m[1]),
+])];
 const dir = path.join(root, 'public/images/catalog');
 fs.mkdirSync(dir, { recursive: true });
 
