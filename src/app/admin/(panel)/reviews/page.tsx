@@ -43,7 +43,12 @@ export default async function ReviewsAdmin({ searchParams }: { searchParams: Pro
                   </div>
                   {r.title && <p className="mt-2 font-medium">{r.title}</p>}
                   <p className="mt-1 text-[0.86rem] text-[#4a443e]">{r.body}</p>
-                  <p className="mt-2 text-[0.75rem] text-muted">{r.name}{r.email ? ` · ${r.email}` : ''} · on <a href={`/products/${slug}#reviews`} target="_blank" rel="noreferrer" className="underline">{product}</a></p>
+                  <p className="mt-2 flex items-center gap-2 text-[0.75rem] text-muted">
+                    {r.avatar && <span className="relative h-8 w-8 overflow-hidden rounded-full bg-secondary"><img src={r.avatar} alt="" className="h-full w-full object-cover" /></span>}
+                    {r.name}{r.email ? ` · ${r.email}` : ''}
+                    {!r.verified && r.email?.endsWith('@studio.maisonaurelle.pk') && ' · studio testimonial'}
+                    {' · on '}<a href={`/products/${slug}#reviews`} target="_blank" rel="noreferrer" className="underline">{product}</a>
+                  </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   {r.status !== 'published' && <ActionButton action={moderateReview.bind(null, r.id, 'published')} showResult={false}>Publish</ActionButton>}

@@ -685,7 +685,7 @@ Our Gulberg atelier welcomes private appointments for bridal consultations, cust
     content: md`## Orders & Payment
 
 ### Which payment methods do you accept?
-EasyPaisa, JazzCash and bank transfer. Upload a receipt at checkout. The order is confirmed only after we verify the payment. Card payments appear only when enabled. Cash on Delivery is not currently offered.
+Cash on Delivery, EasyPaisa, JazzCash and bank transfer. Card payments are not offered. EasyPaisa, JazzCash and bank transfer need a receipt at checkout, and the order is confirmed only after we verify that payment. Cash on Delivery is paid to the courier when the order arrives.
 
 ### How do I pay by EasyPaisa, JazzCash or bank transfer?
 Choose the method at checkout, send the exact total to the account shown, and upload a JPG, PNG, WEBP or PDF receipt. The order stays under review until the payment is verified. Uploading a receipt does not confirm the payment by itself.
@@ -787,7 +787,7 @@ This policy explains what information Maison Aurelle collects when you visit our
 ## Information we collect
 
 - **Account and order details** — name, email, phone number and delivery address.
-- **Payment information** — card payments are processed securely by our payment provider; we never store card numbers.
+- **Payment information** — EasyPaisa, JazzCash and bank-transfer receipts are stored privately for verification. We do not accept card payments and never store card numbers.
 - **Usage data** — basic, anonymised analytics to improve our website.
 
 ## How we use your information
@@ -948,7 +948,7 @@ export const DEFAULT_SETTINGS = {
     ],
   },
   payments: {
-    cod: { enabled: false, fee: 0, maxOrder: 20000000, instructions: 'Cash on Delivery is turned off. The option can be enabled again from Settings → Payments.' },
+    cod: { enabled: true, fee: 0, maxOrder: 20000000, instructions: 'Pay the courier in cash when your order arrives. We may call to confirm the address before dispatch.' },
     bank: {
       enabled: true,
       bankName: 'Meezan Bank',
@@ -976,7 +976,7 @@ export const DEFAULT_SETTINGS = {
       accountTitle: 'Maison Aurelle',
       instructions: 'Legacy combined wallet. Use the separate EasyPaisa and JazzCash methods.',
     },
-    card: { enabled: true },
+    card: { enabled: false },
   },
   tax: { enabled: false, rate: 0, label: 'Sales tax', inclusive: true },
   social: {
@@ -991,7 +991,7 @@ export const DEFAULT_SETTINGS = {
   seo: {
     title: 'Maison Aurelle — Fine Jewelry Made for Your Moments',
     description:
-      'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
+      'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. Cash on Delivery, EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
   },
   reviews: { autoPublishVerified: true },
 };

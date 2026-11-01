@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BadgeCheck } from 'lucide-react';
+import { Img } from '@/components/ui/img';
 import { ProductGallery, type Media } from '@/components/store/product-gallery';
 import { ProductPurchase } from '@/components/store/product-purchase';
 import { RecentlyViewed, ReviewForm, TrackRecentlyViewed } from '@/components/store/product-extras';
@@ -155,20 +156,41 @@ export default async function ProductPage({ params }: P) {
             <div className="mt-8"><ReviewForm productId={p.id} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} /></div>
           </div>
           <div className="divide-y divide-line">
-            {d.reviews.slice(0, 8).map((r) => (
-              <article key={r.id} className="py-7 first:pt-0">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Stars value={r.rating} size={13} />
-                  <span className="text-[0.75rem] text-muted">{formatDate(r.createdAt)}</span>
+            {d.reviews.slice(0, 8).map((r) => {
+              const studio = !r.verified && !!r.email?.endsWith('@studio.maisonaurelle.pk');
+              return (
+              <article key={r.id} className="grid gap-5 py-7 first:pt-0 sm:grid-cols-[auto_1fr]">
+                <div className="flex items-start gap-4">
+                  <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-surface">
+                    {r.avatar ? <Img src={r.avatar} alt="" sizes="56px" /> : <span className="grid h-full place-items-center text-[0.8rem]">{r.name.slice(0, 1)}</span>}
+                  </span>
+                  {r.photo && (
+                    <span className="relative hidden h-24 w-20 overflow-hidden rounded-theme-sm bg-surface sm:block">
+                      <Img src={r.photo} alt={`${r.name} wearing the piece`} sizes="80px" />
+                    </span>
+                  )}
                 </div>
-                {r.title && <h3 className="mt-3 text-[1rem] font-medium">{r.title}</h3>}
-                <p className="mt-2 text-[0.92rem] leading-relaxed text-muted">{r.body}</p>
-                <p className="mt-3 flex items-center gap-2 text-[0.8rem]">
-                  {r.name}
-                  {r.verified && <span className="inline-flex items-center gap-1 text-[0.72rem] text-accent"><BadgeCheck size={14} strokeWidth={1.5} /> Verified buyer</span>}
-                </p>
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Stars value={r.rating} size={13} />
+                    <span className="text-[0.75rem] text-muted">{formatDate(r.createdAt)}</span>
+                  </div>
+                  {r.title && <h3 className="mt-3 text-[1rem] font-medium">{r.title}</h3>}
+                  <p className="mt-2 text-[0.92rem] leading-relaxed text-muted">{r.body}</p>
+                  <p className="mt-3 flex flex-wrap items-center gap-2 text-[0.8rem]">
+                    {r.name}
+                    {r.verified && <span className="inline-flex items-center gap-1 text-[0.72rem] text-accent"><BadgeCheck size={14} strokeWidth={1.5} /> Verified buyer</span>}
+                    {studio && <span className="text-[0.68rem] uppercase tracking-[0.14em] text-muted">Studio testimonial · not a verified purchase</span>}
+                  </p>
+                  {r.photo && (
+                    <span className="relative mt-4 block aspect-[4/5] max-w-[180px] overflow-hidden rounded-theme-sm bg-surface sm:hidden">
+                      <Img src={r.photo} alt="" sizes="180px" />
+                    </span>
+                  )}
+                </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

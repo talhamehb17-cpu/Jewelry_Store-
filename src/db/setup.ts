@@ -21,9 +21,13 @@ export async function migrateAndSeed(db: DB, kind: DbKind, log: (m: string) => v
   const marker = await db.select().from(settings).where(eq(settings.key, 'seed_version'));
   if (marker.length) {
     log('database already seeded — skipping seed');
-    await applyStorePolicy(db, log);
-    await purgeDemoIfNeeded(db, log);
-    return { seeded: false };
+  await applyStorePolicy(db, log);
+  await purgeDemoIfNeeded(db, log);
+  const { ensureCatalog } = await import('./catalog-sync');
+  const { applyCheckoutMethods } = await import('./checkout-policy');
+  await ensureCatalog(db, log);
+  await applyCheckoutMethods(db, log);
+  return { seeded: false };
   }
   const { seedDatabase } = await import('./seed');
   await seedDatabase(db, log);
@@ -31,5 +35,9 @@ export async function migrateAndSeed(db: DB, kind: DbKind, log: (m: string) => v
   log('seed complete');
   await applyStorePolicy(db, log);
   await purgeDemoIfNeeded(db, log);
+  const { ensureCatalog } = await import('./catalog-sync');
+  const { applyCheckoutMethods } = await import('./checkout-policy');
+  await ensureCatalog(db, log);
+  await applyCheckoutMethods(db, log);
   return { seeded: true };
 }

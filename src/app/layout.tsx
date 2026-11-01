@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: '%s · Maison Aurelle',
   },
   description:
-    'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
+    'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. Cash on Delivery, EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
   applicationName: 'Maison Aurelle',
   openGraph: {
     type: 'website',

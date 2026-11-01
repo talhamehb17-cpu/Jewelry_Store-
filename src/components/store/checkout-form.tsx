@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { Lock, ShieldCheck, Tag, X, Banknote, Landmark, Smartphone, CreditCard, ShoppingBag, ChevronDown } from 'lucide-react';
+import { Lock, ShieldCheck, Tag, X, Banknote, Landmark, Smartphone, ShoppingBag, ChevronDown } from 'lucide-react';
 import { useStore } from './providers';
 import { useQuote, FreeShippingBar } from './cart-drawer';
 import { Img } from '@/components/ui/img';
@@ -20,7 +20,7 @@ type Payments = {
   wallet: { enabled: boolean; jazzcash: string; easypaisa: string; accountTitle: string; instructions: string };
   card: { enabled: boolean };
 };
-type PayId = 'cod' | 'bank' | 'easypaisa' | 'jazzcash' | 'card';
+type PayId = 'cod' | 'bank' | 'easypaisa' | 'jazzcash';
 
 type Prefill = { email: string; phone: string; firstName: string; lastName: string; line1: string; line2: string; city: string; province: string; postalCode: string };
 
@@ -82,7 +82,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
   const { cart, cartReady, clearCart } = useStore();
   const [f, setF] = useState<Prefill>(prefill);
   const [shippingMethod, setShippingMethod] = useState('standard');
-  const firstPm: PayId = payments.easypaisa.enabled ? 'easypaisa' : payments.jazzcash.enabled ? 'jazzcash' : payments.bank.enabled ? 'bank' : payments.cod.enabled ? 'cod' : 'card';
+  const firstPm: PayId = payments.cod.enabled ? 'cod' : payments.easypaisa.enabled ? 'easypaisa' : payments.jazzcash.enabled ? 'jazzcash' : 'bank';
   const [paymentMethod, setPaymentMethod] = useState<PayId>(firstPm);
   const [paymentRef, setPaymentRef] = useState('');
   const [proofToken, setProofToken] = useState<string | null>(null);
@@ -150,11 +150,10 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
   };
 
   const pmOptions = [
+    payments.cod.enabled && { id: 'cod' as const, label: 'Cash on Delivery', sub: 'Pay in cash when your order arrives', icon: Banknote },
     payments.easypaisa.enabled && { id: 'easypaisa' as const, label: 'EasyPaisa', sub: 'Transfer, then upload your receipt', icon: Smartphone },
     payments.jazzcash.enabled && { id: 'jazzcash' as const, label: 'JazzCash', sub: 'Transfer, then upload your receipt', icon: Smartphone },
     payments.bank.enabled && { id: 'bank' as const, label: 'Bank Transfer', sub: 'Transfer, then upload your receipt', icon: Landmark },
-    payments.cod.enabled && { id: 'cod' as const, label: 'Cash on Delivery', sub: 'Pay in cash when your order arrives', icon: Banknote },
-    payments.card.enabled && { id: 'card' as const, label: 'Debit / Credit Card', sub: 'Secure checkout powered by Stripe', icon: CreditCard },
   ].filter(Boolean) as { id: PayId; label: string; sub: string; icon: typeof Banknote }[];
 
   const summary = (
@@ -317,7 +316,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
                         <ProofUpload token={proofToken} onToken={setProofToken} />
                       </div>
                     )}
-                    {o.id === 'card' && <p className="text-muted">You’ll be redirected to Stripe’s secure payment page to complete your purchase. Your order is confirmed only after Stripe verifies the payment.</p>}
+
                   </div>
                 )}
               </div>
@@ -330,7 +329,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         </section>
 
         <button type="submit" disabled={pending || !quote || loading || ((paymentMethod === 'bank' || paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && !proofToken)} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
-          {pending ? 'Placing your order…' : paymentMethod === 'card' ? `Continue to secure payment · ${quote ? formatMoney(quote.total) : ''}` : `Place order · ${quote ? formatMoney(quote.total) : ''}`}
+          {pending ? 'Placing your order…' : `Place order · ${quote ? formatMoney(quote.total) : ''}`}
         </button>
         <p className="flex items-center justify-center gap-2 text-[0.75rem] text-muted"><ShieldCheck size={14} /> By placing your order you agree to our <Link href="/policies/terms-of-service" className="underline">Terms</Link> and <Link href="/policies/privacy-policy" className="underline">Privacy Policy</Link>.</p>
       </div>

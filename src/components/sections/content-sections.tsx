@@ -210,7 +210,33 @@ export function ImageTextSection({ section }: Props) {
   }
 }
 
-type T = { quote: string; name: string; location?: string; rating?: number; product?: string };
+type T = { quote: string; name: string; location?: string; rating?: number; product?: string; avatar?: string };
+
+const STUDIO_FACES: Record<string, { avatar: string; image: string; href: string }> = {
+  'Hira A.': { avatar: '/images/reviews/hira.webp', image: '/images/products/celeste-pearl-earrings-1.webp', href: '/products/celeste-pearl-earrings' },
+  'Mahnoor S.': { avatar: '/images/reviews/mahnoor.webp', image: '/images/products/elara-solitaire-ring-1.webp', href: '/products/elara-solitaire-ring' },
+  'Ayesha K.': { avatar: '/images/reviews/ayesha.webp', image: '/images/products/aurelia-gold-necklace-2.webp', href: '/products/aurelia-gold-necklace' },
+  'Zainab R.': { avatar: '', image: '/images/products/serene-pearl-set-1.webp', href: '/products/serene-pearl-set' },
+};
+
+function studioFace(t: T) {
+  return STUDIO_FACES[t.name] ?? (t.avatar ? { avatar: t.avatar, image: '', href: '' } : null);
+}
+
+function StudioPerson({ t, align = 'start' }: { t: T; align?: 'start' | 'center' }) {
+  const face = studioFace(t);
+  return (
+    <span className={cn('mt-4 flex items-center gap-3', align === 'center' && 'justify-center')}>
+      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface">
+        {face?.avatar ? <Img src={face.avatar} alt="" sizes="44px" /> : <span className="grid h-full place-items-center text-[0.72rem] tracking-wide">{t.name.slice(0, 1)}</span>}
+      </span>
+      <span className={cn('text-left', align === 'center' && 'text-left')}>
+        <span className="block text-[0.84rem] font-medium normal-case tracking-normal">{t.name}{t.location ? <span className="font-normal text-muted"> · {t.location}</span> : null}</span>
+        <span className="mt-0.5 block text-[0.62rem] uppercase tracking-[0.16em] text-muted">Studio testimonial</span>
+      </span>
+    </span>
+  );
+}
 
 export function TestimonialsSection({ section }: Props) {
   const st = section.settings;
@@ -227,9 +253,13 @@ export function TestimonialsSection({ section }: Props) {
                 <Stars value={t.rating ?? 5} size={13} />
                 <blockquote className="mt-5 flex-1 text-[0.95rem] leading-relaxed">“{t.quote}”</blockquote>
                 <figcaption className="mt-6 border-t border-line pt-4 text-[0.82rem]">
-                  <span className="font-medium">{t.name}</span>
-                  {t.location && <span className="text-muted"> · {t.location}</span>}
-                  {t.product && <span className="mt-1 block text-[0.75rem] text-muted">Purchased: {t.product}</span>}
+                  <StudioPerson t={t} />
+                  {t.product && <span className="mt-3 block text-[0.75rem] text-muted">Featured piece: {t.product}</span>}
+                  {studioFace(t)?.image && (
+                    <Link href={studioFace(t)!.href} className="relative mt-4 block aspect-[4/5] overflow-hidden rounded-theme-sm bg-surface">
+                      <Img src={studioFace(t)!.image} alt="" sizes="240px" />
+                    </Link>
+                  )}
                 </figcaption>
               </figure>
             ))}
@@ -249,7 +279,7 @@ export function TestimonialsSection({ section }: Props) {
               {items.slice(0, 3).map((t, i) => (
                 <figure key={i} className="reveal py-8 first:pt-0">
                   <blockquote className="font-heading text-[clamp(1.25rem,2vw,1.65rem)] italic leading-snug">“{t.quote}”</blockquote>
-                  <figcaption className="mt-4 text-[0.78rem] uppercase tracking-[0.16em] text-muted">{t.name}{t.location ? ` — ${t.location}` : ''}</figcaption>
+                  <figcaption><StudioPerson t={t} /></figcaption>
                 </figure>
               ))}
             </div>
@@ -266,7 +296,7 @@ export function TestimonialsSection({ section }: Props) {
                 <figure key={i} className="w-[340px] shrink-0 rounded-theme bg-surface p-7">
                   <Stars value={t.rating ?? 5} size={12} />
                   <blockquote className="mt-4 text-[0.95rem] leading-relaxed">“{t.quote}”</blockquote>
-                  <figcaption className="mt-5 text-[0.82rem] font-medium">{t.name} <span className="font-normal text-muted">· {t.location}</span></figcaption>
+                  <figcaption><StudioPerson t={t} /></figcaption>
                 </figure>
               ))}
             </div>
@@ -285,7 +315,14 @@ export function TestimonialsSection({ section }: Props) {
                 <figure key={i}>
                   <Stars value={t.rating ?? 5} size={14} className="justify-center" />
                   <blockquote className="font-heading mx-auto mt-6 max-w-3xl text-[clamp(1.5rem,3vw,2.4rem)] italic leading-snug text-balance">“{t.quote}”</blockquote>
-                  <figcaption className="mt-7 text-[0.78rem] uppercase tracking-[0.2em] text-muted">{t.name}{t.location ? ` · ${t.location}` : ''}</figcaption>
+                  <figcaption className="mt-7 flex flex-col items-center gap-4">
+                    <StudioPerson t={t} align="center" />
+                    {studioFace(t)?.image && (
+                      <Link href={studioFace(t)!.href} className="relative block h-28 w-24 overflow-hidden rounded-theme-sm bg-surface">
+                        <Img src={studioFace(t)!.image} alt={t.product || ''} sizes="96px" />
+                      </Link>
+                    )}
+                  </figcaption>
                 </figure>
               ))}
             </TextSlider>

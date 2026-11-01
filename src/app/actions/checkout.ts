@@ -9,8 +9,7 @@ import { addresses, orderItems, paymentProofs } from '@/db/schema';
 import { changeOrderStatus, createOrder, OrderError, orderAccessToken } from '@/lib/orders';
 import { buildQuote } from '@/lib/pricing';
 import { getCurrentUser } from '@/lib/auth';
-import { getSettings, stripeConfigured } from '@/lib/settings';
-import { createCheckoutSession, cancelUnpaidCardOrder } from '@/lib/stripe';
+import { getSettings } from '@/lib/settings';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { orderConfirmationEmail, sendEmail } from '@/lib/email';
 import { formatMoney } from '@/lib/money';
@@ -70,7 +69,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   if (d.paymentMethod === 'easypaisa' && !pm.easypaisa?.enabled) return { ok: false, error: 'EasyPaisa is currently unavailable.' };
   if (d.paymentMethod === 'jazzcash' && !pm.jazzcash?.enabled) return { ok: false, error: 'JazzCash is currently unavailable.' };
   if (d.paymentMethod === 'wallet') return { ok: false, error: 'Choose EasyPaisa or JazzCash.' };
-  if (d.paymentMethod === 'card' && !(pm.card.enabled && stripeConfigured())) return { ok: false, error: 'Card payments are not available yet. Please choose another payment method.' };
+  if (d.paymentMethod === 'card') return { ok: false, error: 'Card payments are not available. Please choose Cash on Delivery, EasyPaisa, JazzCash or bank transfer.' };
   if (isManualMethod(d.paymentMethod) && !d.proofToken) return { ok: false, error: 'Upload a payment receipt before placing the order.' };
 
   const user = await getCurrentUser();
@@ -125,17 +124,6 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   const base = await origin();
   const token = orderAccessToken(order.number);
   const link = `${base}/checkout/success?order=${encodeURIComponent(order.number)}&token=${token}`;
-
-  if (d.paymentMethod === 'card') {
-    try {
-      const session = await createCheckoutSession(order, base);
-      return { ok: true, redirect: session.url!, external: true };
-    } catch (e) {
-      console.error('Stripe session failed', e);
-      await cancelUnpaidCardOrder(order.id, 'Payment session could not be created');
-      return { ok: false, error: 'We could not start the secure card payment. Please try again or choose another payment method.' };
-    }
-  }
 
   after(async () => {
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));

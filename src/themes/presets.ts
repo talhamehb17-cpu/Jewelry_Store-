@@ -23,7 +23,7 @@ const ANNOUNCEMENT: ThemeAnnouncement = {
   style: 'rotate',
   messages: [
     { text: 'Complimentary shipping on orders over Rs 10,000', link: '/shop' },
-    { text: 'EasyPaisa, JazzCash and bank transfer' },
+    { text: 'Cash on Delivery, EasyPaisa, JazzCash and bank transfer' },
     { text: 'New in — The Pearl Edit', link: '/collections/pearl-edit' },
   ],
 };
@@ -130,7 +130,7 @@ const modernMinimal: ThemeDefinition = {
     buttons: { shape: 'square', style: 'solid', hover: 'arrow', uppercase: false, tracking: 0, size: 'md', weight: 500 },
     header: { variant: 'inline', sticky: true, transparentOnHome: false, logoText: 'Aurelle', logoTagline: '', logoImage: '', logoSize: 22, borderBottom: true },
     footer: { variant: 'minimal', tagline: 'Fine jewelry, reduced to the essential.', showNewsletter: true, showSocial: true, showPayments: false },
-    announcement: { ...ANNOUNCEMENT, style: 'static', messages: [{ text: 'Free shipping over Rs 10,000 · EasyPaisa, JazzCash and bank transfer', link: '/shop' }] },
+    announcement: { ...ANNOUNCEMENT, style: 'static', messages: [{ text: 'Free shipping over Rs 10,000 · Cash on Delivery, EasyPaisa, JazzCash and bank transfer', link: '/shop' }] },
     mobile: { ...MOBILE, headerVariant: 'left', sectionSpacing: 56 },
     animation: { style: 'fade', speed: 500 },
   },

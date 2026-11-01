@@ -221,6 +221,8 @@ export const reviews = pgTable(
     rating: integer('rating').notNull(),
     title: varchar('title', { length: 200 }),
     body: text('body').notNull(),
+    avatar: text('avatar'),
+    photo: text('photo'),
     status: varchar('status', { length: 20 }).notNull().default('published'), // published | pending | hidden
     verified: boolean('verified').notNull().default(false),
     createdAt: ts('created_at').notNull().defaultNow(),

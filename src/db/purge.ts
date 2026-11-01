@@ -15,24 +15,25 @@ export async function purgeDemoIfNeeded(db: DB, log: (m: string) => void = () =>
     return { purged: false };
   }
 
-  await db.execute(sql`
-    delete from payment_proofs;
-    delete from order_events;
-    delete from order_items;
-    delete from orders;
-    delete from inventory_movements;
-    delete from reviews;
-    delete from wishlist_items;
-    delete from collection_products;
-    delete from product_images;
-    delete from product_variants;
-    delete from products;
-    delete from discounts;
-    delete from contact_messages;
-    delete from newsletter_subscribers where email like '%@example.com';
-    delete from addresses where user_id in (select id from users where role <> 'admin');
-    delete from users where role <> 'admin';
-  `);
+  const statements = [
+    sql`delete from payment_proofs`,
+    sql`delete from order_events`,
+    sql`delete from order_items`,
+    sql`delete from orders`,
+    sql`delete from inventory_movements`,
+    sql`delete from reviews`,
+    sql`delete from wishlist_items`,
+    sql`delete from collection_products`,
+    sql`delete from product_images`,
+    sql`delete from product_variants`,
+    sql`delete from products`,
+    sql`delete from discounts`,
+    sql`delete from contact_messages`,
+    sql`delete from newsletter_subscribers where email like '%@example.com'`,
+    sql`delete from addresses where user_id in (select id from users where role <> 'admin')`,
+    sql`delete from users where role <> 'admin'`,
+  ];
+  for (const statement of statements) await db.execute(statement);
 
   await db.insert(settings).values({ key: 'demo_purged', value: true, updatedAt: new Date() }).onConflictDoNothing();
   log('demo products, orders, customers, reviews and discounts removed');

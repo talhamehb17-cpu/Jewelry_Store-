@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { and, asc, desc, eq, gt, gte, inArray, lte, ne, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { categories, collectionProducts, collections, productImages, products, productVariants, reviews, type Collection } from '@/db/schema';
 
@@ -74,7 +74,13 @@ function scopeConditions(f: ProductFilters): SQL[] {
     else if (c.rule === 'category' && c.ruleValue) conds.push(sql`${products.categoryId} = (select id from categories where slug = ${c.ruleValue})`);
     else if (c.rule === 'sale') conds.push(sql`${products.compareAtPrice} > ${products.price}`);
     else if (c.rule === 'new') conds.push(gte(products.createdAt, new Date(Date.now() - NEW_DAYS * 86_400_000)));
-    else if (c.rule === 'bestsellers') conds.push(sql`${products.id} in (select id from products where status = 'active' and sales_count > 0 order by sales_count desc limit 12)`);
+    else if (c.rule === 'bestsellers') conds.push(sql`(
+      ${products.salesCount} > 0
+      or (
+        not exists (select 1 from products p2 where p2.status = 'active' and p2.sales_count > 0)
+        and ${products.featured} = true
+      )
+    )`);
   }
   return conds;
 }
@@ -301,7 +307,7 @@ export async function getCompleteTheLook(productId: number, categoryId: number |
     const extra = await db
       .select()
       .from(products)
-      .where(and(eq(products.status, 'active'), ne(products.id, productId), categoryId ? ne(products.categoryId, categoryId) : undefined, gt(products.salesCount, 0)))
+      .where(and(eq(products.status, 'active'), ne(products.id, productId), categoryId ? ne(products.categoryId, categoryId) : undefined, eq(products.featured, true)))
       .orderBy(desc(products.salesCount))
       .limit(limit * 2);
     const more = await hydrateCards(extra.filter((e) => !cards.some((c) => c.id === e.id)));

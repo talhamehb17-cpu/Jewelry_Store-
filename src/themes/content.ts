@@ -115,7 +115,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'How can I pay?',
-    a: 'Pay by EasyPaisa, JazzCash or bank transfer. Upload your payment receipt at checkout — the order is confirmed only after we verify it. Cash on Delivery is not available at the moment.',
+    a: 'Pay by Cash on Delivery, EasyPaisa, JazzCash or bank transfer. Wallet and bank payments need a receipt at checkout and are confirmed only after we verify them. Cash on Delivery is paid to the courier. Card payments are not offered.',
   },
   {
     q: 'How long does delivery take?',

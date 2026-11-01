@@ -83,8 +83,16 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
         </div>
       </Card>
 
-      <Card title="Payments" className="xl:col-span-2" actions={<div className="flex items-center gap-3">{s3.bar}<SaveBtn pending={s3.pending} onClick={() => s3.save('payments', payments)} /></div>}>
-        <p className="mb-4 text-[0.8rem] text-muted">EasyPaisa, JazzCash and bank transfer each require a receipt before the customer can place an order. Uploading a receipt does not mark the payment as verified.</p>
+        <Card title="Payments" className="xl:col-span-2" actions={<div className="flex items-center gap-3">{s3.bar}<SaveBtn pending={s3.pending} onClick={() => s3.save('payments', { ...payments, card: { enabled: false } })} /></div>}>
+        <p className="mb-4 text-[0.8rem] text-muted">Customers can pay by Cash on Delivery, EasyPaisa, JazzCash or bank transfer. Wallet and bank payments require a receipt, and uploading it does not mark the payment as verified. Card checkout is not offered.</p>
+        <div className="mb-6 space-y-3 rounded-lg border border-line p-4">
+          <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.cod.enabled} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, enabled: e.target.checked } })} /> Cash on Delivery</label>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Instructions" className="sm:col-span-3"><textarea value={payments.cod.instructions} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, instructions: e.target.value } })} rows={2} className="field" /></Field>
+            <Field label="COD fee (Rs)"><input value={rupees(payments.cod.fee)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, fee: minor(e.target.value) } })} className="field" /></Field>
+            <Field label="Max COD order (Rs)"><input value={rupees(payments.cod.maxOrder)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, maxOrder: minor(e.target.value) } })} className="field" /></Field>
+          </div>
+        </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-3">
             <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.easypaisa.enabled} onChange={(e) => setPayments({ ...payments, easypaisa: { ...payments.easypaisa, enabled: e.target.checked } })} /> EasyPaisa</label>
@@ -107,26 +115,7 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
             <Field label="Instructions"><textarea value={payments.bank.instructions} onChange={(e) => setPayments({ ...payments, bank: { ...payments.bank, instructions: e.target.value } })} rows={2} className="field" /></Field>
           </div>
         </div>
-        <details className="mt-5 rounded-lg border border-line p-4">
-          <summary className="cursor-pointer text-[0.85rem] font-medium">Cash on Delivery — currently {payments.cod.enabled ? 'enabled' : 'disabled'}</summary>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <label className="flex items-center gap-2 text-[0.85rem] sm:col-span-3"><input type="checkbox" className="checkbox" checked={payments.cod.enabled} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, enabled: e.target.checked } })} /> Enable Cash on Delivery later</label>
-            <Field label="COD fee (Rs)"><input value={rupees(payments.cod.fee)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, fee: minor(e.target.value) } })} className="field" /></Field>
-            <Field label="Max COD order (Rs)"><input value={rupees(payments.cod.maxOrder)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, maxOrder: minor(e.target.value) } })} className="field" /></Field>
-          </div>
-        </details>
-        <div className="mt-5 grid gap-6 lg:grid-cols-2">
-          <div className="space-y-3">
-            <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.card.enabled} onChange={(e) => setPayments({ ...payments, card: { enabled: e.target.checked } })} /> Cards via Stripe</label>
-            <p className={cn('flex items-center gap-2 rounded-md px-3 py-2 text-[0.78rem]', system.stripe ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900')}>
-              {system.stripe ? <CheckCircle2 size={14} /> : <XCircle size={14} />} {system.stripe ? 'Stripe keys configured' : 'Not configured — card option stays hidden'}
-            </p>
-            <p className="text-[0.75rem] text-muted">To enable, add <code>STRIPE_SECRET_KEY</code> and <code>STRIPE_WEBHOOK_SECRET</code> in Vercel → Settings → Environment Variables, and create a webhook to:</p>
-            <code className="block break-all rounded bg-secondary px-2 py-1 text-[0.72rem]">{system.stripeWebhook}</code>
-            <p className="text-[0.72rem] text-muted">Events: checkout.session.completed, checkout.session.expired, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, charge.refunded.</p>
-          </div>
-        </div>
-        <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-[0.75rem] text-amber-900">Replace the placeholder account numbers with your real business accounts before accepting orders. Receipts are stored privately and are not shown on the storefront.</p>
+        <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-[0.75rem] text-amber-900">Replace the placeholder account numbers with your real business accounts before accepting orders. Receipts are stored privately and are not shown on the storefront. Debit and credit cards are not offered at checkout.</p>
       </Card>
 
       <Card title="Main menu" actions={<div className="flex items-center gap-3">{s4.bar}<SaveBtn pending={s4.pending} onClick={() => s4.save('navigation', { main: main.map((m) => ({ label: m.label, href: m.href, ...(m.childrenText.trim() ? { children: linesToLinks(m.childrenText) } : {}) })), footer: footer.map((c) => ({ title: c.title, links: linesToLinks(c.text) })) })} /></div>}>

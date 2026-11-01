@@ -15,6 +15,13 @@
       "when": 1793549000000,
       "tag": "0001_polish",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793559600000,
+      "tag": "0002_catalog",
+      "breakpoints": true
     }
   ]
 }
