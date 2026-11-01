@@ -212,7 +212,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
         <Accordion title="Care instructions">{p.care}</Accordion>
         <Accordion title="Shipping & returns">
           <p>Standard delivery ({formatMoney(shipping.standard)}) arrives in 3–5 working days nationwide — complimentary over {formatMoney(shipping.freeThreshold)}. Express delivery ({formatMoney(shipping.express)}) arrives in 1–2 working days in Lahore, Karachi and Islamabad.</p>
-          <p className="mt-3">Pay by EasyPaisa, JazzCash or bank transfer, with a receipt uploaded at checkout. Unworn pieces can be returned or exchanged within 7 days. <Link href="/policies/return-policy" className="underline underline-offset-4">Read our returns policy</Link>.</p>
+          <p className="mt-3">Pay by Cash on Delivery, EasyPaisa, JazzCash or bank transfer. Wallet and bank payments need a receipt at checkout. Unworn pieces can be returned or exchanged within 7 days. <Link href="/policies/return-policy" className="underline underline-offset-4">Read our returns policy</Link>.</p>
         </Accordion>
       </div>
 
