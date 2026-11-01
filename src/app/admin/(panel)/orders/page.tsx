@@ -30,7 +30,7 @@ export default async function OrdersAdmin({ searchParams }: { searchParams: Prom
             <input name="q" defaultValue={sp.q} placeholder="Order #, name, email or phone" className="field !pl-9" />
           </div>
           <select name="payment" defaultValue={sp.payment ?? ''} className="field"><option value="">Any payment</option>{PAYMENT_STATUSES.map((p) => <option key={p} value={p}>{titleCase(p)}</option>)}</select>
-          <select name="method" defaultValue={sp.method ?? ''} className="field"><option value="">Any method</option><option value="cod">Cash on Delivery</option><option value="bank">Bank transfer</option><option value="wallet">JazzCash / Easypaisa</option><option value="card">Card</option></select>
+          <select name="method" defaultValue={sp.method ?? ''} className="field"><option value="">Any method</option><option value="easypaisa">EasyPaisa</option><option value="jazzcash">JazzCash</option><option value="bank">Bank transfer</option><option value="cod">Cash on Delivery</option><option value="card">Card</option></select>
           <input type="date" name="from" defaultValue={sp.from} className="field" aria-label="From date" />
           <input type="date" name="to" defaultValue={sp.to} className="field" aria-label="To date" />
           <button className="btn btn-secondary">Apply</button>

@@ -3,13 +3,15 @@ import { getDbKind } from '@/db';
 import { requireAdminPage } from '@/lib/auth';
 import { PageHeader } from '@/components/admin/ui';
 import { SettingsForms } from '@/components/admin/settings-forms';
+import { DatabaseConnection } from '@/components/admin/database-connection';
+import { getDatabaseConnectionPublic } from '@/lib/db-connection';
 import { siteUrl } from '@/lib/utils';
 
 export const metadata = { title: 'Settings' };
 
 export default async function SettingsAdmin() {
   await requireAdminPage({ adminOnly: true });
-  const [settings, kind] = await Promise.all([getSettings(), getDbKind()]);
+  const [settings, kind, dbStatus] = await Promise.all([getSettings(), getDbKind(), getDatabaseConnectionPublic()]);
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
   let host = '';
   try {
@@ -18,6 +20,8 @@ export default async function SettingsAdmin() {
   return (
     <>
       <PageHeader title="Settings" description="Store details, shipping, payments, navigation and system status." />
+      <DatabaseConnection status={dbStatus} />
+      <div className="h-6" />
       <SettingsForms
         settings={settings}
         system={{

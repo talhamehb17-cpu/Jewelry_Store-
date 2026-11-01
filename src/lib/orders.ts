@@ -27,7 +27,7 @@ export type CreateOrderInput = {
   phone: string;
   address: OrderAddress;
   shippingMethod: string;
-  paymentMethod: 'cod' | 'bank' | 'wallet' | 'card';
+  paymentMethod: 'cod' | 'bank' | 'wallet' | 'easypaisa' | 'jazzcash' | 'card';
   paymentRef?: string | null;
   discountCode?: string | null;
   customerNote?: string | null;
@@ -108,7 +108,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       await tx.update(products).set({ salesCount: sql`${products.salesCount} + ${l.quantity}` }).where(eq(products.id, l.productId));
     }
     if (quote.discount) await tx.update(discounts).set({ usageCount: sql`${discounts.usageCount} + 1` }).where(eq(discounts.id, quote.discount.id));
-    const label = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash / Easypaisa', card: 'Card (Stripe)' }[input.paymentMethod];
+    const label = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card (Stripe)' }[input.paymentMethod];
     await tx.insert(orderEvents).values({ orderId: order!.id, type: 'created', message: `Order placed via website · ${label}`, actor: 'customer' });
     if (input.paymentRef) await tx.insert(orderEvents).values({ orderId: order!.id, type: 'payment', message: `Customer submitted payment reference ${input.paymentRef} — awaiting verification`, actor: 'customer' });
     return { ...order!, number };

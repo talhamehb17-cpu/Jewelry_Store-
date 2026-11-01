@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Heart, Plus, ShoppingBag, ArrowRight, Eye } from 'lucide-react';
 import { Img } from '@/components/ui/img';
@@ -25,11 +26,12 @@ function useCardActions(p: CardProduct) {
 }
 
 function Images({ p, className, priority }: { p: CardProduct; className?: string; priority?: boolean }) {
+  const [altOn, setAltOn] = useState(false);
   return (
-    <>
+    <span className="absolute inset-0 block" onMouseEnter={() => p.image2 && setAltOn(true)} onFocus={() => p.image2 && setAltOn(true)}>
       <Img src={p.image} alt={p.name} sizes={SIZES} priority={priority} className={cn('transition-[opacity,transform] duration-[1200ms] ease-[cubic-bezier(.2,.7,.2,1)] group-hover:scale-[1.04]', className)} />
-      {p.image2 && <Img src={p.image2} alt="" sizes={SIZES} className="opacity-0 transition-opacity duration-700 group-hover:opacity-100" />}
-    </>
+      {altOn && p.image2 && <Img src={p.image2} alt="" sizes={SIZES} className="opacity-0 transition-opacity duration-700 group-hover:opacity-100" />}
+    </span>
   );
 }
 
@@ -121,7 +123,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
             <Badges p={p} className="[&>span]:bg-accent [&>span]:text-black" />
           </Link>
           <div className="mt-5 text-center">
-            <Link href={href} className="nav-link block text-[0.8rem] !tracking-[0.22em] !uppercase">{p.name}</Link>
+            <Link href={href} className="nav-link block text-[0.8rem] text-ink !tracking-[0.22em] !uppercase">{p.name}</Link>
             <div className="mt-2 text-[0.85rem] text-accent"><Price price={p.price} compareAt={p.compareAtPrice} className="justify-center" saleClass="text-accent" /></div>
             <button onClick={quickAdd} disabled={!p.inStock} className="mt-3 inline-flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.22em] text-muted opacity-0 transition group-hover:opacity-100 hover:text-accent max-md:opacity-100 disabled:opacity-40">
               {addLabel} <ArrowRight size={12} strokeWidth={1.25} />

@@ -9,7 +9,7 @@ import type { StoreSettings } from '@/lib/settings';
 
 type Props = { footer: ThemeFooter; header: ThemeHeader; settings: StoreSettings };
 
-const PAYMENTS = ['Cash on Delivery', 'Visa', 'Mastercard', 'JazzCash', 'Easypaisa', 'Bank Transfer'];
+const PAYMENTS = ['EasyPaisa', 'JazzCash', 'Bank Transfer', 'Visa', 'Mastercard'];
 
 function Pinterest(props: { size?: number }) {
   return (

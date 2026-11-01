@@ -479,6 +479,49 @@ input[type='radio'].checkbox:checked::after {
 .ratio-product {
   aspect-ratio: var(--img-ratio);
 }
+.media-fill {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  background: var(--c-surface);
+}
+.media-fill-img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover;
+  color: transparent;
+}
+/* Dark Luxury stays midnight black. Cards, prices and borders get a champagne edge so they cannot vanish into the canvas. */
+[data-theme='dark-luxury'] .product-grid,
+[data-theme='dark-luxury'] article.group {
+  color: #f7f1e7;
+}
+[data-theme='dark-luxury'] .product-grid .text-muted,
+[data-theme='dark-luxury'] article.group .text-muted {
+  color: #c8bba8;
+}
+[data-theme='dark-luxury'] .product-grid .text-accent,
+[data-theme='dark-luxury'] article.group .text-accent {
+  color: #e0c48a;
+}
+[data-theme='dark-luxury'] .product-grid .text-sale,
+[data-theme='dark-luxury'] article.group .text-sale {
+  color: #e7a08a;
+}
+[data-theme='dark-luxury'] .product-grid .ratio-product,
+[data-theme='dark-luxury'] .product-grid .aspect-\[3\/4\],
+[data-theme='dark-luxury'] .product-grid .aspect-\[4\/5\],
+[data-theme='dark-luxury'] article.group .ratio-product,
+[data-theme='dark-luxury'] article.group .aspect-\[3\/4\],
+[data-theme='dark-luxury'] article.group .aspect-\[4\/5\],
+[data-theme='dark-luxury'] article.group .bg-surface {
+  background-color: #241f1b;
+  box-shadow: inset 0 0 0 1px rgba(224, 196, 138, 0.55);
+}
 .rounded-theme-sm {
   border-radius: min(var(--radius), 10px);
 }

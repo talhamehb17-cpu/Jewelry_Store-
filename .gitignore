@@ -22,3 +22,6 @@ next-env.d.ts
 .DS_Store
 npm-debug.log*
 coverage/
+
+# Generated at build time by scripts/mirror-images.mjs
+public/images/catalog/

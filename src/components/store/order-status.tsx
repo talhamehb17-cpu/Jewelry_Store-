@@ -1,5 +1,6 @@
 import { Check, X } from 'lucide-react';
 import { cn, titleCase } from '@/lib/utils';
+import { paymentStatusLabel } from '@/lib/payments';
 
 const STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'] as const;
 
@@ -18,7 +19,7 @@ export function StatusBadge({ status, kind = 'order' }: { status: string; kind?:
     refunded: 'bg-stone-100 text-stone-700 border-stone-200',
     partially_refunded: 'bg-stone-100 text-stone-700 border-stone-200',
   };
-  const label = kind === 'payment' && status === 'awaiting' ? 'Awaiting verification' : titleCase(status);
+  const label = kind === 'payment' ? paymentStatusLabel(status) : titleCase(status);
   return <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-medium', tone[status] ?? 'bg-stone-100 text-stone-700 border-stone-200')}>{label}</span>;
 }
 

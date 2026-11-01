@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ['*.e2b.app', '**.e2b.app'],
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '4mb',
     },
   },
   outputFileTracingIncludes: {

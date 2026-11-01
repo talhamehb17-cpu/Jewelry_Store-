@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Image unavailable">
+  <rect width="800" height="1000" fill="#f3eadf"/>
+  <g fill="none" stroke="#b8955a" stroke-width="2" opacity="0.85">
+    <circle cx="400" cy="430" r="78"/>
+    <path d="M400 352l18 46 50 6-38 32 12 49-42-26-42 26 12-49-38-32 50-6z"/>
+  </g>
+  <text x="400" y="560" text-anchor="middle" fill="#8a7f74" font-family="Georgia, serif" font-size="28">Maison Aurelle</text>
+</svg>

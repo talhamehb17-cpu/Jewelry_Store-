@@ -37,9 +37,22 @@ export async function markPaid(orderId: number, ref?: string): Promise<R> {
   if (!o) return { ok: false, message: 'Order not found.' };
   if (o.status === 'cancelled') return { ok: false, message: 'Cancelled orders cannot be marked as paid.' };
   if (o.paymentMethod === 'card') return { ok: false, message: 'Card payments are confirmed automatically by Stripe.' };
-  await markOrderPaid(orderId, { actor: actorName(u), ref: ref || o.paymentRef, message: `Payment verified manually${ref ? ` (ref ${ref})` : ''}` });
+  await markOrderPaid(orderId, { actor: actorName(u), ref: ref || o.paymentRef, message: `Payment verified${ref ? ` (ref ${ref})` : ''}` });
   revalidatePath(`/admin/orders/${orderId}`);
-  return { ok: true, message: 'Payment recorded.' };
+  return { ok: true, message: 'Payment verified.' };
+}
+
+export async function rejectPayment(orderId: number, note?: string): Promise<R> {
+  const u = await assertAdmin();
+  const db = await getDb();
+  const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!o) return { ok: false, message: 'Order not found.' };
+  if (o.paymentMethod === 'card') return { ok: false, message: 'Card payments are confirmed by Stripe.' };
+  if (o.paymentStatus === 'paid') return { ok: false, message: 'Verified payments must be refunded, not rejected.' };
+  await db.update(orders).set({ paymentStatus: 'failed', updatedAt: new Date(), adminNote: note || o.adminNote }).where(eq(orders.id, orderId));
+  await addOrderEvent(orderId, 'payment', `Payment rejected${note ? ` — ${note}` : ''}`, actorName(u));
+  revalidatePath(`/admin/orders/${orderId}`);
+  return { ok: true, message: 'Payment rejected. The customer can be asked to upload a new receipt.' };
 }
 
 export async function refundOrder(orderId: number, amountRupees: number, reason: string, restock: boolean): Promise<R> {

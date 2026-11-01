@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { asc, desc, eq, sql } from 'drizzle-orm';
 import { Printer, Mail, Phone, MapPin } from 'lucide-react';
 import { getDb } from '@/db';
-import { orderEvents, orderItems, orders } from '@/db/schema';
+import { orderEvents, orderItems, orders, paymentProofs } from '@/db/schema';
 import { Card, PageHeader } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/store/order-status';
 import { OrderActions } from '@/components/admin/order-actions';
@@ -11,10 +11,10 @@ import { Img } from '@/components/ui/img';
 import { STATUS_FLOW } from '@/lib/orders';
 import { formatMoney } from '@/lib/money';
 import { formatDateTime } from '@/lib/utils';
-import { getSettings } from '@/lib/settings';
+
 
 export const metadata = { title: 'Order' };
-const PM: Record<string, string> = { cod: 'Cash on Delivery', bank: 'Bank transfer', wallet: 'JazzCash / Easypaisa', card: 'Card (Stripe)' };
+const PM: Record<string, string> = { cod: 'Cash on Delivery', bank: 'Bank transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card (Stripe)' };
 
 export default async function OrderAdmin({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,11 +23,11 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
   const db = await getDb();
   const [o] = await db.select().from(orders).where(eq(orders.id, oid)).limit(1);
   if (!o) notFound();
-  const [items, events, [hist], settings] = await Promise.all([
+  const [proof] = await db.select({ token: paymentProofs.token, filename: paymentProofs.filename, mime: paymentProofs.mime }).from(paymentProofs).where(eq(paymentProofs.orderId, o.id)).limit(1);
+  const [items, events, [hist]] = await Promise.all([
     db.select().from(orderItems).where(eq(orderItems.orderId, oid)),
     db.select().from(orderEvents).where(eq(orderEvents.orderId, oid)).orderBy(desc(orderEvents.createdAt)),
     db.select({ n: sql<number>`count(*)::int`, spent: sql<number>`coalesce(sum(${orders.total}),0)::bigint` }).from(orders).where(sql`lower(${orders.email}) = ${o.email.toLowerCase()} and ${orders.status} <> 'cancelled'`),
-    getSettings(),
   ]);
   const a = o.shippingAddress;
   return (
@@ -102,7 +102,8 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               {o.paymentIntentId && <div className="flex justify-between gap-3"><dt className="text-muted">Payment intent</dt><dd className="break-all text-right font-mono text-[0.75rem]">{o.paymentIntentId}</dd></div>}
               {o.paidAt && <div className="flex justify-between gap-3"><dt className="text-muted">Paid</dt><dd>{formatDateTime(o.paidAt)}</dd></div>}
             </dl>
-            {o.paymentMethod === 'bank' && <p className="mt-3 rounded-md bg-secondary px-3 py-2 text-[0.75rem] text-muted">Verify the transfer in {settings.payments.bank.bankName} before marking as paid.</p>}
+            {proof && <a href={`/api/payment-proof/${proof.token}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-[0.8rem] underline">View payment receipt ({proof.filename})</a>}
+            {(o.paymentMethod === 'bank' || o.paymentMethod === 'easypaisa' || o.paymentMethod === 'jazzcash') && <p className="mt-3 rounded-md bg-secondary px-3 py-2 text-[0.75rem] text-muted">The receipt is private. Verify the funds before marking the payment verified.</p>}
           </Card>
           {o.customerNote && <Card title="Customer note"><p className="whitespace-pre-line text-[0.85rem]">{o.customerNote}</p></Card>}
         </div>

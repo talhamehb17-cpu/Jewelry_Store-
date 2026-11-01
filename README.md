@@ -8,7 +8,7 @@ A complete, production-ready luxury jewelry store built with **Next.js 16 (App R
 - **Theme engine** (`src/themes`) — centralised, typed theme definitions → sanitised CSS variables. Draft/publish workflow, live preview, restore defaults, separate mobile settings. Switching themes never touches catalogue or order data.
 - **Visual homepage builder** — drag-and-drop sections (15 types, 50+ layout variants), per-device visibility, autosaved drafts, publish.
 - **Storefront** — faceted shop (category, collection, material, size, metal colour, price, availability), instant search with autocomplete + popular/recent searches, quick view, product galleries with zoom/lightbox/video, size guides, sticky mobile add-to-bag, reviews, wishlist (synced to account), recently viewed, complete-the-look, cart drawer + cart page with discount codes and free-shipping progress.
-- **Checkout & payments** — Cash on Delivery, bank transfer and JazzCash/Easypaisa (admin verifies payments), plus **Stripe Checkout** when keys are configured, with webhook signature verification and server-side session verification. Server-side price re-calculation, atomic stock reservation, automatic restock on cancellation.
+- **Checkout & payments** — EasyPaisa, JazzCash and bank transfer, each requiring a private payment-receipt upload. Uploading a receipt does not verify the payment. Cash on Delivery stays in the architecture but is disabled. **Stripe Checkout** is used when keys are configured, with webhook signature verification and server-side session verification. Server-side price re-calculation, atomic stock reservation, automatic restock on cancellation.
 - **Customer accounts** — register, sign in, password reset, profile, addresses, order history with status tracking (Pending → Confirmed → Processing → Shipped → Delivered / Cancelled).
 - **Admin** (`/admin`) — dashboard & analytics with interactive charts, products (variants, SKU/barcode, stock thresholds, media, SEO, duplicate), collections & categories, orders (status workflow, tracking, payments, refunds, invoices, CSV export), customers, inventory with full movement history, discounts, reviews moderation, CMS pages, messages/subscribers, theme customizer, homepage builder and settings.
 - **SEO** — per-page metadata, Open Graph, canonical URLs, JSON-LD (Product, BreadcrumbList, FAQPage, JewelryStore, WebSite), `sitemap.xml`, `robots.txt`, clean `/products/[slug]` URLs.
@@ -23,7 +23,7 @@ A complete, production-ready luxury jewelry store built with **Next.js 16 (App R
 | Styling | Tailwind CSS 4 + CSS-variable design tokens, self-hosted fonts (Fontsource, OFL) |
 | Database | PostgreSQL via Drizzle ORM — Neon in production, embedded PGlite for local development |
 | Auth | bcryptjs + jose (HS256 JWT in httpOnly cookie) |
-| Payments | Stripe Checkout (optional), COD, bank transfer, JazzCash/Easypaisa |
+| Payments | EasyPaisa, JazzCash, bank transfer (receipt required), Stripe Checkout (optional). COD disabled |
 | Charts / DnD | Recharts, dnd-kit |
 | Hosting | Vercel (functions pinned to `cle1`, next to the Neon `us-east-2` database) |
 
@@ -67,7 +67,7 @@ The production deployment was provisioned with a free, claimable Neon database t
 
 ## Payments
 
-- **Cash on Delivery / bank transfer / JazzCash / Easypaisa** — orders are created as unpaid; staff verify the transfer and click *Mark as paid* (COD is marked paid automatically when delivered). Replace the demo bank and wallet details in **Settings → Payments**.
+- **EasyPaisa / JazzCash / bank transfer** — the customer must upload a JPG, PNG, WEBP or PDF receipt before the order can be placed. The receipt is not public. Staff verify the funds and click *Verify payment*, or *Reject payment*. Cash on Delivery is disabled and can be turned back on under **Settings → Payments**. Replace the placeholder account details there. A new PostgreSQL database can be tested and activated under **Settings → Database connection** without exposing the password to the browser.
 - **Stripe** — set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`, then add a webhook endpoint `https://<your-domain>/api/stripe/webhook` with events `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `charge.refunded`. Orders are marked paid only after Stripe confirms payment (webhook or server-side session retrieval); abandoned sessions are cancelled and restocked.
 
 ## Project structure

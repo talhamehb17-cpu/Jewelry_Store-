@@ -23,7 +23,7 @@ const ANNOUNCEMENT: ThemeAnnouncement = {
   style: 'rotate',
   messages: [
     { text: 'Complimentary shipping on orders over Rs 10,000', link: '/shop' },
-    { text: 'Cash on Delivery available nationwide' },
+    { text: 'EasyPaisa, JazzCash and bank transfer' },
     { text: 'New in — The Pearl Edit', link: '/collections/pearl-edit' },
   ],
 };
@@ -130,7 +130,7 @@ const modernMinimal: ThemeDefinition = {
     buttons: { shape: 'square', style: 'solid', hover: 'arrow', uppercase: false, tracking: 0, size: 'md', weight: 500 },
     header: { variant: 'inline', sticky: true, transparentOnHome: false, logoText: 'Aurelle', logoTagline: '', logoImage: '', logoSize: 22, borderBottom: true },
     footer: { variant: 'minimal', tagline: 'Fine jewelry, reduced to the essential.', showNewsletter: true, showSocial: true, showPayments: false },
-    announcement: { ...ANNOUNCEMENT, style: 'static', messages: [{ text: 'Free shipping over Rs 10,000 · Cash on Delivery nationwide', link: '/shop' }] },
+    announcement: { ...ANNOUNCEMENT, style: 'static', messages: [{ text: 'Free shipping over Rs 10,000 · EasyPaisa, JazzCash and bank transfer', link: '/shop' }] },
     mobile: { ...MOBILE, headerVariant: 'left', sectionSpacing: 56 },
     animation: { style: 'fade', speed: 500 },
   },
@@ -193,9 +193,9 @@ const darkLuxury: ThemeDefinition = {
   mood: ['Noir', 'Gold leaf', 'Cinematic'],
   settings: {
     colors: {
-      background: '#0E0D0C', surface: '#181614', text: '#EFE8DC', muted: '#A39A8C', primary: '#C9A96E', primaryText: '#0E0D0C',
-      secondary: '#24211D', accent: '#D8B878', border: '#2E2A25', sale: '#D98E73', headerBg: '#0E0D0C', headerText: '#EFE8DC',
-      footerBg: '#080707', footerText: '#EFE8DC', announcementBg: '#C9A96E', announcementText: '#0E0D0C',
+      background: '#0E0D0C', surface: '#241F1B', text: '#F7F1E7', muted: '#C8BBA8', primary: '#C9A96E', primaryText: '#0E0D0C',
+      secondary: '#2C2722', accent: '#E0C48A', border: '#6A5A46', sale: '#E7A08A', headerBg: '#0E0D0C', headerText: '#F7F1E7',
+      footerBg: '#080707', footerText: '#F7F1E7', announcementBg: '#C9A96E', announcementText: '#0E0D0C',
     },
     typography: {
       headingFont: 'marcellus', bodyFont: 'montserrat', navFont: 'marcellus', accentFont: 'cormorant', baseSize: 14, headingScale: 1.0,

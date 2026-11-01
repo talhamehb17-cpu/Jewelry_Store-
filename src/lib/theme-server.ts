@@ -54,11 +54,16 @@ export const getThemeContext = cache(async (): Promise<ThemeContext> => {
       isPreview = true;
     }
   }
-  if (!isPreview && settings.theme.visitorSwitcher) {
-    const pick = jar.get(VISITOR_THEME_COOKIE)?.value;
-    if (isThemeId(pick) && pick !== activeThemeId) {
+  if (!isPreview) {
+    const user = await getCurrentUser();
+    const accountPick = user?.themePreference;
+    const cookiePick = jar.get(VISITOR_THEME_COOKIE)?.value;
+    // Logged-in preference lives on the account. Guests use this browser only.
+    // Neither path writes the admin global theme.
+    const pick = user ? (isThemeId(accountPick) ? accountPick : null) : isThemeId(cookiePick) ? cookiePick : null;
+    if (pick) {
       themeId = pick;
-      isVisitorPick = true;
+      isVisitorPick = pick !== activeThemeId;
     }
   }
   const config = await getThemeConfig(themeId, mode);

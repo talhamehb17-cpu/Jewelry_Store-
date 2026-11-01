@@ -79,7 +79,7 @@ export function ThemeGallery({ themes, active, visitorSwitcher }: { themes: T[];
             </div>
             <label className="mt-6 flex items-start gap-3 rounded-lg bg-secondary/70 p-3 text-[0.8rem]">
               <input type="checkbox" className="checkbox mt-0.5" checked={visitorSwitcher} disabled={pending} onChange={(e) => start(async () => { setMsg((await setVisitorSwitcher(e.target.checked)).message); router.refresh(); })} />
-              <span><span className="font-medium">Demo mode: let visitors preview themes</span><br /><span className="text-muted">Shows a “Themes” button on the storefront so anyone can try every design. Their choice only affects their own browser.</span></span>
+              <span><span className="font-medium">Let visitors choose a personal look</span><br /><span className="text-muted">Shows a Themes button. A visitor’s choice is saved to their account, or to this browser if they are not signed in. It never changes the store default or another customer’s view.</span></span>
             </label>
             {msg && <p className="mt-3 text-[0.8rem] text-emerald-700">{msg}</p>}
           </div>

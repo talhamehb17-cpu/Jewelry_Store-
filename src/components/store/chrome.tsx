@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { Check, Palette, X, Eye } from 'lucide-react';
 import { useStore } from './providers';
 import { setVisitorTheme } from '@/app/actions/store';
@@ -73,8 +73,8 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
         <div className="slide-up mb-3 w-[300px] overflow-hidden rounded-xl border border-black/10 bg-white text-[#23201d] shadow-2xl">
           <div className="flex items-center justify-between border-b border-black/10 px-4 py-3">
             <div>
-              <p className="text-[0.85rem] font-semibold">Preview a theme</p>
-              <p className="text-[0.7rem] text-[#7c756d]">Demo mode · your data stays the same</p>
+              <p className="text-[0.85rem] font-semibold">Your look</p>
+              <p className="text-[0.7rem] text-[#7c756d]">Saved for you only · not the store default</p>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Close theme switcher" className="text-[#7c756d] hover:text-black"><X size={16} /></button>
           </div>
@@ -83,7 +83,12 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
               <li key={t.id}>
                 <button
                   disabled={pending}
-                  onClick={() => start(() => setVisitorTheme(t.id === activeId ? null : t.id))}
+                  onClick={() => {
+                    const next = t.id === activeId ? null : t.id;
+                    if (next) localStorage.setItem('aurelle_theme', next);
+                    else localStorage.removeItem('aurelle_theme');
+                    start(() => setVisitorTheme(next));
+                  }}
                   className={cn('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[.04]', current === t.id && 'bg-black/[.05]')}
                 >
                   <span className="flex shrink-0 overflow-hidden rounded-full border border-black/10">
@@ -105,6 +110,19 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
       </button>
     </div>
   );
+}
+
+export function ThemeSync({ loggedIn }: { loggedIn: boolean }) {
+  const ran = useRef(false);
+  useEffect(() => {
+    if (ran.current || loggedIn) return;
+    ran.current = true;
+    const local = localStorage.getItem('aurelle_theme');
+    if (!local) return;
+    const has = document.cookie.split(';').some((c) => c.trim().startsWith('aurelle_theme='));
+    if (!has) void setVisitorTheme(local);
+  }, [loggedIn]);
+  return null;
 }
 
 export function PreviewBanner({ themeName, mode }: { themeName: string; mode: string }) {

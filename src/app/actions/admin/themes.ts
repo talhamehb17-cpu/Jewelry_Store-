@@ -78,7 +78,7 @@ export async function activateTheme(themeId: string): Promise<R> {
   const s = await getSettings();
   await saveSetting('theme', { ...s.theme, active: themeId });
   revalidatePath('/', 'layout');
-  return { ok: true, message: 'Theme activated — your storefront has switched instantly.' };
+  return { ok: true, message: 'Store default updated. Customers who chose their own look are not affected.' };
 }
 
 export async function setVisitorSwitcher(on: boolean): Promise<R> {
@@ -86,5 +86,5 @@ export async function setVisitorSwitcher(on: boolean): Promise<R> {
   const s = await getSettings();
   await saveSetting('theme', { ...s.theme, visitorSwitcher: on });
   revalidatePath('/', 'layout');
-  return { ok: true, message: on ? 'Visitors can now preview themes.' : 'Visitor theme switcher hidden.' };
+  return { ok: true, message: on ? 'Customers can choose a personal look. It does not change the store default.' : 'Storefront theme button hidden. Saved personal looks still apply.' };
 }

@@ -17,14 +17,19 @@ export async function migrateAndSeed(db: DB, kind: DbKind, log: (m: string) => v
     await migrate(db, { migrationsFolder });
   }
   log('migrations applied');
+  const { applyStorePolicy, purgeDemoIfNeeded } = await import('./purge');
   const marker = await db.select().from(settings).where(eq(settings.key, 'seed_version'));
   if (marker.length) {
     log('database already seeded — skipping seed');
+    await applyStorePolicy(db, log);
+    await purgeDemoIfNeeded(db, log);
     return { seeded: false };
   }
   const { seedDatabase } = await import('./seed');
   await seedDatabase(db, log);
   await db.insert(settings).values({ key: 'seed_version', value: SEED_VERSION }).onConflictDoNothing();
   log('seed complete');
+  await applyStorePolicy(db, log);
+  await purgeDemoIfNeeded(db, log);
   return { seeded: true };
 }

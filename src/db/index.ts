@@ -6,7 +6,7 @@ export type DB = NodePgDatabase<typeof schema>;
 export type DbKind = 'postgres' | 'pglite';
 
 type DbState = { db: DB; kind: DbKind; pool?: Pool };
-const g = globalThis as unknown as { __aurelleDb?: Promise<DbState> };
+const g = globalThis as unknown as { __aurelleDb?: Promise<DbState>; __aurelleEnvDb?: Promise<DbState> };
 
 export function databaseUrl(): string {
   return process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
@@ -25,7 +25,7 @@ export function pgConfig(url: string) {
   };
 }
 
-async function create(): Promise<DbState> {
+async function createEnv(): Promise<DbState> {
   const url = databaseUrl();
   if (url) {
     const pool = new Pool({
@@ -50,6 +50,32 @@ async function create(): Promise<DbState> {
   return { db, kind: 'pglite' };
 }
 
+async function create(): Promise<DbState> {
+  const env = await envState();
+  if (env.kind !== 'postgres') return env;
+  try {
+    const { activeOverrideUrl } = await import('@/lib/db-connection');
+    const url = await activeOverrideUrl();
+    if (!url || url === databaseUrl()) return env;
+    const pool = new Pool({ ...pgConfig(url), max: 5, idleTimeoutMillis: 15_000, connectionTimeoutMillis: 8_000 });
+    await pool.query('select 1');
+    return { db: drizzlePg(pool, { schema }), kind: 'postgres', pool };
+  } catch {
+    // A failed override must never replace the working database.
+    return env;
+  }
+}
+
+function envState(): Promise<DbState> {
+  if (!g.__aurelleEnvDb) {
+    g.__aurelleEnvDb = createEnv().catch((err) => {
+      g.__aurelleEnvDb = undefined;
+      throw err;
+    });
+  }
+  return g.__aurelleEnvDb;
+}
+
 function state(): Promise<DbState> {
   if (!g.__aurelleDb) {
     g.__aurelleDb = create().catch((err) => {
@@ -58,6 +84,17 @@ function state(): Promise<DbState> {
     });
   }
   return g.__aurelleDb;
+}
+
+/** Always the DATABASE_URL pool. Used to read a saved override without following it. */
+export async function getEnvDb(): Promise<DB> {
+  return (await envState()).db;
+}
+
+export function resetDb() {
+  const prev = g.__aurelleDb;
+  g.__aurelleDb = undefined;
+  void prev?.then((s) => s.pool?.end()).catch(() => undefined);
 }
 
 export async function getDb(): Promise<DB> {

@@ -663,7 +663,7 @@ Today, every Aurelle piece is still designed in Lahore and finished by hand. We 
 
 - **Considered materials** — hypoallergenic, nickel-free metals made for sensitive skin.
 - **Hand finishing** — every chain is inspected, every stone set and polished by our artisans.
-- **Thoughtful service** — sizing help on WhatsApp, Cash on Delivery nationwide and easy 7-day returns.
+- **Thoughtful service** — sizing help on WhatsApp, EasyPaisa, JazzCash or bank transfer, and easy 7-day returns.
 - **Gift-ready, always** — each order arrives in our signature ivory box with a handwritten note.
 
 ## Visit the atelier
@@ -681,17 +681,14 @@ Our Gulberg atelier welcomes private appointments for bridal consultations, cust
     slug: 'faq',
     title: 'Frequently Asked Questions',
     template: 'faq',
-    seoDescription: 'Answers about orders, delivery, Cash on Delivery, returns, sizing and jewelry care at Maison Aurelle.',
+    seoDescription: 'Answers about orders, delivery, EasyPaisa, JazzCash, bank transfer, returns, sizing and jewelry care at Maison Aurelle.',
     content: md`## Orders & Payment
 
 ### Which payment methods do you accept?
-Cash on Delivery (nationwide), direct bank transfer, JazzCash, Easypaisa and — where enabled — debit and credit cards through our secure checkout.
+EasyPaisa, JazzCash and bank transfer. Upload a receipt at checkout. The order is confirmed only after we verify the payment. Card payments appear only when enabled. Cash on Delivery is not currently offered.
 
-### Is Cash on Delivery available everywhere?
-Yes, COD is available across Pakistan for orders up to Rs 200,000. For higher-value bridal orders we may request a partial advance.
-
-### How do I pay by bank transfer, JazzCash or Easypaisa?
-Choose your preferred option at checkout and transfer the order total to the account shown. Enter your transaction ID, and your order is confirmed as soon as we verify the payment — usually within a few hours.
+### How do I pay by EasyPaisa, JazzCash or bank transfer?
+Choose the method at checkout, send the exact total to the account shown, and upload a JPG, PNG, WEBP or PDF receipt. The order stays under review until the payment is verified. Uploading a receipt does not confirm the payment by itself.
 
 ## Shipping & Delivery
 
@@ -743,7 +740,7 @@ Orders placed before 2 pm PKT (Monday–Saturday) are dispatched the same day. M
 
 ## Order confirmation
 
-Cash on Delivery orders may be confirmed by phone or WhatsApp before dispatch. Bank transfer and wallet orders ship once payment is verified.
+EasyPaisa, JazzCash and bank-transfer orders ship once the receipt and the funds are verified.
 
 ## Tracking
 
@@ -828,7 +825,7 @@ An order is confirmed once we send an order confirmation. We reserve the right t
 
 ## Payment
 
-Online payments are processed by secure third-party providers. Bank transfer and wallet orders are processed after payment verification. Cash on Delivery orders must be paid in full to the courier.
+EasyPaisa, JazzCash and bank-transfer orders are processed only after the receipt and the funds are verified. Uploading a receipt does not by itself confirm payment.
 
 ## Intellectual property
 
@@ -951,21 +948,33 @@ export const DEFAULT_SETTINGS = {
     ],
   },
   payments: {
-    cod: { enabled: true, fee: 0, maxOrder: 20000000, instructions: 'Pay in cash when your order arrives. Our team may call to confirm before dispatch.' },
+    cod: { enabled: false, fee: 0, maxOrder: 20000000, instructions: 'Cash on Delivery is turned off. The option can be enabled again from Settings → Payments.' },
     bank: {
       enabled: true,
       bankName: 'Meezan Bank',
       accountTitle: 'Maison Aurelle (Pvt) Ltd',
       accountNumber: '0101-0105678901',
       iban: 'PK36MEZN0001010105678901',
-      instructions: 'Transfer the order total and enter your transaction reference. Your order is confirmed once payment is verified.',
+      instructions: 'Transfer the exact order total, then upload a screenshot or PDF of the receipt. The order stays under review until the payment is verified.',
+    },
+    easypaisa: {
+      enabled: true,
+      accountName: 'Maison Aurelle',
+      accountNumber: '0345-1234567',
+      instructions: 'Send the exact order total to this EasyPaisa account, then upload a screenshot or PDF of the receipt. The order is confirmed only after the payment is verified.',
+    },
+    jazzcash: {
+      enabled: true,
+      accountName: 'Maison Aurelle',
+      accountNumber: '0300-1234567',
+      instructions: 'Send the exact order total to this JazzCash account, then upload a screenshot or PDF of the receipt. The order is confirmed only after the payment is verified.',
     },
     wallet: {
-      enabled: true,
+      enabled: false,
       jazzcash: '0300-1234567',
       easypaisa: '0345-1234567',
       accountTitle: 'Maison Aurelle',
-      instructions: 'Send the order total via JazzCash or Easypaisa and enter the transaction ID (TID) below.',
+      instructions: 'Legacy combined wallet. Use the separate EasyPaisa and JazzCash methods.',
     },
     card: { enabled: true },
   },
@@ -982,7 +991,7 @@ export const DEFAULT_SETTINGS = {
   seo: {
     title: 'Maison Aurelle — Fine Jewelry Made for Your Moments',
     description:
-      'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. Cash on Delivery nationwide, free shipping over Rs 10,000.',
+      'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
   },
   reviews: { autoPublishVerified: true },
 };

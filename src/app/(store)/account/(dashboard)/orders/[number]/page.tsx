@@ -13,7 +13,7 @@ import { Img } from '@/components/ui/img';
 
 export const metadata: Metadata = { title: 'Order details', robots: { index: false } };
 
-const PM = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash / Easypaisa', card: 'Card (Stripe)' } as Record<string, string>;
+const PM = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card (Stripe)' } as Record<string, string>;
 
 export default async function OrderDetail({ params }: { params: Promise<{ number: string }> }) {
   const { number } = await params;

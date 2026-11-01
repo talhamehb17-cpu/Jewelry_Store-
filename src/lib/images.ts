@@ -87,11 +87,23 @@ const UNSPLASH = /^https:\/\/images\.unsplash\.com\//;
 export function sizedUrl(src: string, width: number, quality = 75) {
   if (UNSPLASH.test(src)) {
     const base = src.split('?')[0];
-    return `${base}?auto=format&fit=crop&w=${width}&q=${quality}`;
+    const height = Math.round(width * 1.25);
+    return `${base}?auto=format&fit=crop&w=${width}&h=${height}&q=${quality}`;
   }
   return src;
 }
 
 export function isResizableRemote(src: string) {
   return UNSPLASH.test(src);
+}
+
+/** Same-origin copy written by scripts/mirror-images.mjs. */
+export function catalogMirror(src: string) {
+  const match = src.match(/images\.unsplash\.com\/(photo-[A-Za-z0-9_-]+)/);
+  return match ? `/images/catalog/${match[1]}.webp` : null;
+}
+
+/** Prefer the local mirror, then the same-origin proxy. Never return a third-party hotlink. */
+export function reliableImageUrl(src: string, width = 1600) {
+  return catalogMirror(src) || (isResizableRemote(src) ? `/api/img?src=${encodeURIComponent(sizedUrl(src, width))}` : src);
 }

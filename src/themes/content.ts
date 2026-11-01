@@ -114,8 +114,8 @@ export const FAQ_ITEMS = [
     a: 'Yes. Our 18k gold vermeil is a thick layer of gold over solid 925 sterling silver, made to be worn daily. Avoid perfume, chlorine and showering to keep the shine for years.',
   },
   {
-    q: 'Do you offer Cash on Delivery?',
-    a: 'Absolutely — Cash on Delivery is available nationwide. You can also pay by bank transfer, JazzCash or Easypaisa.',
+    q: 'How can I pay?',
+    a: 'Pay by EasyPaisa, JazzCash or bank transfer. Upload your payment receipt at checkout — the order is confirmed only after we verify it. Cash on Delivery is not available at the moment.',
   },
   {
     q: 'How long does delivery take?',

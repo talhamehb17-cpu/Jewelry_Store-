@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/utils';
 import { PrintButton } from '@/components/admin/print-button';
 
 export const metadata = { title: 'Invoice' };
-const PM: Record<string, string> = { cod: 'Cash on Delivery', bank: 'Bank transfer', wallet: 'JazzCash / Easypaisa', card: 'Card (Stripe)' };
+const PM: Record<string, string> = { cod: 'Cash on Delivery', bank: 'Bank transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card (Stripe)' };
 
 export default async function Invoice({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

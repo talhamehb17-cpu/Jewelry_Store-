@@ -81,7 +81,7 @@ export function CartPageView() {
               </dl>
             )}
             <Link href="/checkout" className="btn btn-primary btn-block !py-4"><Lock size={14} /> Secure checkout</Link>
-            <p className="text-center text-[0.75rem] text-muted">Cash on Delivery · Bank transfer · JazzCash · Easypaisa</p>
+            <p className="text-center text-[0.75rem] text-muted">EasyPaisa · JazzCash · Bank transfer</p>
           </div>
         </aside>
       </div>

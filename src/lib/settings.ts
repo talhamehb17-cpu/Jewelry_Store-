@@ -12,7 +12,9 @@ export const getSettings = cache(async (): Promise<StoreSettings> => {
   const db = await getDb();
   const rows = await db.select().from(settingsTable);
   const stored: Record<string, unknown> = {};
-  for (const r of rows) stored[r.key] = r.value;
+  for (const r of rows) {
+    if (r.key in DEFAULT_SETTINGS) stored[r.key] = r.value;
+  }
   const merged = deepMerge(structuredClone(DEFAULT_SETTINGS), stored) as StoreSettings;
   return merged;
 });

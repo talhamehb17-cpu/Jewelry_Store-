@@ -55,16 +55,16 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
           {order.paymentMethod === 'bank' && !paid && (
             <div className="flex gap-3 text-[0.92rem]"><Landmark size={20} strokeWidth={1.25} className="shrink-0 text-accent" />
               <div>
-                <p>Please transfer <strong>{formatMoney(order.total)}</strong> to <strong>{p.bank.accountTitle}</strong>, {p.bank.bankName}, IBAN <span className="font-mono">{p.bank.iban}</span>, using <strong>{order.number}</strong> as the reference.</p>
-                <p className="mt-2 text-muted">{order.paymentRef ? `Reference received: ${order.paymentRef}. ` : ''}Your order will be confirmed once payment is verified.</p>
+                <p>We received your bank-transfer receipt for <strong>{formatMoney(order.total)}</strong> to <strong>{p.bank.accountTitle}</strong>, {p.bank.bankName}.</p>
+                <p className="mt-2 text-muted">{order.paymentRef ? `Reference received: ${order.paymentRef}. ` : ''}Your receipt is under review and is not publicly visible. The order is confirmed only after the payment is verified.</p>
               </div>
             </div>
           )}
-          {order.paymentMethod === 'wallet' && !paid && (
+          {(order.paymentMethod === 'easypaisa' || order.paymentMethod === 'jazzcash' || order.paymentMethod === 'wallet') && !paid && (
             <div className="flex gap-3 text-[0.92rem]"><Smartphone size={20} strokeWidth={1.25} className="shrink-0 text-accent" />
               <div>
-                <p>Send <strong>{formatMoney(order.total)}</strong> via JazzCash ({p.wallet.jazzcash}) or Easypaisa ({p.wallet.easypaisa}) to <strong>{p.wallet.accountTitle}</strong>.</p>
-                <p className="mt-2 text-muted">{order.paymentRef ? `Transaction ID received: ${order.paymentRef}. ` : 'Reply to your confirmation email or WhatsApp us with your transaction ID. '}We’ll confirm as soon as it’s verified.</p>
+                <p>We received your {order.paymentMethod === 'jazzcash' ? 'JazzCash' : order.paymentMethod === 'easypaisa' ? 'EasyPaisa' : 'wallet'} receipt. The order total was <strong>{formatMoney(order.total)}</strong>{order.paymentRef ? `, reference ${order.paymentRef}` : ''}.</p>
+                <p className="mt-2 text-muted">Payment is under review. Uploading the receipt does not confirm it — we’ll email you when it is verified.</p>
               </div>
             </div>
           )}

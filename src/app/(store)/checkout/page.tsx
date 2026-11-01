@@ -53,6 +53,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: SP 
       payments={{
         cod: { enabled: p.cod.enabled, instructions: p.cod.instructions, maxOrder: p.cod.maxOrder },
         bank: { ...p.bank },
+        easypaisa: { ...p.easypaisa },
+        jazzcash: { ...p.jazzcash },
         wallet: { ...p.wallet },
         card: { enabled: p.card.enabled && stripeConfigured() },
       }}

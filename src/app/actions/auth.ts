@@ -1,6 +1,7 @@
 'use server';
 
 import crypto from 'node:crypto';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { refresh } from 'next/cache';
 import { z } from 'zod';
@@ -11,6 +12,16 @@ import { createSession, destroySession, getCurrentUser, hashPassword, isStaff, p
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { resetEmail, sendEmail } from '@/lib/email';
 import { PROVINCES, siteUrl } from '@/lib/utils';
+import { isThemeId } from '@/themes/engine';
+import { VISITOR_THEME_COOKIE } from '@/lib/theme-server';
+
+/** A guest look follows the person into their account, without touching anyone else's preference or the store default. */
+async function adoptGuestTheme(userId: number) {
+  const pick = (await cookies()).get(VISITOR_THEME_COOKIE)?.value;
+  if (!isThemeId(pick)) return;
+  const db = await getDb();
+  await db.update(users).set({ themePreference: pick }).where(and(eq(users.id, userId), isNull(users.themePreference)));
+}
 
 export type FormState = { ok?: boolean; message?: string; fieldErrors?: Record<string, string> } | null;
 
@@ -46,6 +57,7 @@ export async function loginAction(_: FormState, form: FormData): Promise<FormSta
   }
   if (u.status !== 'active') return { message: 'This account has been disabled. Please contact client care.' };
   await db.update(users).set({ failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() }).where(eq(users.id, u.id));
+  await adoptGuestTheme(u.id);
   await createSession(u);
   const adminArea = form.get('area') === 'admin';
   if (adminArea && !isStaff(u)) {
@@ -78,6 +90,7 @@ export async function registerAction(_: FormState, form: FormData): Promise<Form
     .returning();
   // Attach previous guest orders placed with this email.
   await db.update(orders).set({ userId: u!.id }).where(and(eq(sql`lower(${orders.email})`, parsed.data.email), isNull(orders.userId)));
+  await adoptGuestTheme(u!.id);
   await createSession(u!);
   redirect(safeNext(form.get('next'), '/account'));
 }

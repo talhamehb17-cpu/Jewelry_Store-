@@ -3,10 +3,10 @@
 import { headers } from 'next/headers';
 import { after } from 'next/server';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { addresses, orderItems } from '@/db/schema';
-import { createOrder, OrderError, orderAccessToken } from '@/lib/orders';
+import { addresses, orderItems, paymentProofs } from '@/db/schema';
+import { changeOrderStatus, createOrder, OrderError, orderAccessToken } from '@/lib/orders';
 import { buildQuote } from '@/lib/pricing';
 import { getCurrentUser } from '@/lib/auth';
 import { getSettings, stripeConfigured } from '@/lib/settings';
@@ -14,6 +14,7 @@ import { createCheckoutSession, cancelUnpaidCardOrder } from '@/lib/stripe';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { orderConfirmationEmail, sendEmail } from '@/lib/email';
 import { formatMoney } from '@/lib/money';
+import { isManualMethod } from '@/lib/payments';
 import { PROVINCES, siteUrl } from '@/lib/utils';
 
 const phone = z
@@ -33,8 +34,9 @@ const schema = z.object({
   province: z.string().refine((v) => (PROVINCES as readonly string[]).includes(v), 'Select a province.'),
   postalCode: z.string().trim().max(20).optional().default(''),
   shippingMethod: z.string().max(40),
-  paymentMethod: z.enum(['cod', 'bank', 'wallet', 'card']),
+  paymentMethod: z.enum(['cod', 'bank', 'wallet', 'easypaisa', 'jazzcash', 'card']),
   paymentRef: z.string().trim().max(120).optional().default(''),
+  proofToken: z.string().trim().max(80).optional().default(''),
   discountCode: z.string().trim().max(60).optional().default(''),
   note: z.string().trim().max(1000).optional().default(''),
   saveAddress: z.boolean().optional().default(false),
@@ -65,13 +67,23 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   const pm = settings.payments;
   if (d.paymentMethod === 'cod' && !pm.cod.enabled) return { ok: false, error: 'Cash on Delivery is currently unavailable.' };
   if (d.paymentMethod === 'bank' && !pm.bank.enabled) return { ok: false, error: 'Bank transfer is currently unavailable.' };
-  if (d.paymentMethod === 'wallet' && !pm.wallet.enabled) return { ok: false, error: 'Mobile wallet payments are currently unavailable.' };
+  if (d.paymentMethod === 'easypaisa' && !pm.easypaisa?.enabled) return { ok: false, error: 'EasyPaisa is currently unavailable.' };
+  if (d.paymentMethod === 'jazzcash' && !pm.jazzcash?.enabled) return { ok: false, error: 'JazzCash is currently unavailable.' };
+  if (d.paymentMethod === 'wallet') return { ok: false, error: 'Choose EasyPaisa or JazzCash.' };
   if (d.paymentMethod === 'card' && !(pm.card.enabled && stripeConfigured())) return { ok: false, error: 'Card payments are not available yet. Please choose another payment method.' };
+  if (isManualMethod(d.paymentMethod) && !d.proofToken) return { ok: false, error: 'Upload a payment receipt before placing the order.' };
 
   const user = await getCurrentUser();
+  const db = await getDb();
+  let proofId: number | null = null;
+  if (isManualMethod(d.paymentMethod)) {
+    const [proof] = await db.select({ id: paymentProofs.id, orderId: paymentProofs.orderId }).from(paymentProofs).where(eq(paymentProofs.token, d.proofToken)).limit(1);
+    if (!proof || proof.orderId) return { ok: false, error: 'Upload a payment receipt before placing the order.' };
+    proofId = proof.id;
+  }
   const quote = await buildQuote({ lines: d.lines, discountCode: d.discountCode || null, shippingMethod: d.shippingMethod, paymentMethod: d.paymentMethod, email: d.email, userId: user?.id });
   if (d.paymentMethod === 'cod' && pm.cod.maxOrder && quote.total > pm.cod.maxOrder) {
-    return { ok: false, error: `Cash on Delivery is available for orders up to ${formatMoney(pm.cod.maxOrder)}. Please choose bank transfer or a wallet.` };
+    return { ok: false, error: `Cash on Delivery is available for orders up to ${formatMoney(pm.cod.maxOrder)}. Please choose EasyPaisa, JazzCash or bank transfer.` };
   }
 
   let order;
@@ -83,7 +95,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       address: { firstName: d.firstName, lastName: d.lastName, phone: d.phone, line1: d.line1, line2: d.line2 || null, city: d.city, province: d.province, postalCode: d.postalCode || null, country: 'Pakistan' },
       shippingMethod: d.shippingMethod,
       paymentMethod: d.paymentMethod,
-      paymentRef: d.paymentMethod === 'bank' || d.paymentMethod === 'wallet' ? d.paymentRef || null : null,
+      paymentRef: isManualMethod(d.paymentMethod) ? d.paymentRef || null : null,
       discountCode: d.discountCode || null,
       customerNote: d.note || null,
       userId: user?.id ?? null,
@@ -94,7 +106,14 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: 'We could not place your order. Please try again.' };
   }
 
-  const db = await getDb();
+  if (proofId) {
+    const linked = await db.update(paymentProofs).set({ orderId: order.id }).where(and(eq(paymentProofs.id, proofId), sql`order_id is null`)).returning({ id: paymentProofs.id });
+    if (!linked.length) {
+      await changeOrderStatus(order.id, 'cancelled', 'system', { note: 'Payment receipt could not be attached' }).catch(() => undefined);
+      return { ok: false, error: 'That receipt was already used. Please upload it again.' };
+    }
+  }
+
   if (user && d.saveAddress) {
     const existing = await db.select({ id: addresses.id }).from(addresses).where(and(eq(addresses.userId, user.id), eq(addresses.line1, d.line1), eq(addresses.city, d.city))).limit(1);
     if (!existing.length) {

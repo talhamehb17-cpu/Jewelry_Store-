@@ -5,7 +5,7 @@ import { AnnouncementBar } from '@/components/store/announcement';
 import { CartDrawer } from '@/components/store/cart-drawer';
 import { SearchOverlay } from '@/components/store/search-overlay';
 import { QuickView } from '@/components/store/quick-view';
-import { LivePreviewBridge, PreviewBanner, RevealObserver, ThemeSwitcher, Toaster } from '@/components/store/chrome';
+import { LivePreviewBridge, PreviewBanner, RevealObserver, ThemeSwitcher, ThemeSync, Toaster } from '@/components/store/chrome';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings, type NavItem } from '@/lib/settings';
 import { getCurrentUser, isStaff } from '@/lib/auth';
@@ -45,6 +45,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <Toaster />
         <RevealObserver />
         <LivePreviewBridge />
+        <ThemeSync loggedIn={!!user} />
         {ctx.visitorSwitcher && <ThemeSwitcher themes={chips} current={ctx.themeId} activeId={ctx.activeThemeId} />}
       </div>
     </StoreProvider>

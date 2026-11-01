@@ -11,12 +11,16 @@ import { placeOrder } from '@/app/actions/checkout';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 
+type AccountMethod = { enabled: boolean; accountName: string; accountNumber: string; instructions: string };
 type Payments = {
   cod: { enabled: boolean; instructions: string; maxOrder: number };
   bank: { enabled: boolean; bankName: string; accountTitle: string; accountNumber: string; iban: string; instructions: string };
+  easypaisa: AccountMethod;
+  jazzcash: AccountMethod;
   wallet: { enabled: boolean; jazzcash: string; easypaisa: string; accountTitle: string; instructions: string };
   card: { enabled: boolean };
 };
+type PayId = 'cod' | 'bank' | 'easypaisa' | 'jazzcash' | 'card';
 
 type Prefill = { email: string; phone: string; firstName: string; lastName: string; line1: string; line2: string; city: string; province: string; postalCode: string };
 
@@ -32,14 +36,56 @@ function Field({ label, error, children, className }: { label: string; error?: s
   );
 }
 
+function ProofUpload({ token, onToken }: { token: string | null; onToken: (token: string | null) => void }) {
+  const [name, setName] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  return (
+    <div>
+      <label className="label">Payment receipt</label>
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        className="field file:mr-3 file:border-0 file:bg-transparent file:text-[0.82rem]"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          onToken(null);
+          setName('');
+          if (!file) return;
+          if (file.size > 4 * 1024 * 1024) {
+            setErr('The receipt must be under 4 MB.');
+            return;
+          }
+          setBusy(true);
+          setErr('');
+          const body = new FormData();
+          body.set('file', file);
+          const res = await fetch('/api/checkout/proof', { method: 'POST', body });
+          const data = (await res.json().catch(() => ({}))) as { token?: string; error?: string };
+          setBusy(false);
+          if (!res.ok || !data.token) {
+            setErr(data.error || 'Could not upload the receipt.');
+            return;
+          }
+          setName(file.name);
+          onToken(data.token);
+        }}
+      />
+      <p className="mt-1 text-[0.75rem] text-muted">{busy ? 'Uploading…' : token ? `Receipt attached${name ? `: ${name}` : ''}. It is visible only to you and the store team.` : 'Required. JPG, PNG, WEBP or PDF, up to 4 MB.'}</p>
+      {err && <p className="mt-1 text-[0.78rem] text-sale" role="alert">{err}</p>}
+    </div>
+  );
+}
+
 export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelledNotice }: { prefill: Prefill; provinces: readonly string[]; payments: Payments; loggedIn: boolean; cancelledNotice?: string | null }) {
   const router = useRouter();
   const { cart, cartReady, clearCart } = useStore();
   const [f, setF] = useState<Prefill>(prefill);
   const [shippingMethod, setShippingMethod] = useState('standard');
-  const firstPm = payments.cod.enabled ? 'cod' : payments.bank.enabled ? 'bank' : payments.wallet.enabled ? 'wallet' : 'card';
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank' | 'wallet' | 'card'>(firstPm as 'cod');
+  const firstPm: PayId = payments.easypaisa.enabled ? 'easypaisa' : payments.jazzcash.enabled ? 'jazzcash' : payments.bank.enabled ? 'bank' : payments.cod.enabled ? 'cod' : 'card';
+  const [paymentMethod, setPaymentMethod] = useState<PayId>(firstPm);
   const [paymentRef, setPaymentRef] = useState('');
+  const [proofToken, setProofToken] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState('');
   const [code, setCode] = useState<string | null>(null);
   const [note, setNote] = useState('');
@@ -72,12 +118,17 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
     e.preventDefault();
     setErrors({});
     setFormError('');
+    if ((paymentMethod === 'bank' || paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && !proofToken) {
+      setFormError('Upload a payment receipt before placing the order.');
+      return;
+    }
     start(async () => {
       const res = await placeOrder({
         ...f,
         shippingMethod,
         paymentMethod,
         paymentRef,
+        proofToken: proofToken ?? '',
         discountCode: code ?? '',
         note,
         saveAddress: loggedIn && saveAddress,
@@ -99,11 +150,12 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
   };
 
   const pmOptions = [
+    payments.easypaisa.enabled && { id: 'easypaisa' as const, label: 'EasyPaisa', sub: 'Transfer, then upload your receipt', icon: Smartphone },
+    payments.jazzcash.enabled && { id: 'jazzcash' as const, label: 'JazzCash', sub: 'Transfer, then upload your receipt', icon: Smartphone },
+    payments.bank.enabled && { id: 'bank' as const, label: 'Bank Transfer', sub: 'Transfer, then upload your receipt', icon: Landmark },
     payments.cod.enabled && { id: 'cod' as const, label: 'Cash on Delivery', sub: 'Pay in cash when your order arrives', icon: Banknote },
-    payments.bank.enabled && { id: 'bank' as const, label: 'Bank Transfer', sub: 'Direct transfer — confirmed after verification', icon: Landmark },
-    payments.wallet.enabled && { id: 'wallet' as const, label: 'JazzCash / Easypaisa', sub: 'Mobile wallet transfer', icon: Smartphone },
     payments.card.enabled && { id: 'card' as const, label: 'Debit / Credit Card', sub: 'Secure checkout powered by Stripe', icon: CreditCard },
-  ].filter(Boolean) as { id: 'cod' | 'bank' | 'wallet' | 'card'; label: string; sub: string; icon: typeof Banknote }[];
+  ].filter(Boolean) as { id: PayId; label: string; sub: string; icon: typeof Banknote }[];
 
   const summary = (
     <div className="space-y-5">
@@ -238,7 +290,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
                 </label>
                 {paymentMethod === o.id && (
                   <div className="border-t border-line bg-surface/40 px-5 py-4 text-[0.85rem] leading-relaxed">
-                    {o.id === 'cod' && <p className="text-muted">{payments.cod.instructions} Available on orders up to {formatMoney(payments.cod.maxOrder)}.</p>}
+                    {o.id === 'cod' && <p className="text-muted">{payments.cod.instructions}</p>}
                     {o.id === 'bank' && (
                       <div className="space-y-3">
                         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
@@ -248,18 +300,21 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
                           <dt className="text-muted">IBAN</dt><dd className="font-mono text-[0.82rem] break-all">{payments.bank.iban}</dd>
                         </dl>
                         <p className="text-muted">{payments.bank.instructions}</p>
-                        <Field label="Transaction reference (optional)"><input value={paymentRef} onChange={(e) => setPaymentRef(e.target.value)} placeholder="e.g. IBFT 123456789" className="field" /></Field>
                       </div>
                     )}
-                    {o.id === 'wallet' && (
+                    {(o.id === 'easypaisa' || o.id === 'jazzcash') && (
                       <div className="space-y-3">
                         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-                          <dt className="text-muted">JazzCash</dt><dd className="font-mono text-[0.82rem]">{payments.wallet.jazzcash}</dd>
-                          <dt className="text-muted">Easypaisa</dt><dd className="font-mono text-[0.82rem]">{payments.wallet.easypaisa}</dd>
-                          <dt className="text-muted">Account title</dt><dd>{payments.wallet.accountTitle}</dd>
+                          <dt className="text-muted">Account name</dt><dd>{payments[o.id].accountName}</dd>
+                          <dt className="text-muted">Account number</dt><dd className="font-mono text-[0.82rem]">{payments[o.id].accountNumber}</dd>
                         </dl>
-                        <p className="text-muted">{payments.wallet.instructions}</p>
-                        <Field label="Transaction ID (TID)"><input value={paymentRef} onChange={(e) => setPaymentRef(e.target.value)} placeholder="e.g. 0123456789" className="field" /></Field>
+                        <p className="text-muted">{payments[o.id].instructions}</p>
+                      </div>
+                    )}
+                    {(o.id === 'bank' || o.id === 'easypaisa' || o.id === 'jazzcash') && (
+                      <div className="mt-4 space-y-3">
+                        <Field label="Transaction reference (optional)"><input value={paymentRef} onChange={(e) => setPaymentRef(e.target.value)} placeholder="TID or transfer reference" className="field" /></Field>
+                        <ProofUpload token={proofToken} onToken={setProofToken} />
                       </div>
                     )}
                     {o.id === 'card' && <p className="text-muted">You’ll be redirected to Stripe’s secure payment page to complete your purchase. Your order is confirmed only after Stripe verifies the payment.</p>}
@@ -274,7 +329,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
           <Field label="Order note (optional)"><textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Gift message, engraving text or delivery instructions" className="field" /></Field>
         </section>
 
-        <button type="submit" disabled={pending || !quote || loading} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
+        <button type="submit" disabled={pending || !quote || loading || ((paymentMethod === 'bank' || paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && !proofToken)} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
           {pending ? 'Placing your order…' : paymentMethod === 'card' ? `Continue to secure payment · ${quote ? formatMoney(quote.total) : ''}` : `Place order · ${quote ? formatMoney(quote.total) : ''}`}
         </button>
         <p className="flex items-center justify-center gap-2 text-[0.75rem] text-muted"><ShieldCheck size={14} /> By placing your order you agree to our <Link href="/policies/terms-of-service" className="underline">Terms</Link> and <Link href="/policies/privacy-policy" className="underline">Privacy Policy</Link>.</p>

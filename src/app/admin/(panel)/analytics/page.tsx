@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 export const metadata = { title: 'Analytics' };
 const RANGES = [7, 30, 90, 365];
-const PM: Record<string, string> = { cod: 'Cash on Delivery', bank: 'Bank transfer', wallet: 'JazzCash / Easypaisa', card: 'Card' };
+const PM: Record<string, string> = { cod: 'Cash on Delivery', bank: 'Bank transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card' };
 
 export default async function Analytics({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const sp = await searchParams;

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Package, MapPin, UserRound, Heart, LogOut } from 'lucide-react';
+import { LayoutGrid, Package, MapPin, UserRound, Heart, LogOut, Palette } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,7 @@ const LINKS = [
   { href: '/account/orders', label: 'Orders', icon: Package },
   { href: '/account/addresses', label: 'Addresses', icon: MapPin },
   { href: '/account/profile', label: 'Profile & security', icon: UserRound },
+  { href: '/account/appearance', label: 'Appearance', icon: Palette },
   { href: '/wishlist', label: 'Wishlist', icon: Heart },
 ];
 

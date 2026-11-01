@@ -43,6 +43,7 @@ export const users = pgTable(
     lockedUntil: ts('locked_until'),
     acceptsMarketing: boolean('accepts_marketing').notNull().default(false),
     notes: text('notes'),
+    themePreference: varchar('theme_preference', { length: 60 }),
     lastLoginAt: ts('last_login_at'),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
@@ -323,6 +324,21 @@ export const orders = pgTable(
     index('orders_status_idx').on(t.status),
     index('orders_created_idx').on(t.createdAt),
   ],
+);
+
+export const paymentProofs = pgTable(
+  'payment_proofs',
+  {
+    id: serial('id').primaryKey(),
+    token: varchar('token', { length: 64 }).notNull(),
+    orderId: integer('order_id'),
+    filename: varchar('filename', { length: 255 }).notNull(),
+    mime: varchar('mime', { length: 80 }).notNull(),
+    size: integer('size').notNull(),
+    data: bytea('data').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('payment_proofs_token_idx').on(t.token), index('payment_proofs_order_idx').on(t.orderId)],
 );
 
 export const orderItems = pgTable(

@@ -33,6 +33,18 @@ async function chunked<T>(rows: T[], size: number, fn: (part: T[]) => Promise<un
   for (let i = 0; i < rows.length; i += size) await fn(rows.slice(i, i + size));
 }
 
+async function seedOperator(db: DB, log: (m: string) => void, isProd: boolean) {
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL || 'admin@maisonaurelle.pk').toLowerCase();
+  let adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminPassword) {
+    adminPassword = isProd ? crypto.randomBytes(9).toString('base64url') : 'Aurelle#Dev2026';
+    log(`SEED_ADMIN_PASSWORD not set — generated admin password: ${adminPassword}`);
+  }
+  const adminHash = await bcrypt.hash(adminPassword, 10);
+  await db.insert(s.users).values({ email: adminEmail, passwordHash: adminHash, firstName: 'Aurelle', lastName: 'Admin', role: 'admin' }).onConflictDoNothing();
+  log(`administrator ready: ${adminEmail}`);
+}
+
 export async function seedDatabase(db: DB, log: (m: string) => void = () => {}) {
   const rand = rng(20261101);
   const pick = <T,>(arr: readonly T[]) => arr[Math.floor(rand() * arr.length)]!;
@@ -76,6 +88,13 @@ export async function seedDatabase(db: DB, log: (m: string) => void = () => {}) 
     )
     .returning();
   const colId = Object.fromEntries(cols.map((c) => [c.slug, c.id]));
+
+  if (process.env.SEED_DEMO !== '1') {
+    await seedOperator(db, log, isProd);
+    await db.insert(s.pages).values(SEED_PAGES.map((p) => ({ ...p, status: 'published', system: p.slug !== 'jewelry-care', seoTitle: p.title }))).onConflictDoNothing();
+    log('demo catalog skipped — set SEED_DEMO=1 only if sample products are required');
+    return;
+  }
 
   /* -------------------------- products ---------------------------- */
   type VariantRow = typeof s.productVariants.$inferSelect;

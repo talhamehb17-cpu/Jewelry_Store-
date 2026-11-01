@@ -5,7 +5,7 @@ import { refresh } from 'next/cache';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { contactMessages, newsletterSubscribers, orderItems, orders, reviews } from '@/db/schema';
+import { contactMessages, newsletterSubscribers, orderItems, orders, reviews, users } from '@/db/schema';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { isThemeId } from '@/themes/engine';
 import { VISITOR_THEME_COOKIE } from '@/lib/theme-server';
@@ -23,21 +23,24 @@ export async function subscribeNewsletter(_: ActionResult | null, form: FormData
   const source = String(form.get('source') || 'footer').slice(0, 60);
   const db = await getDb();
   await db.insert(newsletterSubscribers).values({ email: parsed.data, source }).onConflictDoNothing();
-  return { ok: true, message: 'Welcome to the Aurelle Circle! Use code WELCOME10 for 10% off your first order.' };
+  return { ok: true, message: 'Welcome to the Aurelle Circle. We’ll write when something beautiful arrives.' };
 }
 
 export async function setVisitorTheme(themeId: string | null) {
+  const value = themeId && isThemeId(themeId) ? themeId : null;
   const jar = await cookies();
-  if (!themeId) jar.set(VISITOR_THEME_COOKIE, '', { path: '/', maxAge: 0 });
-  else if (isThemeId(themeId)) {
-    const crossSite = process.env.COOKIE_CROSS_SITE === '1';
-    jar.set(VISITOR_THEME_COOKIE, themeId, {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: crossSite ? 'none' : 'lax',
-      secure: crossSite || process.env.NODE_ENV === 'production',
-      partitioned: crossSite || undefined,
-    });
+  const crossSite = process.env.COOKIE_CROSS_SITE === '1';
+  jar.set(VISITOR_THEME_COOKIE, value ?? '', {
+    path: '/',
+    maxAge: value ? 60 * 60 * 24 * 365 : 0,
+    sameSite: crossSite ? 'none' : 'lax',
+    secure: crossSite || process.env.NODE_ENV === 'production',
+    partitioned: crossSite || undefined,
+  });
+  const user = await getCurrentUser();
+  if (user) {
+    const db = await getDb();
+    await db.update(users).set({ themePreference: value }).where(eq(users.id, user.id));
   }
   refresh();
 }

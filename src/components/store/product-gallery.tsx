@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Expand, Play, X } from 'lucide-react';
 import { Img } from '@/components/ui/img';
+import { isResizableRemote, reliableImageUrl, sizedUrl } from '@/lib/images';
 import { useBodyLock } from './providers';
 import { cn } from '@/lib/utils';
 import type { PdpVariant } from '@/themes/types';
@@ -86,7 +87,7 @@ function Lightbox({ media, index, onClose }: { media: Media[]; index: number; on
           <video src={m.url} poster={m.poster} controls autoPlay className="max-h-full max-w-full" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={m.url.startsWith('http') ? `${m.url.split('?')[0]}?auto=format&w=2000&q=85` : m.url} alt={m.alt} className={cn('select-none', zoomed ? 'max-w-none' : 'max-h-[100svh] max-w-full object-contain')} style={zoomed ? { width: '200%' } : undefined} />
+          <img src={reliableImageUrl(m.url, 1800)} alt={m.alt} className={cn('select-none', zoomed ? 'max-w-none' : 'max-h-[100svh] max-w-full object-contain')} style={zoomed ? { width: '200%' } : undefined} onError={(e) => { const img = e.currentTarget; if (!img.dataset.tried && isResizableRemote(m.url)) { img.dataset.tried = '1'; img.src = `/api/img?src=${encodeURIComponent(sizedUrl(m.url, 1800))}`; return; } img.src = '/images/placeholder.svg'; }} />
         )}
       </div>
       {media.length > 1 && (
@@ -157,7 +158,7 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
       desktop = (
         <div className="hidden grid-cols-2 gap-3 md:grid">
           {media.map((m, k) => (
-            <div key={k} className={cn('relative overflow-hidden bg-surface rounded-theme', k === 0 ? 'col-span-2 aspect-[6/5]' : 'aspect-square', k === 2 && 'translate-y-10')}>
+            <div key={k} className={cn('relative overflow-hidden bg-surface rounded-theme', k === 0 ? 'col-span-2 aspect-[6/5]' : 'aspect-square')}>
               <ZoomImage m={m} priority={k === 0} onOpen={() => open(k)} zoom={k === 0} />
             </div>
           ))}

@@ -84,12 +84,19 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
       </Card>
 
       <Card title="Payments" className="xl:col-span-2" actions={<div className="flex items-center gap-3">{s3.bar}<SaveBtn pending={s3.pending} onClick={() => s3.save('payments', payments)} /></div>}>
-        <div className="grid gap-6 lg:grid-cols-4">
+        <p className="mb-4 text-[0.8rem] text-muted">EasyPaisa, JazzCash and bank transfer each require a receipt before the customer can place an order. Uploading a receipt does not mark the payment as verified.</p>
+        <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-3">
-            <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.cod.enabled} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, enabled: e.target.checked } })} /> Cash on Delivery</label>
-            <Field label="COD fee (Rs)"><input value={rupees(payments.cod.fee)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, fee: minor(e.target.value) } })} className="field" /></Field>
-            <Field label="Max COD order (Rs)"><input value={rupees(payments.cod.maxOrder)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, maxOrder: minor(e.target.value) } })} className="field" /></Field>
-            <Field label="Instructions"><textarea value={payments.cod.instructions} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, instructions: e.target.value } })} rows={3} className="field" /></Field>
+            <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.easypaisa.enabled} onChange={(e) => setPayments({ ...payments, easypaisa: { ...payments.easypaisa, enabled: e.target.checked } })} /> EasyPaisa</label>
+            <Field label="Account name"><input value={payments.easypaisa.accountName} onChange={(e) => setPayments({ ...payments, easypaisa: { ...payments.easypaisa, accountName: e.target.value } })} className="field" /></Field>
+            <Field label="Account number"><input value={payments.easypaisa.accountNumber} onChange={(e) => setPayments({ ...payments, easypaisa: { ...payments.easypaisa, accountNumber: e.target.value } })} className="field" /></Field>
+            <Field label="Instructions"><textarea value={payments.easypaisa.instructions} onChange={(e) => setPayments({ ...payments, easypaisa: { ...payments.easypaisa, instructions: e.target.value } })} rows={3} className="field" /></Field>
+          </div>
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.jazzcash.enabled} onChange={(e) => setPayments({ ...payments, jazzcash: { ...payments.jazzcash, enabled: e.target.checked } })} /> JazzCash</label>
+            <Field label="Account name"><input value={payments.jazzcash.accountName} onChange={(e) => setPayments({ ...payments, jazzcash: { ...payments.jazzcash, accountName: e.target.value } })} className="field" /></Field>
+            <Field label="Account number"><input value={payments.jazzcash.accountNumber} onChange={(e) => setPayments({ ...payments, jazzcash: { ...payments.jazzcash, accountNumber: e.target.value } })} className="field" /></Field>
+            <Field label="Instructions"><textarea value={payments.jazzcash.instructions} onChange={(e) => setPayments({ ...payments, jazzcash: { ...payments.jazzcash, instructions: e.target.value } })} rows={3} className="field" /></Field>
           </div>
           <div className="space-y-3">
             <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.bank.enabled} onChange={(e) => setPayments({ ...payments, bank: { ...payments.bank, enabled: e.target.checked } })} /> Bank transfer</label>
@@ -97,13 +104,18 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
             <Field label="Account title"><input value={payments.bank.accountTitle} onChange={(e) => setPayments({ ...payments, bank: { ...payments.bank, accountTitle: e.target.value } })} className="field" /></Field>
             <Field label="Account number"><input value={payments.bank.accountNumber} onChange={(e) => setPayments({ ...payments, bank: { ...payments.bank, accountNumber: e.target.value } })} className="field" /></Field>
             <Field label="IBAN"><input value={payments.bank.iban} onChange={(e) => setPayments({ ...payments, bank: { ...payments.bank, iban: e.target.value } })} className="field" /></Field>
+            <Field label="Instructions"><textarea value={payments.bank.instructions} onChange={(e) => setPayments({ ...payments, bank: { ...payments.bank, instructions: e.target.value } })} rows={2} className="field" /></Field>
           </div>
-          <div className="space-y-3">
-            <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.wallet.enabled} onChange={(e) => setPayments({ ...payments, wallet: { ...payments.wallet, enabled: e.target.checked } })} /> JazzCash / Easypaisa</label>
-            <Field label="JazzCash number"><input value={payments.wallet.jazzcash} onChange={(e) => setPayments({ ...payments, wallet: { ...payments.wallet, jazzcash: e.target.value } })} className="field" /></Field>
-            <Field label="Easypaisa number"><input value={payments.wallet.easypaisa} onChange={(e) => setPayments({ ...payments, wallet: { ...payments.wallet, easypaisa: e.target.value } })} className="field" /></Field>
-            <Field label="Account title"><input value={payments.wallet.accountTitle} onChange={(e) => setPayments({ ...payments, wallet: { ...payments.wallet, accountTitle: e.target.value } })} className="field" /></Field>
+        </div>
+        <details className="mt-5 rounded-lg border border-line p-4">
+          <summary className="cursor-pointer text-[0.85rem] font-medium">Cash on Delivery — currently {payments.cod.enabled ? 'enabled' : 'disabled'}</summary>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <label className="flex items-center gap-2 text-[0.85rem] sm:col-span-3"><input type="checkbox" className="checkbox" checked={payments.cod.enabled} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, enabled: e.target.checked } })} /> Enable Cash on Delivery later</label>
+            <Field label="COD fee (Rs)"><input value={rupees(payments.cod.fee)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, fee: minor(e.target.value) } })} className="field" /></Field>
+            <Field label="Max COD order (Rs)"><input value={rupees(payments.cod.maxOrder)} onChange={(e) => setPayments({ ...payments, cod: { ...payments.cod, maxOrder: minor(e.target.value) } })} className="field" /></Field>
           </div>
+        </details>
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <div className="space-y-3">
             <label className="flex items-center gap-2 font-medium"><input type="checkbox" className="checkbox" checked={payments.card.enabled} onChange={(e) => setPayments({ ...payments, card: { enabled: e.target.checked } })} /> Cards via Stripe</label>
             <p className={cn('flex items-center gap-2 rounded-md px-3 py-2 text-[0.78rem]', system.stripe ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900')}>
@@ -114,7 +126,7 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
             <p className="text-[0.72rem] text-muted">Events: checkout.session.completed, checkout.session.expired, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, charge.refunded.</p>
           </div>
         </div>
-        <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-[0.75rem] text-amber-900">The bank and wallet details shown are demo values — replace them with your real business accounts before accepting orders.</p>
+        <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-[0.75rem] text-amber-900">Replace the placeholder account numbers with your real business accounts before accepting orders. Receipts are stored privately and are not shown on the storefront.</p>
       </Card>
 
       <Card title="Main menu" actions={<div className="flex items-center gap-3">{s4.bar}<SaveBtn pending={s4.pending} onClick={() => s4.save('navigation', { main: main.map((m) => ({ label: m.label, href: m.href, ...(m.childrenText.trim() ? { children: linesToLinks(m.childrenText) } : {}) })), footer: footer.map((c) => ({ title: c.title, links: linesToLinks(c.text) })) })} /></div>}>
@@ -177,7 +189,7 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
           {system.claimUrl && (
             <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-[0.85rem] text-amber-950">
               <p className="font-semibold">Claim your database to keep your data</p>
-              <p className="mt-1">This store runs on a free, temporary Neon Postgres database{hoursLeft != null ? (hoursLeft > 0 ? ` that expires in about ${hoursLeft} hours` : ' whose free trial window has ended') : ''}. Claim it into your own Neon account (free) to keep it permanently, then copy the new connection string from the Neon console into Vercel → Settings → Environment Variables → <code>DATABASE_URL</code> and redeploy.</p>
+              <p className="mt-1">This store is using a temporary Neon Postgres database{hoursLeft != null ? (hoursLeft > 0 ? ` whose provider window ends in about ${hoursLeft} hours` : ' whose provider window has ended') : ''}. The application will not delete your data on a timer. Claim the database, or test and activate another PostgreSQL connection below. Also set <code>DATABASE_URL</code> in your host before that window ends.</p>
               <a href={system.claimUrl} target="_blank" rel="noreferrer" className="btn btn-primary mt-3"><ExternalLink size={14} /> Claim database on Neon</a>
             </div>
           )}

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Truck, CheckCircle2, XCircle, RotateCcw, Save, Loader2 } from 'lucide-react';
-import { markPaid, refundOrder, saveOrderNote, saveTracking, updateOrderStatus } from '@/app/actions/admin/orders';
+import { markPaid, refundOrder, rejectPayment, saveOrderNote, saveTracking, updateOrderStatus } from '@/app/actions/admin/orders';
 import { Card, Field } from './ui';
 import { formatMoney } from '@/lib/money';
 import { titleCase } from '@/lib/utils';
@@ -73,9 +73,10 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
             <p className="label">Record payment</p>
             <div className="flex flex-wrap gap-2">
               <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction / receipt reference" className="field max-w-xs" />
-              <button disabled={pending} onClick={() => run(() => markPaid(order.id, ref))} className="btn btn-primary"><CheckCircle2 size={14} /> Mark as paid</button>
+              <button disabled={pending} onClick={() => run(() => markPaid(order.id, ref))} className="btn btn-primary"><CheckCircle2 size={14} /> Verify payment</button>
+              <button disabled={pending} onClick={() => run(() => rejectPayment(order.id, ref))} className="btn btn-secondary">Reject payment</button>
             </div>
-            <p className="mt-2 text-[0.75rem] text-muted">{order.paymentMethod === 'cod' ? 'COD orders are marked paid automatically when delivered.' : 'Only confirm after verifying the funds have arrived.'}</p>
+            <p className="mt-2 text-[0.75rem] text-muted">Verify only after the funds and the receipt match. Rejecting does not delete the order.</p>
           </div>
         )}
 
