@@ -1,5 +1,6 @@
 import { IMG } from '@/lib/images';
 import { BRAND } from '@/lib/brand';
+import { LOOK } from '@/lib/look';
 import {
   BRAND_STORY,
   CATEGORY_TILES,
@@ -484,16 +485,16 @@ parisian.settings.header = { ...parisian.settings.header, ...LOGO };
 goldenGlamour.settings.header = { ...goldenGlamour.settings.header, ...LOGO };
 contemporary.settings.header = { ...contemporary.settings.header, ...LOGO, logoSize: 60 };
 
-softLuxury.sections = buildHome({ hero: 'campaign', categories: 'tiles', featured: 'grid', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards' });
-modernMinimal.sections = buildHome({ hero: 'split', heroImage: BRAND.jewelry, categories: 'list', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', editorialImage: BRAND.leaves, introImage: BRAND.tray });
-roseBoutique.sections = buildHome({ hero: 'arch', heroImage: BRAND.tray, categories: 'circles', featured: 'grid', arrivals: 'carousel', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: BRAND.bracelet, promoImage: BRAND.rings });
-darkLuxury.sections = buildHome({ hero: 'split', heroImage: BRAND.jewelry, categories: 'tiles', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'centered', reviews: 'letter', editorialImage: BRAND.rings, introImage: BRAND.bracelet });
-editorial.sections = buildHome({ hero: 'editorial', heroImage: BRAND.campaign, categories: 'framed', featured: 'asymmetric', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'letter', editorialImage: BRAND.leaves });
-oldMoney.sections = buildHome({ hero: 'classic', heroImage: BRAND.campaign, categories: 'framed', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'heritage', reviews: 'letter', editorialImage: BRAND.tray });
-scandinavian.sections = buildHome({ hero: 'minimal', heroImage: BRAND.jewelry, categories: 'grid', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', introImage: BRAND.leaves });
-parisian.sections = buildHome({ hero: 'split', heroImage: BRAND.tray, categories: 'circles', featured: 'carousel', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'slider', editorialImage: BRAND.rings });
-goldenGlamour.sections = buildHome({ hero: 'split', heroImage: BRAND.jewelry, categories: 'tiles', featured: 'grid', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards', promoImage: BRAND.rings, editorialImage: BRAND.bracelet });
-contemporary.sections = buildHome({ hero: 'mosaic', heroImage: BRAND.jewelry, categories: 'pills', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: BRAND.leaves, introImage: BRAND.tray });
+softLuxury.sections = buildHome({ hero: 'campaign', categories: 'tiles', featured: 'asymmetric', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards' });
+modernMinimal.sections = buildHome({ hero: 'split', heroImage: LOOK.worn, categories: 'list', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', editorialImage: IMG.celestine1, introImage: IMG.noor1 });
+roseBoutique.sections = buildHome({ hero: 'arch', heroImage: IMG.serenePearl, categories: 'circles', featured: 'grid', arrivals: 'carousel', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: IMG.raniaBridal, promoImage: IMG.heirloomPearl });
+darkLuxury.sections = buildHome({ hero: 'split', heroImage: LOOK.editorial, categories: 'tiles', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'centered', reviews: 'letter', editorialImage: IMG.aurora, introImage: IMG.zoyaChain });
+editorial.sections = buildHome({ hero: 'editorial', heroImage: LOOK.worn, categories: 'framed', featured: 'asymmetric', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'letter', editorialImage: LOOK.editorial });
+oldMoney.sections = buildHome({ hero: 'classic', heroImage: LOOK.hero, categories: 'framed', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'heritage', reviews: 'letter', editorialImage: IMG.elara1 });
+scandinavian.sections = buildHome({ hero: 'minimal', heroImage: IMG.amara1, categories: 'grid', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', introImage: LOOK.story });
+parisian.sections = buildHome({ hero: 'split', heroImage: IMG.celestine1, categories: 'circles', featured: 'carousel', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'slider', editorialImage: IMG.isabella1 });
+goldenGlamour.sections = buildHome({ hero: 'split', heroImage: LOOK.hero, categories: 'tiles', featured: 'grid', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards', promoImage: IMG.soleil1, editorialImage: LOOK.editorial });
+contemporary.sections = buildHome({ hero: 'mosaic', heroImage: LOOK.worn, categories: 'pills', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: IMG.crescent2, introImage: IMG.noor1 });
 
 export const THEMES: Record<ThemeId, ThemeDefinition> = {
   'soft-luxury': softLuxury,

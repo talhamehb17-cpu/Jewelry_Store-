@@ -2,6 +2,7 @@ import { SectionRenderer } from '@/components/sections/renderer';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings } from '@/lib/settings';
 import { BRAND } from '@/lib/brand';
+import { LOOK } from '@/lib/look';
 import { jsonLd, siteUrl } from '@/lib/utils';
 import { THEMES } from '@/themes/presets';
 import type { Metadata } from 'next';
@@ -19,7 +20,7 @@ export default async function HomePage() {
     name: settings.store.name,
     url: siteUrl(),
     logo: `${siteUrl()}${BRAND.logo}`,
-    image: `${siteUrl()}${BRAND.campaign}`,
+    image: `${siteUrl()}${LOOK.hero}`,
     telephone: settings.store.phone,
     email: settings.store.email,
     address: { '@type': 'PostalAddress', streetAddress: '42-C Main Boulevard, Gulberg III', addressLocality: 'Lahore', postalCode: '54660', addressCountry: 'PK' },

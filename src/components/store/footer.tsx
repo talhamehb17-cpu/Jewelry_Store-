@@ -290,13 +290,17 @@ export function Footer({ footer, header, settings }: Props) {
               </div>
             </div>
           )}
-          <div className="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1.15fr]">
             <div>
               <Logo header={header} className="items-start" />
               <p className="mt-5 max-w-xs text-[0.9rem] opacity-75">{footer.tagline}</p>
               {footer.showSocial && <Social settings={settings} className="mt-6" />}
             </div>
             <Columns settings={settings} />
+            <div>
+              <p className="mb-5 text-[0.7rem] font-medium uppercase tracking-[0.2em] opacity-60">The atelier</p>
+              <Contact settings={settings} />
+            </div>
           </div>
           <div className="container-x flex flex-col gap-5 border-t border-line py-7 md:flex-row md:items-center md:justify-between">{copy}{footer.showPayments && <Payments />}</div>
         </footer>

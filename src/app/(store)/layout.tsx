@@ -10,7 +10,7 @@ import { getThemeContext } from '@/lib/theme-server';
 import { getSettings, type NavItem } from '@/lib/settings';
 import { getCurrentUser, isStaff } from '@/lib/auth';
 import { getCollections } from '@/lib/catalog';
-import { themeStyleTag, themeName } from '@/themes/engine';
+import { themeCssVars, themeStyleTag, themeName } from '@/themes/engine';
 import { THEME_LIST } from '@/themes/presets';
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +20,10 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     .filter((c) => c.featured)
     .slice(0, 3)
     .map((c) => ({ title: c.name, image: c.image, href: `/collections/${c.slug}` }));
-  const chips = THEME_LIST.map((t) => ({ id: t.id, name: t.name, tagline: t.tagline, swatch: [t.settings.colors.background, t.settings.colors.surface, t.settings.colors.primary, t.settings.colors.accent] }));
+  const chips = THEME_LIST.map((t) => {
+    const vars = themeCssVars(t.settings);
+    return { id: t.id, name: t.name, tagline: t.tagline, swatch: [t.settings.colors.background, t.settings.colors.surface, t.settings.colors.primary, t.settings.colors.accent], desktop: vars.desktop, mobile: vars.mobile };
+  });
 
   return (
     <StoreProvider loggedIn={!!user}>

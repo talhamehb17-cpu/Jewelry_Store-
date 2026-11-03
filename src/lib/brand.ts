@@ -4,10 +4,6 @@ export const BRAND = {
   short: 'Evermoon',
   tagline: 'Wear Your Little Wonder',
   logo: '/images/brand/logo.webp',
-  campaign: '/images/brand/campaign.webp',
-  jewelry: '/images/brand/jewelry.webp',
-  rings: '/images/brand/rings.webp',
-  tray: '/images/brand/tray.webp',
-  bracelet: '/images/brand/bracelet.webp',
-  leaves: '/images/brand/leaves.webp',
+  /** The supplied campaign still. About Us only — do not use it anywhere else. */
+  about: '/images/brand/about.webp',
 } as const;

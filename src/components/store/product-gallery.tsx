@@ -108,7 +108,7 @@ function MobileCarousel({ media, onOpen, className }: { media: Media[]; onOpen: 
     <div className={cn('relative', className)}>
       <div ref={ref} onScroll={(e) => setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))} className="no-scrollbar snap-x-mandatory flex overflow-x-auto">
         {media.map((m, k) => (
-          <div key={k} className="relative aspect-[4/5] max-h-[68svh] w-full shrink-0 snap-start bg-surface">
+          <div key={k} className="relative aspect-[4/5] max-h-[52svh] w-full max-w-full shrink-0 snap-start overflow-hidden bg-surface">
             <ZoomImage m={m} priority={k === 0} onOpen={() => onOpen(k)} zoom={false} />
           </div>
         ))}
@@ -128,7 +128,7 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
   const [active, setActive] = useState(0);
   const [box, setBox] = useState<number | null>(null);
   const open = (i: number) => setBox(i);
-  const mobile = <MobileCarousel media={media} onOpen={open} className="mx-auto w-full max-w-[440px] lg:hidden" />;
+  const mobile = <MobileCarousel media={media} onOpen={open} className="mx-auto w-full max-w-[min(100%,400px)] lg:hidden" />;
   let desktop: React.ReactNode;
 
   switch (layout) {

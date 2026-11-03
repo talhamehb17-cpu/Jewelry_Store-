@@ -6,6 +6,7 @@ import { ProductCard, ProductGrid } from '@/components/store/product-card';
 import { Rail } from './slider';
 import { Hotspot } from './hotspot';
 import { getCardsBySlugs, getCollections, getProductsForSection } from '@/lib/catalog';
+import { publicImage } from '@/lib/look';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/money';
 import type { SectionInstance, ThemeConfig } from '@/themes/types';
@@ -26,7 +27,7 @@ export function CategoriesSection({ section }: Props) {
             {items.map((t, i) => (
               <Link key={t.link + i} href={t.link} className="reveal group flex w-[42%] max-w-[9rem] flex-col items-center sm:w-36" style={{ ['--d' as string]: `${i * 70}ms` }}>
                 <span className="relative block h-24 w-24 overflow-hidden rounded-full border-4 border-bg bg-surface shadow-[0_10px_30px_-18px_rgba(0,0,0,.4)] ring-1 ring-line transition duration-500 group-hover:ring-primary md:h-36 md:w-36">
-                  <Img src={t.image} alt={t.title} sizes="150px" className="transition duration-700 group-hover:scale-110" />
+                  <Img src={publicImage(t.image)} alt={t.title} sizes="150px" className="transition duration-700 group-hover:scale-110" />
                 </span>
                 <span className="mt-4 text-[0.92rem] font-medium">{t.title}</span>
               </Link>
@@ -51,7 +52,7 @@ export function CategoriesSection({ section }: Props) {
                       <span className="font-heading text-[clamp(1.6rem,3.4vw,3rem)] leading-none tracking-tight transition duration-500 group-hover:translate-x-3">{t.title}</span>
                     </span>
                     <span className="pointer-events-none absolute right-16 top-1/2 hidden h-36 w-28 -translate-y-1/2 rotate-3 scale-90 overflow-hidden opacity-0 shadow-xl transition duration-500 group-hover:rotate-0 group-hover:scale-100 group-hover:opacity-100 md:block">
-                      <Img src={t.image} alt="" sizes="120px" />
+                      <Img src={publicImage(t.image)} alt="" sizes="120px" />
                     </span>
                     <ArrowUpRight size={22} strokeWidth={1.25} className="text-muted transition group-hover:text-ink" />
                   </Link>
@@ -69,7 +70,7 @@ export function CategoriesSection({ section }: Props) {
             {items.slice(0, 3).map((t, i) => (
               <Link key={t.link + i} href={t.link} className="reveal group text-center" style={{ ['--d' as string]: `${i * 120}ms` }}>
                 <span className="frame-inset relative block aspect-[4/5] overflow-hidden bg-surface">
-                  <Img src={t.image} alt={t.title} sizes="(max-width:768px) 100vw, 33vw" className="transition duration-[1500ms] group-hover:scale-105" />
+                  <Img src={publicImage(t.image)} alt={t.title} sizes="(max-width:768px) 100vw, 33vw" className="transition duration-[1500ms] group-hover:scale-105" />
                 </span>
                 <span className="font-heading mt-6 block text-[1.5rem]">{t.title}</span>
                 <span className="mt-2 inline-block text-[0.7rem] uppercase tracking-[0.2em] text-muted [font-variant:small-caps] group-hover:text-ink">Discover the collection</span>
@@ -86,7 +87,7 @@ export function CategoriesSection({ section }: Props) {
             {items.slice(0, 4).map((t, i) => (
               <Link key={t.link + i} href={t.link} className="reveal group" style={{ ['--d' as string]: `${i * 80}ms` }}>
                 <span className="relative block aspect-square overflow-hidden rounded-theme bg-surface">
-                  <Img src={t.image} alt={t.title} sizes="(max-width:768px) 50vw, 25vw" className="transition duration-700 group-hover:scale-[1.03]" />
+                  <Img src={publicImage(t.image)} alt={t.title} sizes="(max-width:768px) 50vw, 25vw" className="transition duration-700 group-hover:scale-[1.03]" />
                 </span>
                 <span className="mt-3 flex items-center justify-between text-[0.95rem]">
                   {t.title} <ArrowRight size={15} strokeWidth={1.25} className="text-muted transition group-hover:translate-x-1 group-hover:text-ink" />
@@ -103,7 +104,7 @@ export function CategoriesSection({ section }: Props) {
           <div className="flex flex-wrap gap-3">
             {items.map((t, i) => (
               <Link key={t.link + i} href={t.link} className="group flex min-w-0 items-center gap-3 rounded-full border border-line bg-bg py-2 pl-2 pr-6 transition hover:border-ink hover:bg-ink hover:text-bg">
-                <span className="relative block h-12 w-12 overflow-hidden rounded-full bg-surface"><Img src={t.image} alt="" sizes="48px" /></span>
+                <span className="relative block h-12 w-12 overflow-hidden rounded-full bg-surface"><Img src={publicImage(t.image)} alt="" sizes="48px" /></span>
                 <span className="text-[0.95rem] font-medium">{t.title}</span>
               </Link>
             ))}
@@ -119,7 +120,7 @@ export function CategoriesSection({ section }: Props) {
             {items.map((t, i) => (
               <Link key={t.link + i} href={t.link} className="reveal group min-w-0" style={{ ['--d' as string]: `${i * 80}ms` }}>
                 <span className="frame-inset relative block aspect-[3/4] overflow-hidden border border-line bg-surface">
-                  <Img src={t.image} alt={t.title} sizes="(max-width:768px) 46vw, 18vw" className="transition duration-[1200ms] group-hover:scale-[1.04]" />
+                  <Img src={publicImage(t.image)} alt={t.title} sizes="(max-width:768px) 46vw, 18vw" className="transition duration-[1200ms] group-hover:scale-[1.04]" />
                 </span>
                 <span className="mt-3 block text-center">
                   <span className="font-heading block text-[1.02rem] leading-tight sm:text-[1.2rem]">{t.title}</span>
@@ -148,7 +149,7 @@ export async function FeaturedCollectionsSection({ section }: Props) {
             {cols.slice(0, 3).map((c, i) => (
               <Link key={c.id} href={`/collections/${c.slug}`} className="reveal group text-center" style={{ ['--d' as string]: `${i * 150}ms` }}>
                 <span className="arch relative mx-auto block aspect-[3/4] max-w-[380px] overflow-hidden bg-surface">
-                  <Img src={c.image} alt={c.name} sizes="(max-width:768px) 90vw, 33vw" className="transition duration-[1500ms] group-hover:scale-105" />
+                  <Img src={publicImage(c.image)} alt={c.name} sizes="(max-width:768px) 90vw, 33vw" className="transition duration-[1500ms] group-hover:scale-105" />
                 </span>
                 <span className="font-heading mt-6 block text-[1.8rem] italic">{c.name}</span>
                 <span className="mx-auto mt-2 block max-w-xs text-[0.88rem] text-muted">{c.description}</span>
@@ -174,7 +175,7 @@ export async function FeaturedCollectionsSection({ section }: Props) {
                   <span className="font-heading text-[1.6rem] italic text-muted">{String(i + 1).padStart(2, '0')}</span>
                   <span className="font-heading text-[clamp(1.6rem,3.6vw,3.2rem)] leading-none transition duration-500 group-hover:italic">{c.name}</span>
                   <span className="hidden text-[0.9rem] text-muted md:block">{c.description}</span>
-                  <span className="relative h-16 w-12 overflow-hidden bg-surface md:h-24 md:w-20"><Img src={c.image} alt="" sizes="80px" className="transition duration-700 group-hover:scale-110" /></span>
+                  <span className="relative h-16 w-12 overflow-hidden bg-surface md:h-24 md:w-20"><Img src={publicImage(c.image)} alt="" sizes="80px" className="transition duration-700 group-hover:scale-110" /></span>
                 </Link>
               </li>
             ))}
@@ -189,7 +190,7 @@ export async function FeaturedCollectionsSection({ section }: Props) {
           <div className={cn('grid gap-[var(--grid-gap)]', cols.length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2')}>
             {cols.slice(0, 3).map((c, i) => (
               <Link key={c.id} href={`/collections/${c.slug}`} className="reveal group relative block aspect-[4/5] overflow-hidden bg-surface" style={{ ['--d' as string]: `${i * 140}ms` }}>
-                <Img src={c.image} alt={c.name} sizes="(max-width:768px) 100vw, 33vw" className="transition duration-[1600ms] group-hover:scale-105" />
+                <Img src={publicImage(c.image)} alt={c.name} sizes="(max-width:768px) 100vw, 33vw" className="transition duration-[1600ms] group-hover:scale-105" />
                 <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                 <span className="absolute inset-x-0 bottom-0 p-7 text-white">
                   <span className="font-heading block text-[1.7rem]">{c.name}</span>

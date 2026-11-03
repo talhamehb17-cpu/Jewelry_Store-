@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Truck, Gift, ShieldCheck, RefreshCcw, Gem, Sparkles, Lock, Phone, Quote, Plus } from 'lucide-react';
 import { Img } from '@/components/ui/img';
+import { LOOK, publicImage } from '@/lib/look';
+import { getSettings } from '@/lib/settings';
 import { Instagram } from '@/components/ui/brand-icons';
 import { SectionHeading, Stars } from '@/components/ui/bits';
 import { NewsletterForm } from '@/components/store/newsletter-form';
@@ -9,6 +11,10 @@ import { cn } from '@/lib/utils';
 import type { SectionInstance, ThemeConfig } from '@/themes/types';
 
 type Props = { section: SectionInstance; config: ThemeConfig };
+
+function SafeImg({ src, fallback, ...rest }: React.ComponentProps<typeof Img> & { fallback?: string }) {
+  return <Img {...rest} src={publicImage(src, fallback || LOOK.hero)} />;
+}
 
 function Cta({ label, link, className, light }: { label?: string; link?: string; className?: string; light?: boolean }) {
   if (!label || !link) return null;
@@ -33,7 +39,7 @@ export function BrandStorySection({ section }: Props) {
             </div>
             {st.image && (
               <div className="reveal relative mx-auto mt-16 aspect-[21/9] max-w-5xl overflow-hidden">
-                <Img src={st.image} alt="" sizes="(max-width:1024px) 100vw, 1000px" />
+                <SafeImg src={st.image} alt="" sizes="(max-width:1024px) 100vw, 1000px" />
               </div>
             )}
           </div>
@@ -44,7 +50,7 @@ export function BrandStorySection({ section }: Props) {
         <section className="section-y container-x">
           <div className="grid items-center gap-12 md:grid-cols-[1fr_1.1fr] md:gap-20">
             <div className="reveal frame-inset relative aspect-[4/5] overflow-hidden bg-surface">
-              <Img src={st.image} alt="" sizes="(max-width:768px) 100vw, 45vw" />
+              <SafeImg src={st.image} alt="" sizes="(max-width:768px) 100vw, 45vw" />
             </div>
             <div className="reveal">
               <p className="font-heading text-[clamp(3rem,8vw,6.5rem)] leading-none text-accent/30">LHR</p>
@@ -64,11 +70,11 @@ export function BrandStorySection({ section }: Props) {
           <div className="grid items-center gap-12 md:grid-cols-2 md:gap-20">
             <div className="reveal relative md:pb-24 md:pr-16">
               <div className="relative aspect-[4/5] max-h-[72svh] overflow-hidden bg-surface rounded-theme-sm md:max-h-none">
-                <Img src={st.image} alt="" sizes="(max-width:768px) 90vw, 40vw" />
+                <SafeImg src={st.image} alt="" sizes="(max-width:768px) 90vw, 40vw" />
               </div>
               {st.image2 && (
                 <div className="relative mt-4 aspect-[4/3] w-full overflow-hidden border border-line bg-surface rounded-theme-sm sm:absolute sm:bottom-0 sm:right-0 sm:mt-0 sm:aspect-square sm:w-[46%] sm:border-[6px] sm:border-bg sm:shadow-xl">
-                  <Img src={st.image2} alt="" sizes="(max-width:640px) 90vw, 20vw" />
+                  <SafeImg src={st.image2} alt="" sizes="(max-width:640px) 90vw, 20vw" />
                 </div>
               )}
             </div>
@@ -95,7 +101,7 @@ export function BrandStorySection({ section }: Props) {
   }
 }
 
-export function ImageBannerSection({ section }: Props) {
+export async function ImageBannerSection({ section }: Props) {
   const st = section.settings;
   const light = (st.textColor ?? 'light') === 'light';
   const h = st.height === 'full' ? 'min-h-[90svh]' : st.height === 'large' ? 'min-h-[75vh]' : 'min-h-[58vh]';
@@ -108,13 +114,74 @@ export function ImageBannerSection({ section }: Props) {
       <Cta label={st.ctaLabel} link={st.ctaLink} light={light} className="mt-8" />
     </div>
   );
+  if (section.variant === 'locations') {
+    const settings = await getSettings();
+    const store = settings.store;
+    const cities = [
+      { city: 'Lahore', note: 'Atelier & express' },
+      { city: 'Karachi', note: 'Express delivery' },
+      { city: 'Islamabad', note: 'Express delivery' },
+      { city: 'Pakistan', note: '3–5 working days' },
+    ];
+    return (
+      <section className="section-y bg-surface/50">
+        <div className="container-x grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
+          <div className="reveal relative aspect-[16/10] max-h-[62svh] overflow-hidden bg-bg">
+            <SafeImg src={st.image} fallback={LOOK.atelier} alt="The Evermoon atelier" sizes="(max-width:1024px) 100vw, 58vw" className="!object-cover" />
+          </div>
+          <div className="reveal min-w-0">
+            {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
+            <h2 className="t-1 text-balance">{st.heading}</h2>
+            <div className="hairline-gold my-6 w-20" />
+            <p className="text-[1.02rem] leading-relaxed text-muted">{store.address}</p>
+            <p className="mt-2 text-[0.92rem] text-muted">{store.hours}</p>
+            <p className="mt-1 text-[0.92rem]"><a href={`tel:${store.phone.replace(/\s/g, '')}`} className="link-u">{store.phone}</a></p>
+            <ul className="mt-8 grid grid-cols-2 gap-3">
+              {cities.map((c) => (
+                <li key={c.city} className="border border-line bg-bg px-4 py-3">
+                  <span className="block font-heading text-[1.15rem]">{c.city}</span>
+                  <span className="mt-1 block text-[0.68rem] uppercase tracking-[0.14em] text-muted">{c.note}</span>
+                </li>
+              ))}
+            </ul>
+            <Cta label={st.ctaLabel || 'Book an appointment'} link={st.ctaLink || '/contact'} className="mt-8" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+  if (section.variant === 'finale') {
+    return (
+      <section className="section-y">
+        <div className="container-x">
+          <div className="reveal grid items-center overflow-hidden border border-line bg-secondary md:grid-cols-2">
+            <div className="relative aspect-[4/5] max-h-[52svh] md:aspect-auto md:max-h-none md:min-h-[420px]">
+              <SafeImg src={st.image} fallback={LOOK.editorial} alt="" sizes="(max-width:768px) 100vw, 50vw" />
+            </div>
+            <div className="flex items-center px-6 py-12 sm:px-10 md:px-14">
+              <div className="max-w-md">
+                {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
+                <h2 className="t-1 text-balance">{st.heading}</h2>
+                <div className="hairline-gold my-6 w-20" />
+                {st.body && <p className="text-[1.02rem] leading-relaxed text-muted">{st.body}</p>}
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Cta label={st.ctaLabel} link={st.ctaLink} />
+                  {st.cta2Label && st.cta2Link && <Link href={st.cta2Link} className="btn btn-secondary">{st.cta2Label}</Link>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
   if (section.variant === 'promo') {
     return (
       <section className="section-y">
         <div className="container-x">
           <div className="reveal grid items-center overflow-hidden border border-line bg-secondary md:grid-cols-2">
             <div className="relative aspect-[5/4] max-h-[58svh] md:aspect-auto md:max-h-none md:min-h-[460px]">
-              <Img src={st.image} alt="A floral bracelet on sage silk" sizes="(max-width:768px) 100vw, 50vw" className="!object-cover !object-[center_60%]" />
+              <SafeImg src={st.image} alt="A tennis bracelet from the collection" sizes="(max-width:768px) 100vw, 50vw" className="!object-cover !object-center" />
             </div>
             <div className="flex items-center px-6 py-10 sm:px-10 md:px-14 md:py-16">
               <div className="max-w-md">
@@ -134,8 +201,8 @@ export function ImageBannerSection({ section }: Props) {
   return (
     <section className={cn(framed ? 'section-y-sm container-x' : '')}>
       <div className={cn('reveal relative flex items-center overflow-hidden', h, framed && 'rounded-theme')}>
-        <Img src={st.image} alt="" sizes="100vw" className={st.mobileImage ? 'max-md:hidden' : ''} />
-        {st.mobileImage && <Img src={st.mobileImage} alt="" sizes="100vw" className="md:hidden" />}
+        <SafeImg src={st.image} alt="" sizes="100vw" className={st.mobileImage ? 'max-md:hidden' : ''} />
+        {st.mobileImage && <SafeImg src={st.mobileImage} alt="" sizes="100vw" className="md:hidden" />}
         <div className="absolute inset-0 bg-black" style={{ opacity: (Number(st.overlay) || 0) / 100 }} />
         <div className={cn('relative w-full py-16', framed ? 'px-8 md:px-16' : 'container-x')}>{copy}</div>
       </div>
@@ -154,11 +221,11 @@ export function ImageTextSection({ section }: Props) {
           <div className="container-x grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
             <div className={cn('reveal', right && 'lg:order-2')}>
               <div className="relative aspect-[4/5] max-h-[70svh] overflow-hidden bg-bg">
-                <Img src={st.image} alt="Evermoon jewellery in afternoon light" sizes="(max-width:1024px) 100vw, 50vw" className="!object-cover" />
+                <SafeImg src={st.image} alt="A quiet studio table with gold hoops and a fine chain" sizes="(max-width:1024px) 100vw, 50vw" className="!object-cover" />
               </div>
               {st.image2 && (
                 <div className="relative mt-3 aspect-[5/4] w-full overflow-hidden border border-line bg-bg sm:ml-auto sm:-mt-16 sm:aspect-square sm:w-[46%] sm:max-w-[240px] sm:border-[8px] sm:border-surface sm:shadow-[0_24px_50px_-28px_rgba(0,0,0,.45)]">
-                  <Img src={st.image2} alt="A closer look at the rings and enamel bangles" sizes="240px" />
+                  <SafeImg src={st.image2} alt="A gold chain from the collection" sizes="240px" />
                 </div>
               )}
             </div>
@@ -187,8 +254,8 @@ export function ImageTextSection({ section }: Props) {
         <section className="section-y container-x">
           <div className="grid items-center gap-14 md:grid-cols-2 md:gap-20">
             <div className={cn('reveal relative h-[440px] md:h-[600px]', right && 'md:order-2')}>
-              <div className="absolute left-0 top-0 h-[78%] w-[68%] overflow-hidden bg-surface"><Img src={st.image} alt="" sizes="40vw" /></div>
-              <div className="arch absolute bottom-0 right-0 h-[62%] w-[52%] overflow-hidden border-8 border-bg bg-surface shadow-2xl"><Img src={st.image2 || st.image} alt="" sizes="30vw" /></div>
+              <div className="absolute left-0 top-0 h-[78%] w-[68%] overflow-hidden bg-surface"><SafeImg src={st.image} alt="" sizes="40vw" /></div>
+              <div className="arch absolute bottom-0 right-0 h-[62%] w-[52%] overflow-hidden border-8 border-bg bg-surface shadow-2xl"><SafeImg src={st.image2 || st.image} alt="" sizes="30vw" /></div>
             </div>
             <div className="reveal">
               {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
@@ -205,7 +272,7 @@ export function ImageTextSection({ section }: Props) {
           <div className="grid gap-10 md:grid-cols-12">
             <div className={cn('reveal md:col-span-7', right && 'md:order-2')}>
               <div className="relative aspect-[3/4] max-h-[70svh] overflow-hidden bg-surface md:aspect-auto md:max-h-[720px] md:min-h-[52vh]">
-                <Img src={st.image} alt="Enamel bangles and gold rings in afternoon light" sizes="(max-width:768px) 100vw, 55vw" />
+                <SafeImg src={st.image} alt="A solitaire ring in warm light" sizes="(max-width:768px) 100vw, 55vw" />
               </div>
               {st.caption && <p className="mt-3 text-[0.72rem] uppercase tracking-[0.18em] text-muted">{st.caption}</p>}
             </div>
@@ -229,8 +296,8 @@ export function ImageTextSection({ section }: Props) {
               <p className="mt-4 text-[0.95rem] opacity-75">{st.body}</p>
               {st.ctaLink && <Link href={st.ctaLink} className="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-bg px-5 py-3 text-[0.85rem] text-ink transition hover:scale-[1.03]">{st.ctaLabel} →</Link>}
             </div>
-            <div className="reveal relative aspect-[4/3] overflow-hidden rounded-theme bg-surface md:col-span-2 md:aspect-auto"><Img src={st.image} alt="" sizes="66vw" /></div>
-            <div className="reveal relative aspect-square overflow-hidden rounded-theme bg-surface md:aspect-auto"><Img src={st.image2 || st.image} alt="" sizes="33vw" /></div>
+            <div className="reveal relative aspect-[4/3] overflow-hidden rounded-theme bg-surface md:col-span-2 md:aspect-auto"><SafeImg src={st.image} alt="" sizes="66vw" /></div>
+            <div className="reveal relative aspect-square overflow-hidden rounded-theme bg-surface md:aspect-auto"><SafeImg src={st.image2 || st.image} alt="" sizes="33vw" /></div>
             <div className="reveal flex items-center justify-center rounded-theme bg-accent p-8 text-center text-white">
               <p className="font-heading text-[1.6rem] leading-tight">Hand-finished<br />in Lahore</p>
             </div>
@@ -242,7 +309,7 @@ export function ImageTextSection({ section }: Props) {
       return (
         <section className="section-y container-x">
           <div className="grid items-center gap-12 md:grid-cols-2 md:gap-20">
-            <div className={cn('reveal relative aspect-[4/5] overflow-hidden bg-surface rounded-theme', right && 'md:order-2')}><Img src={st.image} alt="" sizes="(max-width:768px) 100vw, 50vw" /></div>
+            <div className={cn('reveal relative aspect-[4/5] overflow-hidden bg-surface rounded-theme', right && 'md:order-2')}><SafeImg src={st.image} alt="" sizes="(max-width:768px) 100vw, 50vw" /></div>
             <div className="reveal max-w-lg">
               {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
               <h2 className="t-1 text-balance">{st.heading}</h2>
@@ -275,7 +342,7 @@ function StudioPerson({ t, align = 'start', className }: { t: T; align?: 'start'
   return (
     <span className={cn('mt-4 flex items-center gap-3', align === 'center' && 'justify-center', className)}>
       <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface">
-        {face?.avatar ? <Img src={face.avatar} alt="" sizes="44px" /> : <span className="grid h-full place-items-center text-[0.72rem] tracking-wide">{t.name.slice(0, 1)}</span>}
+        {face?.avatar ? <SafeImg src={face.avatar} alt="" sizes="44px" /> : <span className="grid h-full place-items-center text-[0.72rem] tracking-wide">{t.name.slice(0, 1)}</span>}
       </span>
       <span className={cn('text-left', align === 'center' && 'text-left')}>
         <span className="block text-[0.84rem] font-medium normal-case tracking-normal">{t.name}{t.location ? <span className="font-normal text-muted"> · {t.location}</span> : null}</span>
@@ -308,7 +375,7 @@ export function TestimonialsSection({ section }: Props) {
                 {face?.image && (
                   <Link href={face.href} className="mt-auto flex items-center gap-3 border-t border-line px-4 py-3 text-[0.82rem] transition hover:bg-surface">
                     <span className="relative block h-16 w-14 shrink-0 overflow-hidden bg-surface">
-                      <Img src={face.image} alt="" sizes="64px" />
+                      <SafeImg src={face.image} alt="" sizes="64px" />
                     </span>
                     <span className="min-w-0">
                       <span className="block text-[0.62rem] uppercase tracking-[0.14em] text-muted">Related piece</span>
@@ -341,7 +408,7 @@ export function TestimonialsSection({ section }: Props) {
                     {studioFace(t)?.image && (
                       <Link href={studioFace(t)!.href} className="mt-4 flex items-center gap-3 text-[0.82rem]">
                         <span className="relative block h-16 w-14 shrink-0 overflow-hidden rounded-theme-sm bg-bg">
-                          <Img src={studioFace(t)!.image} alt="" sizes="64px" />
+                          <SafeImg src={studioFace(t)!.image} alt="" sizes="64px" />
                         </span>
                         <span>Related piece: {t.product || 'View'}</span>
                       </Link>
@@ -386,7 +453,7 @@ export function TestimonialsSection({ section }: Props) {
                     <StudioPerson t={t} align="center" />
                     {studioFace(t)?.image && (
                       <Link href={studioFace(t)!.href} className="relative block h-28 w-24 overflow-hidden rounded-theme-sm bg-surface">
-                        <Img src={studioFace(t)!.image} alt={t.product || ''} sizes="96px" />
+                        <SafeImg src={studioFace(t)!.image} alt={t.product || ''} sizes="96px" />
                       </Link>
                     )}
                   </figcaption>
@@ -406,7 +473,7 @@ export function InstagramSection({ section }: Props) {
   const link = st.link || 'https://instagram.com/';
   const tile = (src: string, i: number, cls = '') => (
     <a key={i} href={link} target="_blank" rel="noopener noreferrer" className={cn('group relative block overflow-hidden bg-surface', cls)} aria-label={`View on Instagram (${i + 1})`}>
-      <Img src={src} alt="" sizes="(max-width:768px) 33vw, 16vw" className="transition duration-700 group-hover:scale-105" />
+      <SafeImg src={src} alt="" sizes="(max-width:768px) 33vw, 16vw" className="transition duration-700 group-hover:scale-105" />
       <span className="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition duration-500 group-hover:bg-black/30 group-hover:opacity-100">
         <Instagram size={26} strokeWidth={1.25} />
       </span>
@@ -477,7 +544,7 @@ export function NewsletterSection({ section }: Props) {
       return (
         <section className="section-y container-x">
           <div className="reveal grid overflow-hidden bg-surface md:grid-cols-2">
-            <div className="relative min-h-[300px]"><Img src={st.image} alt="" sizes="(max-width:768px) 100vw, 50vw" /></div>
+            <div className="relative min-h-[300px]"><SafeImg src={st.image} alt="" sizes="(max-width:768px) 100vw, 50vw" /></div>
             <div className="flex items-center p-10 md:p-16">
               <div className="w-full max-w-md">
                 {st.eyebrow && <p className="eyebrow mb-3">{st.eyebrow}</p>}
@@ -608,7 +675,29 @@ export function FaqSection({ section }: Props) {
 const ICONS = { truck: Truck, gift: Gift, shield: ShieldCheck, refresh: RefreshCcw, gem: Gem, sparkles: Sparkles, lock: Lock, phone: Phone } as const;
 
 export function TrustBadgesSection({ section }: Props) {
-  const items: { icon: keyof typeof ICONS; title: string; text: string }[] = Array.isArray(section.settings.items) ? section.settings.items : [];
+  const st = section.settings;
+  const items: { icon: keyof typeof ICONS; title: string; text: string }[] = Array.isArray(st.items) ? st.items : [];
+  if (section.variant === 'pillars') {
+    return (
+      <section className="section-y">
+        <div className="container-x">
+          <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {items.map((b, i) => {
+              const Icon = ICONS[b.icon] ?? Sparkles;
+              return (
+                <article key={b.title} className="reveal border border-line bg-surface/60 p-6" style={{ ['--d' as string]: `${i * 80}ms` }}>
+                  <span className="grid h-11 w-11 place-items-center border border-accent/40 text-accent"><Icon size={18} strokeWidth={1.25} /></span>
+                  <h3 className="mt-5 font-heading text-[1.35rem] leading-tight">{b.title}</h3>
+                  <p className="mt-3 text-[0.9rem] leading-relaxed text-muted">{b.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="border-y border-line">
       <div className="container-x grid grid-cols-2 gap-x-6 gap-y-8 py-10 md:grid-cols-4">

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Img } from '@/components/ui/img';
 import { FadeSlider } from './slider';
 import { BRAND } from '@/lib/brand';
+import { LOOK, publicImage } from '@/lib/look';
 import { cn } from '@/lib/utils';
 import type { SectionInstance, ThemeConfig } from '@/themes/types';
 
@@ -34,8 +35,8 @@ function Media({ s, priority, sizes = '100vw', className }: { s: Slide; priority
         <video className={cn('absolute inset-0 h-full w-full object-cover', className)} src={s.video} poster={s.image} autoPlay muted loop playsInline preload="metadata" aria-hidden />
       ) : (
         <>
-          <Img src={s.image} alt={s.heading ?? ''} priority={priority} sizes={sizes} className={cn('slide-img', s.mobileImage && 'max-md:hidden', className)} />
-          {s.mobileImage && <Img src={s.mobileImage} alt={s.heading ?? ''} priority={priority} sizes="100vw" className={cn('slide-img md:hidden', className)} />}
+          <Img src={publicImage(s.image, LOOK.hero)} alt={s.heading ?? ''} priority={priority} sizes={sizes} className={cn('slide-img', s.mobileImage && 'max-md:hidden', className)} />
+          {s.mobileImage && <Img src={publicImage(s.mobileImage, LOOK.hero)} alt="" priority={priority} sizes="100vw" className={cn('slide-img md:hidden', className)} />}
         </>
       )}
     </>
@@ -81,37 +82,23 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
   switch (section.variant) {
     case 'campaign':
       return (
-        <section className="overflow-hidden bg-bg" style={vars}>
-          <div className="relative hidden bg-surface md:block">
-            <div className="relative mx-auto aspect-[2056/765] max-h-[70vh] w-full max-w-[1680px] bg-surface xl:my-6">
-              <Img src={first.image || BRAND.campaign} alt="Evermoon Jewels — Wear your little wonder" priority sizes="(max-width:1680px) 100vw, 1680px" className="hero-drift !object-cover !object-center" />
+        <section className="overflow-hidden border-b border-line bg-bg" style={vars}>
+          <div className="container-x grid items-center gap-8 py-8 md:min-h-[min(var(--hero-h),820px)] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-12 md:py-12">
+            <div className="order-2 min-w-0 md:order-1 md:py-6">
+              <Image src={BRAND.logo} alt="" width={64} height={64} className="mb-5 h-14 w-14 object-contain md:h-16 md:w-16" />
+              <Copy s={{ ...first, textColor: 'dark' }} light={false} />
+              <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-[0.68rem] uppercase tracking-[0.16em] text-muted">
+                <li>18k gold vermeil</li>
+                <li>Freshwater pearls</li>
+                <li>Cash on delivery</li>
+              </ul>
             </div>
-          </div>
-          <div className="md:hidden">
-            <div className="relative mx-auto aspect-[4/5] max-h-[62svh] w-full overflow-hidden bg-surface">
-              <Img src={first.mobileImage || BRAND.jewelry} alt="Evermoon jewellery arranged in afternoon light" priority sizes="100vw" className="!object-cover !object-[center_42%]" />
-            </div>
-            <div className="container-x py-8">
-              <Image src={BRAND.logo} alt="" width={64} height={64} className="mb-5 h-16 w-16 object-contain" />
-              <Copy s={{ ...first, textColor: 'dark' }} light={false} size="1" />
-            </div>
-          </div>
-          <div className="hidden border-y border-line md:block">
-            <div className="container-x grid items-center gap-6 py-7 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-10">
-              <Image src={BRAND.logo} alt={BRAND.name} width={72} height={72} className="h-[4.5rem] w-[4.5rem] object-contain" />
-              <div className="min-w-0">
-                <p className="eyebrow">Designed in Lahore</p>
-                <p className="mt-2 max-w-xl text-[1.05rem] leading-relaxed text-muted">{first.subheading}</p>
+            <div className="order-1 min-w-0 md:order-2">
+              <div className="relative mx-auto aspect-[4/5] max-h-[58svh] w-full overflow-hidden bg-surface md:aspect-[5/4] md:max-h-[72vh]">
+                <Img src={publicImage(first.image, LOOK.hero)} alt="Gold necklace and pearl earrings in window light" priority sizes="(max-width:768px) 100vw, 54vw" className="hero-drift !object-cover !object-[center_40%]" />
               </div>
-              <Ctas s={first} light={false} className="!mt-0" />
             </div>
           </div>
-          <ul className="container-x flex flex-wrap gap-x-6 gap-y-2 py-3 text-[0.68rem] uppercase tracking-[0.16em] text-muted">
-            <li>18k gold vermeil</li>
-            <li>Freshwater pearls</li>
-            <li>Cash on delivery</li>
-            <li>EasyPaisa · JazzCash · Bank</li>
-          </ul>
         </section>
       );
 
@@ -199,9 +186,9 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
                 <span className="accent-italic">{(first.heading ?? '').split(' ').slice(0, 2).join(' ')}</span> {(first.heading ?? '').split(' ').slice(2).join(' ')}
               </h1>
               <div className="mt-6 grid grid-cols-2 gap-4 md:gap-6">
-                <div className="relative aspect-[4/5] overflow-hidden bg-surface"><Img src={first.image2} alt="" sizes="25vw" /></div>
+                <div className="relative aspect-[4/5] overflow-hidden bg-surface"><Img src={publicImage(first.image2, LOOK.editorial)} alt="" sizes="25vw" /></div>
                 <div className="flex flex-col justify-end">
-                  <div className="relative mb-6 aspect-square overflow-hidden bg-surface"><Img src={first.image3} alt="" sizes="25vw" /></div>
+                  <div className="relative mb-6 aspect-square overflow-hidden bg-surface"><Img src={publicImage(first.image3, LOOK.story)} alt="" sizes="25vw" /></div>
                   <p className="text-[0.95rem] leading-relaxed text-muted">{first.subheading}</p>
                   {first.primaryLink && <Link href={first.primaryLink} className="link-line mt-4 self-start text-[0.75rem] uppercase tracking-[0.2em]">{first.primaryLabel} →</Link>}
                 </div>
@@ -308,9 +295,9 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
               <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" />
               <span className="absolute bottom-4 left-4 rounded-full bg-bg/90 px-4 py-2 text-[0.78rem] backdrop-blur">New season ↗</span>
             </div>
-            <div className="relative hidden overflow-hidden rounded-theme bg-surface md:block"><Img src={first.image2} alt="" sizes="25vw" /></div>
+            <div className="relative hidden overflow-hidden rounded-theme bg-surface md:block"><Img src={publicImage(first.image2, LOOK.editorial)} alt="" sizes="25vw" /></div>
             <div className="relative hidden overflow-hidden rounded-theme bg-accent md:block">
-              <Img src={first.image3} alt="" sizes="25vw" className="mix-blend-multiply" />
+              <Img src={publicImage(first.image3, LOOK.story)} alt="" sizes="25vw" className="mix-blend-multiply" />
             </div>
           </div>
         </section>

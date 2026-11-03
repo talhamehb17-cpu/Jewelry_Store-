@@ -70,6 +70,19 @@ export async function applyBrandHome(db: DB, log: (m: string) => void = () => {}
     await db.update(settings).set({ value: next as never, updatedAt: new Date() }).where(eq(settings.key, key));
   }
 
+  const retired = [
+    ['/images/brand/campaign.webp', '/images/lookbook/hero.webp'],
+    ['/images/brand/jewelry.webp', '/images/lookbook/hero.webp'],
+    ['/images/brand/rings.webp', '/images/products/elara-solitaire-ring-1.webp'],
+    ['/images/brand/tray.webp', '/images/products/celeste-pearl-earrings-1.webp'],
+    ['/images/brand/bracelet.webp', '/images/products/luna-tennis-bracelet-1.webp'],
+    ['/images/brand/leaves.webp', '/images/lookbook/story.webp'],
+  ] as const;
+  for (const [from, to] of retired) {
+    await db.execute(sql`update theme_configs set published = replace(published::text, ${from}, ${to})::jsonb where published::text like ${'%' + from + '%'}`);
+    await db.execute(sql`update theme_configs set draft = replace(draft::text, ${from}, ${to})::jsonb where draft is not null and draft::text like ${'%' + from + '%'}`);
+  }
+
   await db.execute(sql`update products set care = replace(care, 'Aurelle', 'Evermoon') where care like '%Aurelle%'`);
   await db.execute(sql`update products set description = replace(description, 'Maison Aurelle', 'Evermoon Jewels') where description like '%Maison Aurelle%'`);
   await db.execute(sql`update products set description = replace(description, 'Aurelle', 'Evermoon') where description like '%Aurelle%'`);

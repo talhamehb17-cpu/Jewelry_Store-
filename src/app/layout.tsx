@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { fontVariables } from '@/themes/fonts';
 import { siteUrl } from '@/lib/utils';
 import { BRAND } from '@/lib/brand';
+import { LOOK } from '@/lib/look';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: BRAND.name,
     locale: 'en_PK',
-    images: [{ url: BRAND.campaign, width: 1800, height: 670, alt: 'Evermoon Jewels — wear your little wonder' }],
+    images: [{ url: LOOK.hero, width: 1376, height: 768, alt: 'Gold necklace and pearl earrings in window light' }],
   },
   twitter: { card: 'summary_large_image' },
   formatDetection: { telephone: false },

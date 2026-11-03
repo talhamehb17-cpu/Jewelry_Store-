@@ -1,5 +1,5 @@
-import { BRAND } from '@/lib/brand';
 import { IMG } from '@/lib/images';
+import { LOOK, publicImage } from '@/lib/look';
 import type { SectionInstance, SectionSettings, SectionType } from './types';
 
 let counter = 0;
@@ -30,8 +30,8 @@ export const HERO_PRIMARY = {
   primaryLink: '/shop',
   secondaryLabel: 'Our story',
   secondaryLink: '/about',
-  image: BRAND.campaign,
-  mobileImage: BRAND.jewelry,
+  image: LOOK.hero,
+  mobileImage: IMG.celeste1,
 };
 
 export const HERO_PEARL = {
@@ -55,13 +55,13 @@ export const HERO_BRIDAL = {
 };
 
 export const BRAND_INTRO = {
-  eyebrow: 'The house',
-  heading: 'Pretty little things, made for every day.',
-  body: 'Evermoon Jewels is a Lahore house of handpicked jewellery. Gold vermeil, freshwater pearls and quiet stones — luxury light enough for a Monday, a mehndi, or the market. Every piece is finished to feel considered, and entirely yours.',
+  eyebrow: 'Our story',
+  heading: 'A studio table, then a house.',
+  body: 'Evermoon began in Gulberg with a simple idea: jewellery should feel like a little wonder you wear, not a piece you lock away. Gold vermeil, freshwater pearls and quiet stones — finished to be gifted, layered and lived in.',
   ctaLabel: 'Read our story',
   ctaLink: '/about',
-  image: BRAND.jewelry,
-  image2: BRAND.rings,
+  image: LOOK.story,
+  image2: IMG.aurelia2,
   imagePosition: 'right',
   notes: [
     { k: '18k', v: 'Gold vermeil' },
@@ -77,8 +77,8 @@ export const BRAND_STORY = {
   ctaLabel: 'Visit the atelier',
   ctaLink: '/about',
   signature: 'Evermoon Jewels, Lahore',
-  image: BRAND.tray,
-  image2: BRAND.leaves,
+  image: LOOK.story,
+  image2: IMG.elara1,
   stats: [
     { value: '18k', label: 'Gold vermeil' },
     { value: '925', label: 'Sterling silver' },
@@ -87,15 +87,15 @@ export const BRAND_STORY = {
 };
 
 export const EDITORIAL = {
-  eyebrow: 'The edit',
-  heading: 'Handpicked for the light.',
-  body: 'Sun on stone, a flower earring, a chain that sits quietly. This is the Evermoon way of dressing — pretty, unforced, and made for the day you are actually having.',
+  eyebrow: 'Luxury collection',
+  heading: 'Light, caught in stone.',
+  body: 'A quieter kind of luxury — a solitaire that reads in daylight, a chain fine enough to forget you are wearing it. Designed in Lahore, finished to be kept.',
   quote: 'Luxury light enough for a Monday.',
-  caption: 'Afternoon light, Gulberg studio',
-  ctaLabel: 'Shop the collection',
-  ctaLink: '/shop',
-  image: BRAND.rings,
-  image2: BRAND.leaves,
+  caption: 'The solitaire edit',
+  ctaLabel: 'Explore bridal',
+  ctaLink: '/collections/bridal',
+  image: LOOK.editorial,
+  image2: IMG.isabella1,
   imagePosition: 'left',
 };
 
@@ -105,7 +105,25 @@ export const PROMO = {
   body: 'Every order arrives in a signature box with a handwritten note. Pay by Cash on Delivery, EasyPaisa, JazzCash or bank transfer.',
   ctaLabel: 'Shop gifts',
   ctaLink: '/collections/gifts',
-  image: BRAND.bracelet,
+  image: IMG.tennis1,
+};
+
+export const WHY_CHOOSE = [
+  { icon: 'gem', title: 'Premium Quality', text: '18k gold vermeil over solid sterling silver, finished to be worn — not saved for a drawer.' },
+  { icon: 'sparkles', title: 'Elegant Designs', text: 'Quiet shapes from the Lahore studio. Pearls, chains and stones that layer without effort.' },
+  { icon: 'shield', title: 'Secure Shopping', text: 'Cash on Delivery, EasyPaisa, JazzCash or bank transfer. Receipts are checked before we dispatch.' },
+  { icon: 'truck', title: 'Reliable Delivery', text: 'Three to five days across Pakistan. Express in Lahore, Karachi and Islamabad.' },
+];
+
+export const FINALE = {
+  eyebrow: 'Begin here',
+  heading: 'Find the piece you will actually wear.',
+  body: 'A chain for Monday. Pearls for a mehndi. A ring you do not take off. The collection is ready when you are.',
+  ctaLabel: 'Shop the collection',
+  ctaLink: '/shop',
+  cta2Label: 'Our story',
+  cta2Link: '/about',
+  image: IMG.serenePearl,
 };
 
 export const TESTIMONIALS = [
@@ -207,7 +225,7 @@ export const STATEMENT = {
     'Each Evermoon piece is designed in our Lahore studio and finished by hand in 18k gold vermeil, sterling silver and responsibly sourced stones — made to be layered, gifted and treasured for years.',
   ctaLabel: 'Meet the house',
   ctaLink: '/about',
-  image: BRAND.leaves,
+  image: LOOK.story,
 };
 
 export const VIDEO = {
@@ -234,31 +252,28 @@ export type HomeLook = {
   introImage?: string;
 };
 
-/** Shared premium homepage. Variants change the look; the story stays complete. */
+/** Shared premium homepage. Variants change the look; the About photograph is never used. */
 export function buildHome(look: HomeLook): SectionInstance[] {
-  const heroImage = look.heroImage || (look.hero === 'campaign' || look.hero === 'classic' ? BRAND.campaign : BRAND.jewelry);
+  const heroImage = publicImage(look.heroImage, look.hero === 'editorial' ? LOOK.worn : LOOK.hero);
   const slideBase = {
     ...HERO_PRIMARY,
     image: heroImage,
-    mobileImage: look.hero === 'campaign' ? BRAND.jewelry : heroImage,
-    image2: BRAND.tray,
-    image3: BRAND.rings,
+    mobileImage: look.hero === 'campaign' ? IMG.celeste1 : heroImage,
+    image2: IMG.elara1,
+    image3: IMG.isabella1,
     align: 'left' as const,
-    textColor: look.hero === 'cinematic' ? 'light' as const : 'dark' as const,
+    textColor: look.hero === 'cinematic' ? ('light' as const) : ('dark' as const),
     overlay: look.hero === 'cinematic' ? 42 : 0,
   };
+  const intro = publicImage(look.introImage, LOOK.story);
+  const editorial = publicImage(look.editorialImage, LOOK.editorial);
+  const promo = publicImage(look.promoImage, IMG.tennis1);
   return [
     section('hero', look.hero, {
-      homeVersion: 3,
-      height: look.hero === 'cinematic' ? 'large' : 'large',
+      homeVersion: 4,
+      height: 'large',
       autoplay: false,
       slides: [slideBase],
-    }),
-    section('image-text', 'studio', {
-      ...BRAND_INTRO,
-      image: look.introImage || BRAND.jewelry,
-      image2: look.introImage === BRAND.tray ? BRAND.bracelet : BRAND.rings,
-      imagePosition: 'left',
     }),
     section('categories', look.categories || 'tiles', {
       eyebrow: 'Shop by category',
@@ -266,21 +281,39 @@ export function buildHome(look: HomeLook): SectionInstance[] {
       items: CATEGORY_TILES.slice(0, 5),
     }),
     section('product-grid', look.featured === 'carousel' ? 'carousel' : 'asymmetric', gridHome('Featured pieces', 'featured', 'The edit', 5, '/shop')),
+    section('product-grid', look.arrivals === 'grid' ? 'grid' : 'carousel', gridHome('New arrivals', 'new', 'Just in', 8, '/collections/new-arrivals')),
+    section('product-grid', look.bestsellers === 'carousel' ? 'carousel' : 'offset', gridHome('Best sellers', 'bestsellers', 'Most loved', 4, '/collections/best-sellers')),
     section('image-text', 'magazine', {
       ...EDITORIAL,
-      image: look.editorialImage || BRAND.rings,
+      image: editorial,
       imagePosition: 'left',
     }),
-    section('product-grid', look.arrivals || 'carousel', gridHome('New arrivals', 'new', 'Just in', 8, '/collections/new-arrivals')),
-    section('product-grid', look.bestsellers === 'carousel' ? 'carousel' : 'offset', gridHome('Best sellers', 'bestsellers', 'Most loved', 4, '/collections/best-sellers')),
-    section('brand-story', look.story || 'split', { ...BRAND_STORY, image: BRAND.tray, image2: BRAND.leaves }),
-    section('image-banner', 'promo', { ...PROMO, image: look.promoImage || BRAND.bracelet, align: 'left', textColor: 'dark', overlay: 0, height: 'medium' }),
+    section('trust-badges', 'pillars', {
+      eyebrow: 'Why Evermoon',
+      heading: 'Made to be worn',
+      items: WHY_CHOOSE,
+    }),
+    section('image-text', 'studio', {
+      ...BRAND_INTRO,
+      image: intro,
+      image2: IMG.crescent1,
+      imagePosition: 'left',
+    }),
     section('testimonials', look.reviews || 'cards', {
       eyebrow: 'Studio notes',
       heading: 'Three voices from the styling desk',
       items: TESTIMONIALS.slice(0, 3),
     }),
-    section('newsletter', 'centered', NEWSLETTER),
+    section('image-banner', 'locations', {
+      eyebrow: 'Visit',
+      heading: 'The Gulberg atelier',
+      body: 'Private appointments for sizing, engraving and bridal. We also deliver across Pakistan.',
+      ctaLabel: 'Book an appointment',
+      ctaLink: '/contact',
+      image: LOOK.atelier,
+    }),
+    section('newsletter', 'card', NEWSLETTER),
+    section('image-banner', 'finale', { ...FINALE, image: promo }),
   ];
 }
 

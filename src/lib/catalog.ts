@@ -249,8 +249,43 @@ export async function getCardsByIds(ids: number[]) {
   return ids.map((id) => cards.find((c) => c.id === id)).filter((c): c is CardProduct => !!c);
 }
 
+/** One product read per request, shared by the homepage rails. */
+const loadActiveCards = cache(async () => {
+  const db = await getDb();
+  const rows = await db.select().from(products).where(eq(products.status, 'active'));
+  const cards = await hydrateCards(rows);
+  const meta = new Map(rows.map((r) => [r.id, r]));
+  return cards.map((card) => ({ card, row: meta.get(card.id)! }));
+});
+
+function take(items: { card: CardProduct; row: typeof products.$inferSelect }[], limit: number) {
+  return items.slice(0, limit).map((x) => x.card);
+}
+
 export async function getProductsForSection(settings: { source?: string; collection?: string; category?: string; products?: string[]; limit?: number }) {
   const limit = Math.min(16, Math.max(1, Number(settings.limit) || 8));
+  if (settings.source === 'new' || settings.source === 'featured' || settings.source === 'bestsellers') {
+    const all = await loadActiveCards();
+    if (settings.source === 'new') {
+      return take([...all].sort((a, b) => +b.row.createdAt - +a.row.createdAt), limit);
+    }
+    if (settings.source === 'featured') {
+      const loved = new Set(all.filter((x) => (x.row.badges ?? []).includes('bestseller')).map((x) => x.card.id));
+      const pool = all.filter((x) => x.row.featured);
+      const fresh = pool.filter((x) => !loved.has(x.card.id));
+      const picked = fresh.length >= 4 ? fresh : pool;
+      return take(picked.sort((a, b) => b.row.salesCount - a.row.salesCount || a.row.name.localeCompare(b.row.name)), limit);
+    }
+    const loved = all.filter((x) => (x.row.badges ?? []).includes('bestseller'));
+    if (loved.length) {
+      return take(loved.sort((a, b) => b.row.salesCount - a.row.salesCount || b.row.ratingCount - a.row.ratingCount || a.row.name.localeCompare(b.row.name)), limit);
+    }
+    const newestIds = new Set([...all].sort((a, b) => +b.row.createdAt - +a.row.createdAt).slice(0, 8).map((x) => x.card.id));
+    return take(
+      all.filter((x) => !newestIds.has(x.card.id)).sort((a, b) => Number(b.row.featured) - Number(a.row.featured) || b.row.price - a.row.price),
+      limit,
+    );
+  }
   switch (settings.source) {
     case 'manual':
       return getCardsBySlugs((settings.products ?? []).slice(0, limit));

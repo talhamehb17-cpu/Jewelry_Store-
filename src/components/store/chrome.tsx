@@ -59,13 +59,30 @@ export function RevealObserver() {
   return null;
 }
 
-type ThemeChip = { id: string; name: string; tagline: string; swatch: string[] };
+type ThemeChip = { id: string; name: string; tagline: string; swatch: string[]; desktop: Record<string, string>; mobile: Record<string, string> };
+
+function paintTheme(chip: ThemeChip) {
+  const root = document.documentElement;
+  const vars = window.innerWidth < 768 ? { ...chip.desktop, ...chip.mobile } : chip.desktop;
+  for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
+  root.dataset.themePaint = chip.id;
+}
 
 export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip[]; current: string; activeId: string }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [inFrame, setInFrame] = useState(false);
   useEffect(() => setInFrame(window.self !== window.top && document.referrer.includes('/admin')), []);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (root.dataset.themePaint !== current) return;
+    const style = root.style;
+    for (let i = style.length - 1; i >= 0; i--) {
+      const key = style.item(i);
+      if (key.startsWith('--')) style.removeProperty(key);
+    }
+    delete root.dataset.themePaint;
+  }, [current]);
   if (inFrame) return null;
   return (
     <div className="fixed bottom-4 left-4 z-[60] md:bottom-6 md:left-6">
@@ -82,9 +99,11 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
             {themes.map((t) => (
               <li key={t.id}>
                 <button
-                  disabled={pending}
+                  disabled={pending && current === t.id}
                   onClick={() => {
                     const next = t.id === activeId ? null : t.id;
+                    const chip = next ? t : themes.find((x) => x.id === activeId) ?? t;
+                    paintTheme(chip);
                     if (next) localStorage.setItem('aurelle_theme', next);
                     else localStorage.removeItem('aurelle_theme');
                     start(() => setVisitorTheme(next));
