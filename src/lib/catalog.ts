@@ -77,8 +77,7 @@ function scopeConditions(f: ProductFilters): SQL[] {
     else if (c.rule === 'bestsellers') conds.push(sql`(
       ${products.salesCount} > 0
       or (
-        not exists (select 1 from products p2 where p2.status = 'active' and p2.sales_count > 0)
-        and ${products.featured} = true
+        ${products.badges} @> '["bestseller"]'::jsonb
       )
     )`);
   }
@@ -261,7 +260,31 @@ export async function getProductsForSection(settings: { source?: string; collect
       return (await listProducts({ collection: { rule: 'sale' } as Collection, perPage: limit, sort: 'bestselling' })).items;
     case 'featured': {
       const db = await getDb();
-      const rows = await db.select().from(products).where(and(eq(products.status, 'active'), eq(products.featured, true))).orderBy(desc(products.salesCount)).limit(limit);
+      const rows = await db
+        .select()
+        .from(products)
+        .where(and(eq(products.status, 'active'), eq(products.featured, true)))
+        .orderBy(desc(products.salesCount), asc(products.name))
+        .limit(limit);
+      return hydrateCards(rows);
+    }
+    case 'bestsellers': {
+      const db = await getDb();
+      const badgeRows = await db
+        .select()
+        .from(products)
+        .where(and(eq(products.status, 'active'), sql`${products.badges} @> '["bestseller"]'::jsonb`))
+        .orderBy(desc(products.salesCount), desc(products.ratingCount), asc(products.name))
+        .limit(limit);
+      if (badgeRows.length) return hydrateCards(badgeRows);
+      const newest = await db.select({ id: products.id }).from(products).where(eq(products.status, 'active')).orderBy(desc(products.createdAt)).limit(8);
+      const skip = newest.map((r) => r.id);
+      const rows = await db
+        .select()
+        .from(products)
+        .where(and(eq(products.status, 'active'), skip.length ? sql`${products.id} not in ${skip}` : undefined))
+        .orderBy(desc(products.featured), desc(products.price))
+        .limit(limit);
       return hydrateCards(rows);
     }
     case 'collection': {
