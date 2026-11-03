@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, Phone, CalendarDays, Plus, Minus } from 'lucide-react';
 import { useStore } from './providers';
+import { CurrencySwitcher } from './currency-context';
 import { Drawer } from '@/components/ui/overlay';
 import { Img } from '@/components/ui/img';
 import { BRAND } from '@/lib/brand';
@@ -126,6 +127,7 @@ function Icons({ textLabels, user, compact }: { textLabels?: boolean; user: Head
   const btn = 'relative grid h-10 w-10 place-items-center rounded-full transition hover:opacity-60';
   return (
     <div className={cn('flex items-center', compact ? 'gap-0' : 'gap-1')}>
+      <CurrencySwitcher compact />
       <button onClick={() => setSearchOpen(true)} className={btn} aria-label="Search">
         <Search size={19} strokeWidth={SW} />
       </button>

@@ -28,15 +28,15 @@ type Slide = {
 const HEIGHT = { medium: '62vh', large: '86vh', full: '100svh' } as const;
 const MOBILE_H = { auto: 'auto', '60': '60svh', '75': '75svh', '90': '90svh', '100': '100svh' } as const;
 
-function Media({ s, priority, sizes = '100vw', className }: { s: Slide; priority?: boolean; sizes?: string; className?: string }) {
+function Media({ s, priority, sizes = '100vw', className, slot }: { s: Slide; priority?: boolean; sizes?: string; className?: string; slot?: 'hero' | 'mobile' }) {
   return (
     <>
       {s.video ? (
         <video className={cn('absolute inset-0 h-full w-full object-cover', className)} src={s.video} poster={s.image} autoPlay muted loop playsInline preload="metadata" aria-hidden />
       ) : (
         <>
-          <Img src={publicImage(s.image, LOOK.hero)} alt={s.heading ?? ''} priority={priority} sizes={sizes} className={cn('slide-img', s.mobileImage && 'max-md:hidden', className)} />
-          {s.mobileImage && <Img src={publicImage(s.mobileImage, LOOK.hero)} alt="" priority={priority} sizes="100vw" className={cn('slide-img md:hidden', className)} />}
+          <Img slot={slot} src={publicImage(s.image, LOOK.hero)} alt={s.heading ?? ''} priority={priority} sizes={sizes} className={cn('slide-img', s.mobileImage && 'max-md:hidden', className)} />
+          {s.mobileImage && <Img slot={slot ? 'mobile' : undefined} src={publicImage(s.mobileImage, LOOK.hero)} alt="" priority={priority} sizes="100vw" className={cn('slide-img md:hidden', className)} />}
         </>
       )}
     </>
@@ -106,7 +106,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
       return (
         <section className="grid border-b border-line md:min-h-[var(--hero-h)] md:grid-cols-2" style={vars}>
           <div className="relative order-1 aspect-[4/5] max-h-[68svh] overflow-hidden bg-surface md:order-2 md:aspect-auto md:max-h-none">
-            <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" />
+            <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" slot="hero" />
           </div>
           <div className="order-2 flex items-center px-[var(--pad-x)] py-14 md:order-1 md:px-[max(var(--pad-x),5vw)]">
             <div className="max-w-xl">
@@ -137,7 +137,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
               <div className="absolute -left-6 top-10 hidden h-28 w-28 rounded-full border border-primary/30 md:block" />
               <div className="absolute -bottom-6 -right-4 h-40 w-40 rounded-full bg-secondary/70 blur-2xl" />
               <div className="arch relative aspect-[4/5] overflow-hidden bg-bg shadow-[0_40px_80px_-50px_rgba(120,60,70,.55)]">
-                <Media s={first} priority sizes="(max-width:768px) 90vw, 520px" />
+                <Media s={first} priority sizes="(max-width:768px) 90vw, 520px" slot="hero" />
               </div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
           <FadeSlider autoplay={st.autoplay !== false} interval={st.interval} dots="lines" arrows={false}>
             {slides.map((s, k) => (
               <div key={k} className="relative h-full w-full">
-                <Media s={s} priority={k === 0} />
+                <Media s={s} priority={k === 0} slot={k === 0 ? "hero" : undefined} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40" style={{ opacity: Math.min(1, ((s.overlay ?? 45) + 30) / 100) }} />
                 <div className="container-x relative flex h-full items-end pb-24 md:pb-28">
                   <div className="max-w-4xl text-white">
@@ -175,7 +175,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
         <section className="relative overflow-hidden" style={vars}>
           <div className="container-x grid gap-4 py-10 md:grid-cols-12 md:gap-6 md:py-14">
             <div className="relative aspect-[3/4] overflow-hidden bg-surface md:col-span-6 md:row-span-2 md:aspect-auto md:min-h-[78vh]">
-              <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" />
+              <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" slot="hero" />
             </div>
             <div className="flex flex-col justify-between md:col-span-6">
               <div className="flex items-start justify-between border-b border-ink pb-3 text-[0.7rem] uppercase tracking-[0.24em]">
@@ -203,7 +203,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
         <section className="container-x pt-8 md:pt-12" style={vars}>
           <div className="relative overflow-hidden border border-line p-2 md:p-3">
             <div className="relative aspect-[4/5] overflow-hidden bg-surface md:aspect-[21/9]">
-              <Media s={first} priority />
+              <Media s={first} priority slot="hero" />
               <div className="absolute inset-4 border border-white/60 md:inset-6" />
             </div>
           </div>
@@ -229,7 +229,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
             )}
           </div>
           <div className="relative aspect-[4/5] overflow-hidden rounded-theme bg-surface md:aspect-[5/4]">
-            <Media s={first} priority sizes="(max-width:768px) 100vw, 60vw" />
+            <Media s={first} priority sizes="(max-width:768px) 100vw, 60vw" slot="hero" />
           </div>
         </section>
       );
@@ -240,7 +240,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
           <FadeSlider autoplay={st.autoplay !== false} interval={st.interval} dots="center" arrows={false}>
             {slides.map((s, k) => (
               <div key={k} className="relative h-full w-full">
-                <Media s={s} priority={k === 0} />
+                <Media s={s} priority={k === 0} slot={k === 0 ? "hero" : undefined} />
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,.05),rgba(0,0,0,.45))]" style={{ opacity: Math.max(0.4, (s.overlay ?? 30) / 50) }} />
                 <div className="container-x relative flex h-full items-center justify-center text-center text-white">
                   <div className="max-w-3xl">
@@ -262,7 +262,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
           <FadeSlider autoplay={st.autoplay !== false} interval={st.interval} dots="center">
             {slides.map((s, k) => (
               <div key={k} className="relative h-full w-full">
-                <Media s={s} priority={k === 0} />
+                <Media s={s} priority={k === 0} slot={k === 0 ? "hero" : undefined} />
                 <div className="absolute inset-0 bg-black" style={{ opacity: (s.overlay ?? 30) / 100 }} />
                 <div className="container-x relative flex h-full items-center">
                   <div className={cn('relative max-w-xl border border-accent/70 bg-black/25 p-8 text-white backdrop-blur-[3px] md:p-12', s.align === 'center' && 'mx-auto text-center', s.align === 'right' && 'ml-auto')}>
@@ -292,7 +292,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
               </div>
             </div>
             <div className="relative aspect-[4/5] overflow-hidden rounded-theme bg-surface md:col-span-2 md:row-span-2 md:aspect-auto">
-              <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" />
+              <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" slot="hero" />
               <span className="absolute bottom-4 left-4 rounded-full bg-bg/90 px-4 py-2 text-[0.78rem] backdrop-blur">New season ↗</span>
             </div>
             <div className="relative hidden overflow-hidden rounded-theme bg-surface md:block"><Img src={publicImage(first.image2, LOOK.editorial)} alt="" sizes="25vw" /></div>
@@ -312,7 +312,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
               const l = (s.textColor ?? 'light') === 'light';
               return (
                 <div key={k} className="relative h-full w-full">
-                  <Media s={s} priority={k === 0} />
+                  <Media s={s} priority={k === 0} slot={k === 0 ? "hero" : undefined} />
                   <div className="absolute inset-0 bg-black" style={{ opacity: (s.overlay ?? 25) / 100 }} />
                   <div className={cn('absolute inset-0', l ? 'bg-gradient-to-r from-black/30 via-transparent to-transparent' : '')} />
                   <div className="container-x relative flex h-full items-center">

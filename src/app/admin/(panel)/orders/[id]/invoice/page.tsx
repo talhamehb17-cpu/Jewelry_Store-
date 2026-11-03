@@ -54,7 +54,7 @@ export default async function Invoice({ params }: { params: Promise<{ id: string
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{formatMoney(o.shippingTotal)}</dd></div>
           <div className="flex justify-between border-t border-[#23201d] pt-2 text-[1rem] font-semibold"><dt>Total (PKR)</dt><dd>{formatMoney(o.total)}</dd></div>
         </dl>
-        <p className="mt-16 border-t border-line pt-5 text-center text-[0.75rem] text-muted">Thank you for choosing Evermoon Jewels. Unworn pieces may be returned within 7 days of delivery.</p>
+        <p className="mt-16 border-t border-line pt-5 text-center text-[0.75rem] text-muted">Thank you for choosing EVERMOON. Unworn pieces may be discussed for return within 7 days of a confirmed delivery. A refund is recorded only when the atelier records one.</p>
       </div>
     </div>
   );

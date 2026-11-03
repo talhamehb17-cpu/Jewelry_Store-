@@ -2,7 +2,7 @@ import { Check, X } from 'lucide-react';
 import { cn, titleCase } from '@/lib/utils';
 import { paymentStatusLabel } from '@/lib/payments';
 
-const STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'] as const;
+const STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'] as const;
 
 export function StatusBadge({ status, kind = 'order' }: { status: string; kind?: 'order' | 'payment' }) {
   const tone: Record<string, string> = {
@@ -12,6 +12,7 @@ export function StatusBadge({ status, kind = 'order' }: { status: string; kind?:
     confirmed: 'bg-sky-50 text-sky-800 border-sky-200',
     processing: 'bg-indigo-50 text-indigo-800 border-indigo-200',
     shipped: 'bg-violet-50 text-violet-800 border-violet-200',
+    out_for_delivery: 'bg-violet-50 text-violet-900 border-violet-200',
     delivered: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     paid: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     cancelled: 'bg-rose-50 text-rose-800 border-rose-200',
@@ -33,7 +34,7 @@ export function OrderTracker({ status }: { status: string }) {
   }
   const idx = STEPS.indexOf(status as (typeof STEPS)[number]);
   return (
-    <ol className="grid grid-cols-5 gap-1" aria-label="Order progress">
+    <ol className="grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label="Order progress">
       {STEPS.map((s, i) => {
         const done = i <= idx;
         return (

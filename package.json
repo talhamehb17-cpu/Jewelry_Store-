@@ -1,8 +1,8 @@
 {
-  "name": "maison-aurelle",
+  "name": "evermoon",
   "version": "1.0.0",
   "private": true,
-  "description": "Maison Aurelle — premium jewelry e-commerce platform with 10 themes, admin panel and visual homepage builder.",
+  "description": "EVERMOON — premium jewellery e-commerce platform with themes, admin panel and visual homepage builder.",
   "engines": {
     "node": "24.x"
   },

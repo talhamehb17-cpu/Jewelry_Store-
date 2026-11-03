@@ -267,6 +267,14 @@ export const inventoryMovements = pgTable(
 /* Orders                                                              */
 /* ------------------------------------------------------------------ */
 
+export type DeliveryPlan = {
+  durationMinutes: number;
+  confirmMinutes: number | null;
+  processingMinutes: number | null;
+  shipMinutes: number | null;
+  outMinutes: number | null;
+};
+
 export type OrderAddress = {
   firstName: string;
   lastName: string;
@@ -288,7 +296,7 @@ export const orders = pgTable(
     email: varchar('email', { length: 255 }).notNull(),
     phone: varchar('phone', { length: 40 }),
     customerName: varchar('customer_name', { length: 200 }).notNull(),
-    status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | confirmed | processing | shipped | delivered | cancelled
+    status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | confirmed | processing | shipped | out_for_delivery | delivered | cancelled
     paymentStatus: varchar('payment_status', { length: 20 }).notNull().default('unpaid'), // unpaid | awaiting | paid | failed | refunded | partially_refunded
     paymentMethod: varchar('payment_method', { length: 30 }).notNull(), // cod | bank | wallet | card
     paymentRef: varchar('payment_ref', { length: 255 }),
@@ -319,6 +327,15 @@ export const orders = pgTable(
     shippedAt: ts('shipped_at'),
     deliveredAt: ts('delivered_at'),
     cancelledAt: ts('cancelled_at'),
+    deliveryCode: varchar('delivery_code', { length: 40 }),
+    deliveryMinutes: integer('delivery_minutes'),
+    expectedAt: ts('expected_at'),
+    timelineStartAt: ts('timeline_start_at'),
+    deliveryConfirmedAt: ts('delivery_confirmed_at'),
+    deliveryResponse: varchar('delivery_response', { length: 20 }),
+    deliveryPlan: jsonb('delivery_plan').$type<DeliveryPlan>(),
+    cancelReason: text('cancel_reason'),
+    customerVisibleNote: text('customer_visible_note'),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
@@ -519,8 +536,10 @@ export const emailLogs = pgTable(
     toEmail: varchar('to_email', { length: 255 }).notNull(),
     subject: varchar('subject', { length: 255 }).notNull(),
     campaignId: integer('campaign_id'),
-    status: varchar('status', { length: 20 }).notNull(), // sent | failed | skipped
+    orderId: integer('order_id'),
+    status: varchar('status', { length: 20 }).notNull(), // sent | failed | skipped | queued
     error: text('error'),
+    attempts: integer('attempts').notNull().default(1),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('email_logs_created_idx').on(t.createdAt), index('email_logs_kind_idx').on(t.kind)],
@@ -537,6 +556,71 @@ export const contactMessages = pgTable('contact_messages', {
   createdAt: ts('created_at').notNull().defaultNow(),
 });
 
+export const deliveryServices = pgTable(
+  'delivery_services',
+  {
+    id: serial('id').primaryKey(),
+    code: varchar('code', { length: 40 }).notNull(),
+    name: varchar('name', { length: 120 }).notNull(),
+    description: text('description').notNull().default(''),
+    price: integer('price').notNull().default(0),
+    durationMinutes: integer('duration_minutes').notNull(),
+    active: boolean('active').notNull().default(true),
+    confirmMinutes: integer('confirm_minutes'),
+    processingMinutes: integer('processing_minutes'),
+    shipMinutes: integer('ship_minutes'),
+    outMinutes: integer('out_minutes'),
+    cutoffNote: text('cutoff_note'),
+    position: integer('position').notNull().default(0),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('delivery_services_code_idx').on(t.code)],
+);
+
+export const storeLocations = pgTable('store_locations', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 160 }).notNull(),
+  city: varchar('city', { length: 100 }).notNull(),
+  country: varchar('country', { length: 80 }).notNull().default('Pakistan'),
+  address: text('address').notNull(),
+  phone: varchar('phone', { length: 40 }),
+  hours: text('hours'),
+  image: text('image'),
+  mapUrl: text('map_url'),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  active: boolean('active').notNull().default(true),
+  showOnHome: boolean('show_on_home').notNull().default(true),
+  position: integer('position').notNull().default(0),
+  createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
+});
+
+export const deliveryIssues = pgTable(
+  'delivery_issues',
+  {
+    id: serial('id').primaryKey(),
+    orderId: integer('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    status: varchar('status', { length: 20 }).notNull().default('open'),
+    note: text('note'),
+    expectedAt: ts('expected_at'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    resolvedAt: ts('resolved_at'),
+    resolvedBy: varchar('resolved_by', { length: 120 }),
+  },
+  (t) => [index('delivery_issues_status_idx').on(t.status)],
+);
+
+export const exchangeRates = pgTable('exchange_rates', {
+  code: varchar('code', { length: 3 }).primaryKey(),
+  perPkr: real('per_pkr').notNull(),
+  source: varchar('source', { length: 40 }).notNull(),
+  fetchedAt: ts('fetched_at').notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;
@@ -550,3 +634,6 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Page = typeof pages.$inferSelect;
 export type Address = typeof addresses.$inferSelect;
+export type DeliveryService = typeof deliveryServices.$inferSelect;
+export type StoreLocation = typeof storeLocations.$inferSelect;
+export type ExchangeRate = typeof exchangeRates.$inferSelect;

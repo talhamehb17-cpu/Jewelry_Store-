@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { catalogMirror, isRemote, isResizableRemote, sizedUrl } from '@/lib/images';
+import { useThemeLive } from '@/components/store/theme-live';
 
 type Props = {
   src: string | null | undefined;
@@ -12,6 +13,7 @@ type Props = {
   className?: string;
   priority?: boolean;
   quality?: number;
+  slot?: 'hero' | 'editorial' | 'story' | 'atelier' | 'finale' | 'mobile';
 };
 
 const WIDTHS = [320, 480, 640, 828, 1080, 1400];
@@ -35,7 +37,9 @@ function Fallback({ alt, className }: { alt: string; className?: string }) {
  * Unsplash photos use a same-origin mirror, then a same-origin proxy, then a visible fallback.
  * A failed remote image never leaves a broken icon or a half-empty frame.
  */
-export function Img({ src, alt, sizes = '100vw', className, priority, quality = 80 }: Props) {
+export function Img({ src: incoming, alt, sizes = '100vw', className, priority, quality = 80, slot }: Props) {
+  const live = useThemeLive();
+  const src = (slot && live?.look?.[slot]) || incoming;
   const [stage, setStage] = useState<'mirror' | 'proxy' | 'direct' | 'fail'>('mirror');
   if (!src || stage === 'fail') return <Fallback alt={alt} className={className} />;
 

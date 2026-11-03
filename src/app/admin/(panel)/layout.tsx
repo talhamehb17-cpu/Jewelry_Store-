@@ -4,11 +4,13 @@ import { AdminShell } from '@/components/admin/shell';
 import { requireAdminPage } from '@/lib/auth';
 import { getDb, getDbKind } from '@/db';
 import { contactMessages, orders, productVariants, reviews } from '@/db/schema';
+import { scheduleProgress } from '@/lib/fulfillment';
 
-export const metadata: Metadata = { title: { default: 'Admin', template: '%s · Evermoon Admin' }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: { default: 'Admin', template: '%s · EVERMOON Admin' }, robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdminPage();
+  scheduleProgress();
   const db = await getDb();
   const [[o], [l], [r], [m], kind] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(orders).where(sql`${orders.status} = 'pending' or ${orders.paymentStatus} = 'awaiting'`),

@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Check, Palette, X, Eye } from 'lucide-react';
+import { flushSync } from 'react-dom';
 import { useStore } from './providers';
 import { setVisitorTheme } from '@/app/actions/store';
+import { useThemeLive } from './theme-live';
 import { cn } from '@/lib/utils';
 
 export function Toaster() {
@@ -59,18 +61,26 @@ export function RevealObserver() {
   return null;
 }
 
-type ThemeChip = { id: string; name: string; tagline: string; swatch: string[]; desktop: Record<string, string>; mobile: Record<string, string> };
+type ThemeChip = { id: string; name: string; tagline: string; swatch: string[]; desktop: Record<string, string>; mobile: Record<string, string>; anim?: string };
 
 function paintTheme(chip: ThemeChip) {
   const root = document.documentElement;
+  const frame = document.querySelector('[data-store-frame]');
+  if (frame instanceof HTMLElement) {
+    frame.dataset.theme = chip.id;
+    if (chip.anim) frame.dataset.anim = chip.anim;
+  }
+  root.dataset.theme = chip.id;
   const vars = window.innerWidth < 768 ? { ...chip.desktop, ...chip.mobile } : chip.desktop;
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
   root.dataset.themePaint = chip.id;
+  document.querySelectorAll('.reveal').forEach((el) => el.classList.add('in-view'));
 }
 
 export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip[]; current: string; activeId: string }) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  const live = useThemeLive();
   const [inFrame, setInFrame] = useState(false);
   useEffect(() => setInFrame(window.self !== window.top && document.referrer.includes('/admin')), []);
   useEffect(() => {
@@ -103,6 +113,7 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
                   onClick={() => {
                     const next = t.id === activeId ? null : t.id;
                     const chip = next ? t : themes.find((x) => x.id === activeId) ?? t;
+                    if (live) flushSync(() => live.setThemeId(chip.id as never));
                     paintTheme(chip);
                     if (next) localStorage.setItem('aurelle_theme', next);
                     else localStorage.removeItem('aurelle_theme');

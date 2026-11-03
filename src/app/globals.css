@@ -631,7 +631,7 @@ input[type='radio'].checkbox:checked::after {
   transition-delay: var(--d, 0ms);
 }
 .js .reveal:not(.in-view) {
-  opacity: 0;
+  opacity: 1;
 }
 .js [data-anim='fade-up'] .reveal:not(.in-view) {
   transform: translateY(28px);
@@ -640,7 +640,7 @@ input[type='radio'].checkbox:checked::after {
   transform: scale(0.965);
 }
 .js [data-anim='reveal'] .reveal:not(.in-view) {
-  clip-path: inset(0 0 100% 0);
+  clip-path: none;
   opacity: 1;
 }
 .js [data-anim='rise'] .reveal:not(.in-view) {

@@ -12,6 +12,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { Img } from '@/components/ui/img';
 import { ClearCartOnMount } from '@/components/store/clear-cart';
+import { GuestCancel } from '@/components/store/guest-cancel';
 
 export const metadata: Metadata = { title: 'Order confirmed', robots: { index: false } };
 
@@ -47,11 +48,11 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
           <CheckCircle2 size={48} strokeWidth={1} className="mx-auto text-accent" />
           <p className="eyebrow mt-6">Order {order.number}</p>
           <h1 className="t-1 mt-3">Thank you, {order.customerName.split(' ')[0]}</h1>
-          <p className="mx-auto mt-4 max-w-lg text-muted">Your order has been received{paid ? ' and paid' : ''}. We’ve sent a confirmation to <span className="text-ink">{order.email}</span>.</p>
+          <p className="mx-auto mt-4 max-w-lg text-muted">Your order has been received{paid ? ' and paid' : ''}. A confirmation is sent to <span className="text-ink">{order.email}</span> only if the mailbox accepts it. The order is saved either way.</p>
         </div>
 
         <div className="mt-10 rounded-theme border border-line p-6 md:p-8">
-          {order.paymentMethod === 'cod' && <p className="flex gap-3 text-[0.92rem]"><Banknote size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span>Please keep <strong>{formatMoney(order.total)}</strong> ready in cash for the courier. Our team may call {order.phone} to confirm your order before dispatch.</span></p>}
+          {order.paymentMethod === 'cod' && <p className="flex gap-3 text-[0.92rem]"><Banknote size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span>Please keep <strong>{formatMoney(order.total)} PKR</strong> ready in cash. This is the amount to pay. A currency shown elsewhere on the site is only a display estimate.</span></p>}
           {order.paymentMethod === 'bank' && !paid && (
             <div className="flex gap-3 text-[0.92rem]"><Landmark size={20} strokeWidth={1.25} className="shrink-0 text-accent" />
               <div>
@@ -92,7 +93,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
               {order.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{order.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(order.campaignDiscount)}</dd></div>}
               {order.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {order.discountCode && `(${order.discountCode})`}</dt><dd>−{formatMoney(order.discountTotal)}</dd></div>}
               <div className="flex justify-between"><dt className="text-muted">{order.shippingMethodName}</dt><dd>{order.shippingTotal ? formatMoney(order.shippingTotal) : 'Complimentary'}</dd></div>
-              <div className="flex justify-between border-t border-line pt-3 text-[1rem]"><dt>Total</dt><dd className="font-medium">{formatMoney(order.total)}</dd></div>
+              <div className="flex justify-between border-t border-line pt-3 text-[1rem]"><dt>Total to pay</dt><dd className="font-medium">{formatMoney(order.total)} PKR</dd></div>
             </dl>
           </div>
           <div className="space-y-6 text-[0.9rem]">
@@ -103,9 +104,9 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
             <div>
               <h3 className="label">What happens next</h3>
               <ol className="space-y-2 text-muted">
-                <li>1. We confirm your order{order.paymentMethod === 'cod' ? ' by phone or WhatsApp' : ''}.</li>
-                <li>2. Your pieces are polished, boxed and dispatched.</li>
-                <li>3. You receive a tracking number by email and SMS.</li>
+                <li>1. The order stays Pending until the atelier confirms it{order.paymentMethod === 'cod' ? '. They may call to confirm before dispatch' : ''}.</li>
+                <li>2. You can cancel from your account only while it is Pending.</li>
+                <li>3. A tracking number is added only when the atelier has one. Delivery dates are estimates, not a guarantee.</li>
               </ol>
             </div>
           </div>
@@ -113,6 +114,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Link href="/shop" className="btn btn-primary">Continue shopping</Link>
           {user ? <Link href={`/account/orders/${order.number}`} className="btn btn-secondary">Track this order</Link> : <Link href="/account/register" className="btn btn-secondary">Create an account to track orders</Link>}
+          {sp.token && <GuestCancel number={order.number} token={sp.token} pending={order.status === 'pending'} />}
         </div>
       </div>
     </div>

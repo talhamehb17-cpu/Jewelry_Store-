@@ -6,6 +6,7 @@ import { Logo } from './header';
 import { cn } from '@/lib/utils';
 import type { ThemeFooter, ThemeHeader } from '@/themes/types';
 import type { StoreSettings } from '@/lib/settings';
+import { publicContact } from '@/lib/locations';
 
 type Props = { footer: ThemeFooter; header: ThemeHeader; settings: StoreSettings };
 
@@ -76,13 +77,13 @@ function Payments({ className }: { className?: string }) {
 }
 
 function Contact({ settings, className }: { settings: StoreSettings; className?: string }) {
-  const s = settings.store;
+  const s = publicContact(settings.store);
   return (
     <ul className={cn('space-y-3 text-[0.88rem] opacity-85', className)}>
-      <li className="flex gap-3"><MapPin size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.address}</li>
-      <li className="flex gap-3"><Phone size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a></li>
-      <li className="flex gap-3"><Mail size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><a href={`mailto:${s.email}`}>{s.email}</a></li>
-      <li className="flex gap-3"><Clock size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.hours}</li>
+      {s.address && <li className="flex gap-3"><MapPin size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.address}</li>}
+      {s.phone && <li className="flex gap-3"><Phone size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a></li>}
+      {s.email && <li className="flex gap-3"><Mail size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><a href={`mailto:${s.email}`}>{s.email}</a></li>}
+      {s.hours && <li className="flex gap-3"><Clock size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.hours}</li>}
     </ul>
   );
 }
@@ -182,7 +183,7 @@ export function Footer({ footer, header, settings }: Props) {
             </div>
             {footer.showNewsletter && (
               <div className="mt-16 grid items-center gap-6 border-y border-current/15 py-8 md:grid-cols-2">
-                <p className="font-heading text-xl">Correspondence from the Maison</p>
+                <p className="font-heading text-xl">Letters from EVERMOON</p>
                 <NewsletterForm variant="line" dark />
               </div>
             )}

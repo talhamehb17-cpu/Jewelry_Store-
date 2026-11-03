@@ -19,7 +19,7 @@ export default async function AboutPage() {
     <>
       <section className="border-b border-line">
         <div className="container-x py-10 md:py-14">
-          <p className="eyebrow mb-4">Evermoon Jewels · Lahore</p>
+          <p className="eyebrow mb-4">EVERMOON · Lahore</p>
           <h1 className="t-display max-w-3xl text-balance">{page.title}</h1>
           <p className="mt-5 max-w-xl text-[1.05rem] leading-relaxed text-muted">Wear your little wonder. Pretty jewellery, handpicked and finished to be worn every day.</p>
         </div>
@@ -28,7 +28,7 @@ export default async function AboutPage() {
             <div className="relative mx-auto aspect-[2056/765] w-full max-w-[1680px]">
               <Img
                 src={BRAND.about}
-                alt="Evermoon Jewels — Wear your little wonder. Pretty little things for your everyday."
+                alt="EVERMOON — Wear your little wonder. Pretty little things for your everyday."
                 sizes="(max-width:1680px) 100vw, 1680px"
                 priority
                 className="!object-cover !object-center"
@@ -52,7 +52,7 @@ export default async function AboutPage() {
           <div>
             <div className="prose-aurelle" dangerouslySetInnerHTML={{ __html: renderMarkdown(page.content) }} />
             <dl className="mt-12 grid grid-cols-3 gap-6 border-y border-line py-8">
-              {[['Lahore', 'Designed in Gulberg'], ['18k', 'Gold vermeil'], ['7 days', 'Easy returns']].map(([v, l]) => (
+              {[['Lahore', 'Designed in Lahore'], ['18k', 'Gold vermeil'], ['7 days', 'Returns discussed']].map(([v, l]) => (
                 <div key={l}><dt className="font-heading text-[clamp(1.6rem,4vw,2rem)] leading-none">{v}</dt><dd className="mt-2 text-[0.72rem] uppercase tracking-[0.14em] text-muted">{l}</dd></div>
               ))}
             </dl>

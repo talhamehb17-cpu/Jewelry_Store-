@@ -68,7 +68,20 @@ export async function submitContact(_: ActionResult | null, form: FormData): Pro
   if (!rateLimit(`contact:${await clientIp()}`, 4, 10 * 60_000)) return { ok: false, message: 'Too many messages. Please try again later.' };
   const db = await getDb();
   await db.insert(contactMessages).values({ ...parsed.data, phone: parsed.data.phone || null, subject: parsed.data.subject || null });
-  return { ok: true, message: 'Thank you for reaching out — our client care team will reply within one working day.' };
+  const { sendEmail } = await import('@/lib/email');
+  const { brandEmailLayout } = await import('@/lib/mailer');
+  const mail = await sendEmail(
+    parsed.data.email,
+    'We received your message — EVERMOON',
+    brandEmailLayout('Message received', `<p>Thank you, ${parsed.data.name}. Client care has your note and will reply within one working day when the mailbox is working.</p>`),
+    'contact-confirmation',
+  );
+  return {
+    ok: true,
+    message: mail.sent
+      ? 'Thank you. Your message is saved and a confirmation was accepted by the mail server.'
+      : 'Thank you. Your message is saved. A confirmation email was not accepted — client care still has it.',
+  };
 }
 
 const reviewSchema = z.object({

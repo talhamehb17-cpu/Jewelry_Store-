@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Truck, Gift, ShieldCheck, RefreshCcw, Gem, Sparkles, Lock, Phone, Quote, Plus } from 'lucide-react';
 import { Img } from '@/components/ui/img';
 import { LOOK, publicImage } from '@/lib/look';
-import { getSettings } from '@/lib/settings';
 import { Instagram } from '@/components/ui/brand-icons';
 import { SectionHeading, Stars } from '@/components/ui/bits';
 import { NewsletterForm } from '@/components/store/newsletter-form';
@@ -115,36 +114,19 @@ export async function ImageBannerSection({ section }: Props) {
     </div>
   );
   if (section.variant === 'locations') {
-    const settings = await getSettings();
-    const store = settings.store;
-    const cities = [
-      { city: 'Lahore', note: 'Atelier & express' },
-      { city: 'Karachi', note: 'Express delivery' },
-      { city: 'Islamabad', note: 'Express delivery' },
-      { city: 'Pakistan', note: '3–5 working days' },
-    ];
     return (
       <section className="section-y bg-surface/50">
         <div className="container-x grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
           <div className="reveal relative aspect-[16/10] max-h-[62svh] overflow-hidden bg-bg">
-            <SafeImg src={st.image} fallback={LOOK.atelier} alt="The Evermoon atelier" sizes="(max-width:1024px) 100vw, 58vw" className="!object-cover" />
+            <SafeImg slot="atelier" src={st.image} fallback={LOOK.atelier} alt={st.heading || 'Jewellery still'} sizes="(max-width:1024px) 100vw, 58vw" className="!object-cover" />
           </div>
           <div className="reveal min-w-0">
             {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
             <h2 className="t-1 text-balance">{st.heading}</h2>
             <div className="hairline-gold my-6 w-20" />
-            <p className="text-[1.02rem] leading-relaxed text-muted">{store.address}</p>
-            <p className="mt-2 text-[0.92rem] text-muted">{store.hours}</p>
-            <p className="mt-1 text-[0.92rem]"><a href={`tel:${store.phone.replace(/\s/g, '')}`} className="link-u">{store.phone}</a></p>
-            <ul className="mt-8 grid grid-cols-2 gap-3">
-              {cities.map((c) => (
-                <li key={c.city} className="border border-line bg-bg px-4 py-3">
-                  <span className="block font-heading text-[1.15rem]">{c.city}</span>
-                  <span className="mt-1 block text-[0.68rem] uppercase tracking-[0.14em] text-muted">{c.note}</span>
-                </li>
-              ))}
-            </ul>
-            <Cta label={st.ctaLabel || 'Book an appointment'} link={st.ctaLink || '/contact'} className="mt-8" />
+            {st.body && <p className="text-[1.02rem] leading-relaxed text-muted">{st.body}</p>}
+            <p className="mt-4 text-[0.92rem] text-muted">Store addresses appear only when the atelier adds them. This section does not invent a location.</p>
+            <Cta label={st.ctaLabel || 'Contact'} link={st.ctaLink || '/contact'} className="mt-8" />
           </div>
         </div>
       </section>

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
 import { getDb, getDbKind } from '@/db';
 import { products, orders } from '@/db/schema';
-import { stripeConfigured, emailConfigured } from '@/lib/settings';
+import { stripeConfigured, mailboxConfigured } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ export async function GET() {
       {
         status: 'ok',
         database: { kind: await getDbKind(), connected: true, products: Number(p?.n ?? 0), orders: Number(o?.n ?? 0) },
-        integrations: { stripe: stripeConfigured(), email: emailConfigured() },
+        integrations: { stripe: stripeConfigured(), email: await mailboxConfigured() },
         latencyMs: Date.now() - started,
         time: new Date().toISOString(),
       },

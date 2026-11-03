@@ -6,15 +6,16 @@ import { saveEmailSettingsAction, sendTestEmailAction } from '@/app/actions/admi
 import { Card, Field } from './ui';
 import type { EmailPublic } from '@/lib/mailer';
 
-export function EmailSettingsForm({ initial }: { initial: EmailPublic }) {
+export function EmailSettingsForm({ initial, logs = [] }: { initial: EmailPublic; logs?: { id: number; kind: string; toEmail: string; status: string; error: string | null; createdAt: string }[] }) {
   const [form, setForm] = useState({
     address: initial.address,
-    senderName: initial.senderName || 'Evermoon Jewels',
+    senderName: initial.senderName || 'EVERMOON',
     host: initial.host,
     port: String(initial.port || 587),
     username: initial.username,
     password: '',
     security: initial.security || 'starttls',
+    enabled: initial.enabled !== false,
   });
   const [testTo, setTestTo] = useState(initial.address);
   const [msg, setMsg] = useState<{ ok: boolean; message: string } | null>(null);
@@ -23,10 +24,11 @@ export function EmailSettingsForm({ initial }: { initial: EmailPublic }) {
 
   return (
     <Card title="Email settings" actions={pending ? <Loader2 size={14} className="animate-spin" /> : null}>
-      <p className="mb-4 text-[0.8rem] text-muted">This account sends order updates and promotional letters. For Gmail, use an App Password — never the normal account password. The password is encrypted in the database and is not returned to this page.</p>
+      <p className="mb-4 text-[0.8rem] text-muted">For Gmail, generate an App Password at https://myaccount.google.com/apppasswords after 2-Step Verification is on. Do not enter your normal Gmail password — Gmail rejects that with 535-5.7.8. Spaces are removed. The username must be the full Gmail address. Host smtp.gmail.com, port 587 with STARTTLS, or 465 with SSL. The password is encrypted and is never sent back to this page. Environment variables do not override this mailbox.</p>
+      <p className="mb-4 text-[0.8rem]">Status: {initial.configured && initial.enabled ? 'Saved and enabled' : initial.configured ? 'Saved but turned off' : 'Not configured'}{initial.lastSuccessAt ? ` · last acceptance ${new Date(initial.lastSuccessAt).toLocaleString('en-GB', { timeZone: 'Asia/Karachi' })} PKT` : ''}{initial.lastError ? ` · last error: ${initial.lastError}` : ''}</p>
       {msg && <p className={`mb-4 rounded-md px-3 py-2 text-[0.82rem] ${msg.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>{msg.message}</p>}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Sender email"><input value={form.address} onChange={(e) => set('address', e.target.value)} className="field" placeholder="care@maisonaurelle.pk" autoComplete="off" /></Field>
+        <Field label="Sender email"><input value={form.address} onChange={(e) => set('address', e.target.value)} className="field" placeholder="you@gmail.com" autoComplete="off" /></Field>
         <Field label="Sender name"><input value={form.senderName} onChange={(e) => set('senderName', e.target.value)} className="field" /></Field>
         <Field label="SMTP host"><input value={form.host} onChange={(e) => set('host', e.target.value)} className="field" placeholder="smtp.gmail.com" autoComplete="off" /></Field>
         <Field label="SMTP port"><input value={form.port} onChange={(e) => set('port', e.target.value.replace(/\D/g, ''))} className="field" inputMode="numeric" /></Field>
@@ -34,6 +36,7 @@ export function EmailSettingsForm({ initial }: { initial: EmailPublic }) {
         <Field label={initial.hasPassword ? 'App password (leave blank to keep the saved one)' : 'App password'}>
           <input type="password" value={form.password} onChange={(e) => set('password', e.target.value)} className="field" autoComplete="new-password" placeholder={initial.hasPassword ? '••••••••••••' : ''} />
         </Field>
+        <label className="flex items-center gap-2 text-[0.82rem] sm:col-span-2"><input type="checkbox" checked={form.enabled} onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))} /> Email system enabled</label>
         <Field label="Security">
           <select value={form.security} onChange={(e) => set('security', e.target.value)} className="field">
             <option value="starttls">STARTTLS (port 587)</option>
@@ -54,7 +57,7 @@ export function EmailSettingsForm({ initial }: { initial: EmailPublic }) {
           type="button"
           disabled={pending}
           className="btn btn-primary btn-sm"
-          onClick={() => start(async () => setMsg(await saveEmailSettingsAction({ ...form, port: Number(form.port) || 587, security: form.security as 'starttls' | 'ssl' | 'none' })))}
+          onClick={() => start(async () => setMsg(await saveEmailSettingsAction({ ...form, port: Number(form.port) || 587, security: form.security as 'starttls' | 'ssl' | 'none', enabled: form.enabled })))}
         >
           <Mail size={14} /> Save email settings
         </button>
@@ -68,6 +71,16 @@ export function EmailSettingsForm({ initial }: { initial: EmailPublic }) {
           </button>
         </div>
         <p className="mt-2 text-[0.75rem] text-muted">{initial.configured ? 'A mailbox is saved. The test is a real send — success is shown only if the server accepts it.' : 'Save the mailbox before sending a test.'}</p>
+        {logs.length > 0 && (
+          <ul className="mt-4 space-y-2 text-[0.75rem]">
+            {logs.map((l) => (
+              <li key={l.id} className="border-t border-line pt-2">
+                <span className="font-medium">{l.status}</span> · {l.kind} · {l.toEmail} · {new Date(l.createdAt).toLocaleString('en-GB', { timeZone: 'Asia/Karachi' })}
+                {l.error ? <span className="block text-rose-800">{l.error}</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </Card>
   );

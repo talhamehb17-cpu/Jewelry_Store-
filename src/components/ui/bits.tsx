@@ -1,13 +1,19 @@
+'use client';
+
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatMoney, percentOff } from '@/lib/money';
+import { formatDisplay } from '@/lib/currency-format';
+import { useCurrency } from '@/components/store/currency-context';
 
 export function Price({ price, compareAt, className, saleClass }: { price: number; compareAt?: number | null; className?: string; saleClass?: string }) {
+  const book = useCurrency();
+  const label = (minor: number) => (book && book.code !== 'PKR' ? formatDisplay(minor, book.code, book.rates) : null) ?? formatMoney(minor);
   const sale = !!compareAt && compareAt > price;
   return (
     <span className={cn('inline-flex flex-wrap items-baseline gap-x-2', className)}>
-      <span className={cn(sale && (saleClass ?? 'text-sale'))}>{formatMoney(price)}</span>
-      {sale && <s className="text-[0.85em] text-muted opacity-80">{formatMoney(compareAt)}</s>}
+      <span className={cn(sale && (saleClass ?? 'text-sale'))}>{label(price)}</span>
+      {sale && compareAt && <s className="text-[0.85em] text-muted opacity-80">{label(compareAt)}</s>}
     </span>
   );
 }

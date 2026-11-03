@@ -23,7 +23,7 @@ export function section(
 /* ----------------------------- shared copy ----------------------------- */
 
 export const HERO_PRIMARY = {
-  eyebrow: 'Evermoon Jewels',
+  eyebrow: 'EVERMOON',
   heading: 'Wear your little wonder.',
   subheading: 'Pretty little things for your everyday. Handpicked jewellery, finished to be worn — not saved for later.',
   primaryLabel: 'Shop the collection',
@@ -57,7 +57,7 @@ export const HERO_BRIDAL = {
 export const BRAND_INTRO = {
   eyebrow: 'Our story',
   heading: 'A studio table, then a house.',
-  body: 'Evermoon began in Gulberg with a simple idea: jewellery should feel like a little wonder you wear, not a piece you lock away. Gold vermeil, freshwater pearls and quiet stones — finished to be gifted, layered and lived in.',
+  body: 'EVERMOON began with a simple idea: jewellery should feel like a little wonder you wear, not a piece you lock away. Gold vermeil, freshwater pearls and quiet stones — finished to be gifted, layered and lived in.',
   ctaLabel: 'Read our story',
   ctaLink: '/about',
   image: LOOK.story,
@@ -73,10 +73,10 @@ export const BRAND_INTRO = {
 export const BRAND_STORY = {
   eyebrow: 'Our story',
   heading: 'A studio table, then a house.',
-  body: 'Evermoon began with a simple idea: jewellery should feel like a little wonder you wear, not a piece you lock away. Designed in Gulberg and finished by hand, our gold vermeil, sterling silver and pearls are made to be gifted, layered and lived in.',
+  body: 'EVERMOON began with a simple idea: jewellery should feel like a little wonder you wear, not a piece you lock away. Designed in Lahore and finished by hand, our gold vermeil, sterling silver and pearls are made to be gifted, layered and lived in.',
   ctaLabel: 'Visit the atelier',
   ctaLink: '/about',
-  signature: 'Evermoon Jewels, Lahore',
+  signature: 'EVERMOON, Lahore',
   image: LOOK.story,
   image2: IMG.elara1,
   stats: [
@@ -195,11 +195,11 @@ export const NEWSLETTER = {
   heading: 'Join the Evermoon Circle',
   body: 'New collections, private sales and styling notes — plus 10% off your first order.',
   buttonLabel: 'Subscribe',
-  disclaimer: 'By subscribing you agree to receive emails from Evermoon Jewels. Unsubscribe anytime.',
+  disclaimer: 'By subscribing you agree to receive emails from EVERMOON. Unsubscribe anytime.',
 };
 
 export const COMPLETE_THE_LOOK = {
-  eyebrow: 'Styled by Aurelle',
+  eyebrow: 'Styled by EVERMOON',
   heading: 'Complete the Look',
   body: 'Layer the Aurelia chain with the Luna crescent, then finish with pearl drops for effortless evening elegance.',
   image: IMG.aurelia2,
@@ -306,7 +306,7 @@ export function buildHome(look: HomeLook): SectionInstance[] {
     }),
     section('image-banner', 'locations', {
       eyebrow: 'Visit',
-      heading: 'The Gulberg atelier',
+      heading: 'The studio',
       body: 'Private appointments for sizing, engraving and bridal. We also deliver across Pakistan.',
       ctaLabel: 'Book an appointment',
       ctaLink: '/contact',

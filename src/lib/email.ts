@@ -6,9 +6,15 @@ import { brandEmailLayout, deliverEmail, emailButton } from './mailer';
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 /** Sends through the admin SMTP account, then Resend if that is the only provider configured. */
-export async function sendEmail(to: string, subject: string, html: string, kind = 'transactional') {
-  const res = await deliverEmail(to, subject, html, { kind });
-  return { sent: res.sent, reason: res.error, via: res.via };
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  kind = 'transactional',
+  meta: { orderId?: number; force?: boolean; campaignId?: number | null } = {},
+) {
+  const res = await deliverEmail(to, subject, html, { kind, ...meta });
+  return { sent: res.sent, reason: res.error, via: res.via, status: res.status };
 }
 
 export function orderConfirmationEmail(order: Order, items: OrderItem[], link: string) {
@@ -24,7 +30,8 @@ export function orderConfirmationEmail(order: Order, items: OrderItem[], link: s
   return brandEmailLayout(
     `Thank you, ${esc(order.customerName.split(' ')[0] || 'there')}`,
     `<p>We’ve received order <strong>${esc(order.number)}</strong>. The atelier will prepare it with care.</p>
-     <p style="color:#8A7F74;font-size:13px">Payment: ${esc(pay)} · ${esc(order.shippingMethodName)}</p>
+     <p style="color:#8A7F74;font-size:13px">Payment: ${esc(pay)} · ${esc(order.shippingMethodName)} · payable ${formatMoney(order.total)} PKR</p>
+     <p style="color:#8A7F74;font-size:13px">Delivery timing on the site is an estimate, not a guarantee. You can cancel from your account only while the order is Pending.</p>
      ${order.campaignDiscount ? `<p>Includes ${esc(order.campaignName || 'event sale')} savings of ${formatMoney(order.campaignDiscount)}.</p>` : ''}
      <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:14px">${rows}
        ${order.discountTotal ? `<tr><td style="padding:8px 0">Discount${order.discountCode ? ` (${esc(order.discountCode)})` : ''}</td><td style="text-align:right">−${formatMoney(order.discountTotal)}</td></tr>` : ''}
@@ -39,6 +46,7 @@ const STATUS_COPY: Record<string, string> = {
   confirmed: 'Your order is confirmed.',
   processing: 'Your order is being finished and packed.',
   shipped: 'Your order is on its way.',
+  out_for_delivery: 'Your order is out for delivery.',
   delivered: 'Your order has been delivered.',
   cancelled: 'Your order has been cancelled.',
   paid: 'Your payment has been confirmed.',
@@ -65,7 +73,7 @@ export function resetEmail(link: string) {
 export function testEmailHtml() {
   return brandEmailLayout(
     'Your email settings work',
-    `<p>This is a real message from the Evermoon Jewels atelier account. Order updates and promotional letters will be sent from this address.</p>${emailButton(siteUrl(), 'VISIT THE STORE')}`,
+    `<p>This is a real message from EVERMOON. It was accepted by the mail server. Check the inbox and the spam folder.</p>${emailButton(siteUrl(), 'VISIT THE STORE')}`,
   );
 }
 

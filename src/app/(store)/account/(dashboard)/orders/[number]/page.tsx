@@ -9,6 +9,8 @@ import { requireUser } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { OrderTracker, StatusBadge } from '@/components/store/order-status';
+import { CancelOrder } from '@/components/store/cancel-order';
+import { getSettings } from '@/lib/settings';
 import { Img } from '@/components/ui/img';
 
 export const metadata: Metadata = { title: 'Order details', robots: { index: false } };
@@ -18,6 +20,7 @@ const PM = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash /
 export default async function OrderDetail({ params }: { params: Promise<{ number: string }> }) {
   const { number } = await params;
   const user = await requireUser(`/account/orders/${number}`);
+  const settings = await getSettings();
   const db = await getDb();
   const [o] = await db.select().from(orders).where(and(eq(orders.number, number), eq(orders.userId, user.id))).limit(1);
   if (!o) notFound();
@@ -37,6 +40,8 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
         <div className="flex gap-2"><StatusBadge status={o.status} /><StatusBadge status={o.paymentStatus} kind="payment" /></div>
       </div>
       <div className="rounded-theme border border-line p-6"><OrderTracker status={o.status} /></div>
+      <CancelOrder orderId={o.id} pendingStatus={o.status === 'pending'} phone={settings.store.phone} email={settings.store.email} />
+      {o.expectedAt && <p className="text-[0.85rem] text-muted">Expected by {formatDateTime(o.expectedAt)} PKT · {o.shippingMethodName}. This is an estimate, not a guarantee. You pay {formatMoney(o.total)} PKR.</p>}
       {o.trackingNumber && (
         <p className="flex items-center gap-3 rounded-theme-sm bg-surface px-4 py-3 text-[0.9rem]"><Truck size={18} strokeWidth={1.25} className="text-accent" /> Shipped with {o.trackingCarrier} · Tracking number <span className="font-mono">{o.trackingNumber}</span></p>
       )}

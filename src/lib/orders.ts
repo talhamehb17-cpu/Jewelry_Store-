@@ -3,6 +3,7 @@ import { and, eq, gte, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { discountUsages, discounts, inventoryMovements, orderEvents, orderItems, orders, products, productVariants, type Order, type OrderAddress } from '@/db/schema';
 import { buildQuote, type CartLineInput } from './pricing';
+import { deliveryServiceByCode, planFromService } from './delivery';
 
 export class OrderError extends Error {}
 
@@ -46,6 +47,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   if (!quote.lines.length) throw new OrderError('Your bag is empty or the items are no longer available.');
   if (input.discountCode && quote.discountError) throw new OrderError(quote.discountError);
   const db = await getDb();
+  const service = await deliveryServiceByCode(quote.shippingMethod);
+  const plan = service ? planFromService(service) : null;
 
   return db.transaction(async (tx) => {
     // Reserve stock atomically — fails if any variant no longer has enough units.
@@ -58,7 +61,9 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       if (!updated.length) throw new OrderError(`Sorry — ${l.name}${l.variantTitle ? ` (${l.variantTitle})` : ''} just sold out. Please review your bag.`);
       l.stock = updated[0]!.stock;
     }
-    const methodName = quote.shippingMethods.find((m) => m.id === quote.shippingMethod)?.name ?? 'Standard Delivery';
+    const methodName = quote.shippingMethods.find((m) => m.id === quote.shippingMethod)?.name ?? service?.name ?? 'Standard Delivery';
+    const placedAt = new Date();
+    const clockStarts = input.paymentMethod === 'cod';
     const [order] = await tx
       .insert(orders)
       .values({
@@ -86,9 +91,14 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         campaignName: quote.campaign?.name ?? null,
         campaignDiscount: quote.campaign?.amount ?? 0,
         customerNote: input.customerNote || null,
+        deliveryCode: service?.code ?? quote.shippingMethod,
+        deliveryMinutes: plan?.durationMinutes ?? null,
+        deliveryPlan: plan,
+        timelineStartAt: clockStarts ? placedAt : null,
+        expectedAt: clockStarts && plan ? new Date(placedAt.getTime() + plan.durationMinutes * 60_000) : null,
       })
       .returning();
-    const number = `AUR-${10000 + order!.id}`;
+    const number = `EM-${10000 + order!.id}`;
     await tx.update(orders).set({ number }).where(eq(orders.id, order!.id));
     await tx.insert(orderItems).values(
       quote.lines.map((l) => ({
@@ -163,6 +173,10 @@ export async function markOrderPaid(orderId: number, opts: { actor: string; ref?
       paymentRef: opts.ref ?? o.paymentRef,
       paymentIntentId: opts.paymentIntentId ?? o.paymentIntentId,
       status: o.status === 'pending' ? 'confirmed' : o.status,
+      timelineStartAt: o.timelineStartAt ?? (o.paymentMethod === 'cod' ? o.createdAt : new Date()),
+      expectedAt:
+        o.expectedAt ??
+        (o.deliveryMinutes ? new Date(Date.now() + o.deliveryMinutes * 60_000) : null),
       updatedAt: new Date(),
     })
     .where(eq(orders.id, orderId))
@@ -171,23 +185,37 @@ export async function markOrderPaid(orderId: number, opts: { actor: string; ref?
   return updated;
 }
 
+export const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'] as const;
+
 export const STATUS_FLOW: Record<string, string[]> = {
   pending: ['confirmed', 'processing', 'cancelled'],
-  confirmed: ['processing', 'shipped', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
-  shipped: ['delivered', 'cancelled'],
-  delivered: [],
+  confirmed: ['processing', 'shipped', 'out_for_delivery', 'cancelled'],
+  processing: ['shipped', 'out_for_delivery', 'cancelled'],
+  shipped: ['out_for_delivery', 'delivered', 'cancelled'],
+  out_for_delivery: ['delivered', 'cancelled'],
+  delivered: ['cancelled'],
   cancelled: [],
 };
 
-export async function changeOrderStatus(orderId: number, status: string, actor: string, extra: { carrier?: string; tracking?: string; note?: string } = {}) {
+export async function changeOrderStatus(
+  orderId: number,
+  status: string,
+  actor: string,
+  extra: { carrier?: string; tracking?: string; note?: string; reason?: string; force?: boolean; customerNote?: string } = {},
+) {
   const db = await getDb();
   const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
   if (!o) throw new OrderError('Order not found.');
   if (o.status === status) return o;
-  if (!(STATUS_FLOW[o.status] ?? []).includes(status)) throw new OrderError(`Cannot move an order from “${o.status}” to “${status}”.`);
+  if (!ORDER_STATUSES.includes(status as (typeof ORDER_STATUSES)[number])) throw new OrderError('Unknown order status.');
+  if (status === 'cancelled' && !extra.reason && !extra.note && actor !== 'customer' && actor !== 'system') {
+    throw new OrderError('Enter a cancellation reason.');
+  }
+  const allowed = extra.force || (STATUS_FLOW[o.status] ?? []).includes(status);
+  if (!allowed) throw new OrderError(`Cannot move an order from “${o.status}” to “${status}”.`);
   const now = new Date();
   const patch: Partial<Order> = { status, updatedAt: now };
+  if (extra.customerNote) patch.customerVisibleNote = extra.customerNote.slice(0, 500);
   if (status === 'shipped') {
     patch.shippedAt = now;
     if (extra.carrier) patch.trackingCarrier = extra.carrier;
@@ -200,12 +228,35 @@ export async function changeOrderStatus(orderId: number, status: string, actor: 
       patch.paidAt = now;
     }
   }
-  if (status === 'cancelled') patch.cancelledAt = now;
+  if (status === 'cancelled') {
+    patch.cancelledAt = now;
+    patch.cancelReason = (extra.reason || extra.note || 'Cancelled').slice(0, 500);
+  }
   const [updated] = await db.update(orders).set(patch).where(eq(orders.id, orderId)).returning();
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  const label = status.replaceAll('_', ' ');
   const tracking = status === 'shipped' && (extra.tracking || o.trackingNumber) ? ` · ${extra.carrier || o.trackingCarrier || ''} ${extra.tracking || o.trackingNumber}` : '';
-  await addOrderEvent(orderId, 'status', `${label}${tracking}${extra.note ? ` — ${extra.note}` : ''}`, actor);
+  const reason = extra.reason ? ` Reason: ${extra.reason}` : '';
+  await addOrderEvent(orderId, 'status', `${o.status} → ${label}${tracking}${reason}${extra.note ? ` — ${extra.note}` : ''}`, actor);
   if (status === 'delivered' && o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') await addOrderEvent(orderId, 'payment', 'Cash collected on delivery', actor);
   if (status === 'cancelled') await restockOrder(orderId, 'cancel', actor);
-  return updated;
+  return updated!;
+}
+
+/** Guest cancellation from the order link. The token is checked here; status must still be pending. */
+export async function cancelPendingByToken(number: string, token: string) {
+  if (!verifyOrderToken(number, token)) throw new OrderError('This link cannot cancel the order.');
+  const db = await getDb();
+  const [o] = await db.select().from(orders).where(eq(orders.number, number)).limit(1);
+  if (!o) throw new OrderError('Order not found.');
+  if (o.status !== 'pending') throw new OrderError('You can cancel only while the order is still pending. After confirmation, contact client care.');
+  return changeOrderStatus(o.id, 'cancelled', 'customer', { reason: 'Customer cancelled while the order was pending' });
+}
+
+/** Customer cancellation is allowed only while the order is still pending. Enforced here, not only in the UI. */
+export async function cancelPendingOrder(orderId: number, userId: number) {
+  const db = await getDb();
+  const [o] = await db.select().from(orders).where(and(eq(orders.id, orderId), eq(orders.userId, userId))).limit(1);
+  if (!o) throw new OrderError('Order not found.');
+  if (o.status !== 'pending') throw new OrderError('You can cancel from your account only while the order is still pending. After confirmation, contact client care.');
+  return changeOrderStatus(orderId, 'cancelled', 'customer', { reason: 'Customer cancelled while the order was pending' });
 }

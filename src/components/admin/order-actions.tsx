@@ -51,9 +51,12 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
                 </button>
               ))}
               {next.includes('cancelled') && (
-                <button disabled={pending} onClick={() => confirm('Cancel this order and return items to stock?') && run(() => updateOrderStatus(order.id, 'cancelled', { notify }))} className="btn btn-secondary !text-rose-700">
-                  <XCircle size={14} /> Cancel order
-                </button>
+                <div className="mt-2 flex w-full flex-col gap-2 sm:flex-row">
+                  <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Cancellation reason" className="field" />
+                  <button disabled={pending} onClick={() => reason.trim() && run(() => updateOrderStatus(order.id, 'cancelled', { notify, reason }))} className="btn btn-secondary !text-rose-700">
+                    <XCircle size={14} /> Cancel order
+                  </button>
+                </div>
               )}
             </div>
             <label className="mt-3 flex items-center gap-2 text-[0.8rem] text-muted"><input type="checkbox" className="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the customer about this update (when email is configured)</label>
@@ -92,6 +95,15 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
           </details>
         )}
 
+        <div className="border-t border-line pt-5">
+          <p className="label">Admin override</p>
+          <p className="mb-2 text-[0.75rem] text-muted">This records the previous status, the new status, the time and your name. It does not pretend a refund has been paid out.</p>
+          <div className="flex flex-wrap gap-2">
+            {['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'].filter((s) => s !== order.status).map((s) => (
+              <button key={s} type="button" disabled={pending || (s === 'cancelled' && !reason.trim())} className="btn btn-secondary btn-sm" onClick={() => run(() => updateOrderStatus(order.id, s, { notify, reason, force: true, carrier, tracking }))}>Set {s.replaceAll('_', ' ')}</button>
+            ))}
+          </div>
+        </div>
         <div className="border-t border-line pt-5">
           <Field label="Internal note (not visible to customer)"><textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="field" /></Field>
           <button disabled={pending} onClick={() => run(() => saveOrderNote(order.id, note))} className="btn btn-secondary mt-2"><Save size={14} /> Save note</button>

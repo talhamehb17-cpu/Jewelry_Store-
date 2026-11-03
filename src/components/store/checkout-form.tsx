@@ -9,6 +9,7 @@ import { useQuote, FreeShippingBar } from './cart-drawer';
 import { Img } from '@/components/ui/img';
 import { placeOrder } from '@/app/actions/checkout';
 import { formatMoney } from '@/lib/money';
+import { PayLine } from './currency-context';
 import { cn } from '@/lib/utils';
 
 type AccountMethod = { enabled: boolean; accountName: string; accountNumber: string; instructions: string };
@@ -197,7 +198,8 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{quote.shipping === 0 ? 'Complimentary' : formatMoney(quote.shipping)}</dd></div>
           {quote.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatMoney(quote.codFee)}</dd></div>}
           {quote.tax > 0 && <div className="flex justify-between"><dt className="text-muted">{quote.taxLabel}</dt><dd>{formatMoney(quote.tax)}</dd></div>}
-          <div className="flex items-baseline justify-between border-t border-line pt-4 text-[1.1rem]"><dt>Total</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)}</dd></div>
+          <div className="flex items-baseline justify-between border-t border-line pt-4 text-[1.1rem]"><dt>Total to pay</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)} PKR</dd></div>
+          <PayLine minor={quote.total} />
         </dl>
       )}
       {quote && quote.freeShippingRemaining > 0 && <FreeShippingBar remaining={quote.freeShippingRemaining} threshold={quote.freeShippingThreshold} />}

@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   if (!c || c.status !== 'active') return { title: 'Collection not found' };
   return {
     title: c.seoTitle || c.name,
-    description: c.seoDescription || c.description || `Shop the ${c.name} collection at Evermoon Jewels.`,
+    description: c.seoDescription || c.description || `Shop the ${c.name} collection at EVERMOON.`,
     alternates: { canonical: `/collections/${c.slug}` },
     openGraph: { title: c.name, description: c.description ?? undefined, images: c.image ? [{ url: c.image.startsWith('http') ? c.image : absoluteUrl(c.image) }] : undefined },
   };

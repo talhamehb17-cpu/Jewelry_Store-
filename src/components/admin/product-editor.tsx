@@ -215,8 +215,8 @@ export function ProductEditor({ initial, categories, collections, productId }: {
 
           <Card title="Search engine listing">
             <div className="mb-4 rounded-lg bg-secondary/60 p-4">
-              <p className="text-[0.75rem] text-emerald-800">maisonaurelle.pk › products › {slugPreview || 'handle'}</p>
-              <p className="mt-0.5 text-[1.05rem] text-[#1a0dab]">{p.seoTitle || p.name || 'Product title'} · Evermoon Jewels</p>
+              <p className="text-[0.75rem] text-emerald-800">EVERMOON › products › {slugPreview || 'handle'}</p>
+              <p className="mt-0.5 text-[1.05rem] text-[#1a0dab]">{p.seoTitle || p.name || 'Product title'} · EVERMOON</p>
               <p className="mt-0.5 line-clamp-2 text-[0.8rem] text-muted">{p.seoDescription || p.description || 'Add a description to see how this product might appear in search results.'}</p>
             </div>
             <div className="space-y-4">

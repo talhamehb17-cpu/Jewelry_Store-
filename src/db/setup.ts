@@ -26,9 +26,11 @@ export async function migrateAndSeed(db: DB, kind: DbKind, log: (m: string) => v
   const { ensureCatalog } = await import('./catalog-sync');
   const { applyCheckoutMethods } = await import('./checkout-policy');
   const { applyBrandHome } = await import('./brand-sync');
+  const { applyOperations } = await import('./operations-sync');
   await ensureCatalog(db, log);
   await applyCheckoutMethods(db, log);
   await applyBrandHome(db, log);
+  await applyOperations(db, log);
   return { seeded: false };
   }
   const { seedDatabase } = await import('./seed');
@@ -40,8 +42,10 @@ export async function migrateAndSeed(db: DB, kind: DbKind, log: (m: string) => v
   const { ensureCatalog } = await import('./catalog-sync');
   const { applyCheckoutMethods } = await import('./checkout-policy');
   const { applyBrandHome } = await import('./brand-sync');
+  const { applyOperations } = await import('./operations-sync');
   await ensureCatalog(db, log);
   await applyCheckoutMethods(db, log);
   await applyBrandHome(db, log);
+  await applyOperations(db, log);
   return { seeded: true };
 }

@@ -38,3 +38,9 @@ export function stripeConfigured() {
 export function emailConfigured() {
   return !!process.env.RESEND_API_KEY;
 }
+
+export async function mailboxConfigured() {
+  const { getEmailSettingsPublic } = await import('./mailer');
+  const pub = await getEmailSettingsPublic();
+  return pub.configured && pub.enabled;
+}

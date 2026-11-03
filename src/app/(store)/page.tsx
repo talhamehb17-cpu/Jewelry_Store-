@@ -1,4 +1,6 @@
 import { CampaignHome } from '@/components/store/campaign-home';
+import { LocationsSection } from '@/components/store/locations-section';
+import { homeLocations, publicContact } from '@/lib/locations';
 import { SectionRenderer } from '@/components/sections/renderer';
 import { getActiveCampaign } from '@/lib/campaigns';
 import { applyThemeImagery, themeLook } from '@/themes/language';
@@ -15,7 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [ctx, settings, campaign] = await Promise.all([getThemeContext(), getSettings(), getActiveCampaign()]);
+  const [ctx, settings, campaign, locations] = await Promise.all([getThemeContext(), getSettings(), getActiveCampaign(), homeLocations()]);
+  const contact = publicContact(settings.store);
   const org = {
     '@context': 'https://schema.org',
     '@type': 'JewelryStore',
@@ -23,9 +26,9 @@ export default async function HomePage() {
     url: siteUrl(),
     logo: `${siteUrl()}${BRAND.logo}`,
     image: `${siteUrl()}${themeLook(ctx.themeId).hero}`,
-    telephone: settings.store.phone,
-    email: settings.store.email,
-    address: { '@type': 'PostalAddress', streetAddress: '42-C Main Boulevard, Gulberg III', addressLocality: 'Lahore', postalCode: '54660', addressCountry: 'PK' },
+    ...(contact.phone ? { telephone: contact.phone } : {}),
+    ...(contact.email ? { email: contact.email } : {}),
+    ...(contact.address ? { address: { '@type': 'PostalAddress', streetAddress: contact.address, addressCountry: 'PK' } } : {}),
     priceRange: 'Rs 6,800 – Rs 185,000',
     sameAs: Object.values(settings.social).filter(Boolean),
   };
@@ -46,6 +49,7 @@ export default async function HomePage() {
       {hero && <SectionRenderer sections={[hero]} config={ctx.config} />}
       {campaign && <CampaignHome campaign={campaign} card={ctx.config.settings.layout.cardVariant} />}
       <SectionRenderer sections={rest} config={ctx.config} />
+      <LocationsSection locations={locations} />
     </>
   );
 }

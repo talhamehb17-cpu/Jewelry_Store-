@@ -1,4 +1,12 @@
+import { cookies } from 'next/headers';
 import { CampaignBanner } from '@/components/store/campaign-banner';
+import { CurrencyProvider } from '@/components/store/currency-context';
+import { ThemeLiveProvider } from '@/components/store/theme-live';
+import { DeliveryPrompt } from '@/components/store/delivery-prompt';
+import { CURRENCY_COOKIE, getRateBook, isCurrency } from '@/lib/currency';
+import { ordersAwaitingDeliveryConfirmation, scheduleProgress } from '@/lib/fulfillment';
+import { themeLook } from '@/themes/language';
+import { THEME_IDS } from '@/themes/types';
 import { getActiveCampaign } from '@/lib/campaigns';
 import { StoreProvider } from '@/components/store/providers';
 import { Header } from '@/components/store/header';
@@ -16,7 +24,20 @@ import { themeCssVars, themeStyleTag, themeName } from '@/themes/engine';
 import { THEME_LIST } from '@/themes/presets';
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const [ctx, settings, user, collections, campaign] = await Promise.all([getThemeContext(), getSettings(), getCurrentUser(), getCollections(), getActiveCampaign()]);
+  const [ctx, settings, user, collections, campaign, book, jar] = await Promise.all([
+    getThemeContext(),
+    getSettings(),
+    getCurrentUser(),
+    getCollections(),
+    getActiveCampaign(),
+    getRateBook(),
+    cookies(),
+  ]);
+  const picked = jar.get(CURRENCY_COOKIE)?.value;
+  const code = isCurrency(picked) && (picked === 'PKR' || (book.rates[picked] ?? 0) > 0) ? picked : 'PKR';
+  const looks = Object.fromEntries(THEME_IDS.map((id) => [id, themeLook(id)]));
+  scheduleProgress();
+  const promptOrder = user ? (await ordersAwaitingDeliveryConfirmation(user.id))[0] : null;
   const s = ctx.config.settings;
   const mega = collections
     .filter((c) => c.featured)
@@ -24,13 +45,15 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     .map((c) => ({ title: c.name, image: c.image, href: `/collections/${c.slug}` }));
   const chips = THEME_LIST.map((t) => {
     const vars = themeCssVars(t.settings);
-    return { id: t.id, name: t.name, tagline: t.tagline, swatch: [t.settings.colors.background, t.settings.colors.surface, t.settings.colors.primary, t.settings.colors.accent], desktop: vars.desktop, mobile: vars.mobile };
+    return { id: t.id, name: t.name, tagline: t.tagline, swatch: [t.settings.colors.background, t.settings.colors.surface, t.settings.colors.primary, t.settings.colors.accent], desktop: vars.desktop, mobile: vars.mobile, anim: t.settings.animation.style };
   });
 
   return (
+    <CurrencyProvider value={{ code, rates: book.rates, fetchedAt: book.fetchedAt, source: book.source }}>
+    <ThemeLiveProvider initialId={ctx.themeId} looks={looks}>
     <StoreProvider loggedIn={!!user}>
       <style dangerouslySetInnerHTML={{ __html: themeStyleTag(s) }} />
-      <div data-theme={ctx.themeId} data-anim={s.animation.style} data-btn-style={s.buttons.style} data-btn-hover={s.buttons.hover} className="flex min-h-screen flex-col">
+      <div data-store-frame data-theme={ctx.themeId} data-anim={s.animation.style} data-btn-style={s.buttons.style} data-btn-hover={s.buttons.hover} className="flex min-h-screen flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-bg focus:px-4 focus:py-2">Skip to content</a>
         {ctx.isPreview && <PreviewBanner themeName={themeName(ctx.themeId)} mode={ctx.mode} />}
         {campaign && <CampaignBanner campaign={{ name: campaign.name, percent: campaign.percent, endsAt: campaign.endsAt.toISOString(), href: campaign.ctaHref || '/shop' }} />}
@@ -53,7 +76,21 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <LivePreviewBridge />
         <ThemeSync loggedIn={!!user} />
         {ctx.visitorSwitcher && <ThemeSwitcher themes={chips} current={ctx.themeId} activeId={ctx.activeThemeId} />}
+        {promptOrder && (
+          <DeliveryPrompt
+            order={{
+              id: promptOrder.id,
+              number: promptOrder.number,
+              expectedAt: promptOrder.expectedAt!.toISOString(),
+              total: promptOrder.total,
+              shippingMethodName: promptOrder.shippingMethodName,
+              summary: promptOrder.customerName,
+            }}
+          />
+        )}
       </div>
     </StoreProvider>
+    </ThemeLiveProvider>
+    </CurrencyProvider>
   );
 }

@@ -168,7 +168,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
       { id: 'heritage', label: 'Heritage' },
     ],
     fields: [eyebrow, heading, { key: 'body', label: 'Text', type: 'textarea' }, { key: 'image', label: 'Image', type: 'image' }, { key: 'image2', label: 'Secondary image', type: 'image' }, { key: 'signature', label: 'Signature line', type: 'text' }, ...cta],
-    defaults: () => ({ eyebrow: 'Our Philosophy', heading: 'Made to Be Remembered', body: 'Our jewelry is crafted to celebrate beauty, confidence, and life’s most meaningful moments.', image: IMG.aurelia2, image2: '', signature: 'Evermoon Jewels', ctaLabel: 'Our Story', ctaLink: '/about' }),
+    defaults: () => ({ eyebrow: 'Our Philosophy', heading: 'Made to Be Remembered', body: 'Our jewelry is crafted to celebrate beauty, confidence, and life’s most meaningful moments.', image: IMG.aurelia2, image2: '', signature: 'EVERMOON', ctaLabel: 'Our Story', ctaLink: '/about' }),
   },
   'image-banner': {
     label: 'Image Banner',
@@ -214,7 +214,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
       { key: 'products', label: 'Products in the look', type: 'products' },
       { key: 'hotspots', label: 'Hotspots', type: 'list', itemLabel: 'Hotspot', fields: [{ key: 'product', label: 'Product', type: 'product' }, { key: 'x', label: 'Horizontal position (%)', type: 'range', min: 0, max: 100 }, { key: 'y', label: 'Vertical position (%)', type: 'range', min: 0, max: 100 }] },
     ],
-    defaults: () => ({ eyebrow: 'Styled by Aurelle', heading: 'Complete the Look', body: '', image: IMG.aurelia2, products: ['aurelia-gold-necklace', 'celeste-pearl-earrings'], hotspots: [] }),
+    defaults: () => ({ eyebrow: 'Styled by EVERMOON', heading: 'Complete the Look', body: '', image: IMG.aurelia2, products: ['aurelia-gold-necklace', 'celeste-pearl-earrings'], hotspots: [] }),
   },
   testimonials: {
     label: 'Testimonials',
@@ -237,7 +237,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
       { id: 'strip', label: 'Scrolling strip' },
     ],
     fields: [heading, { key: 'handle', label: 'Handle', type: 'text' }, { key: 'link', label: 'Profile link', type: 'url' }, { key: 'images', label: 'Images', type: 'images' }],
-    defaults: () => ({ heading: 'Worn with Aurelle', handle: '@maisonaurelle', link: 'https://instagram.com/', images: INSTAGRAM_IMAGES }),
+    defaults: () => ({ heading: 'Worn with EVERMOON', handle: 'EVERMOON', link: 'https://instagram.com/', images: INSTAGRAM_IMAGES }),
   },
   newsletter: {
     label: 'Newsletter',

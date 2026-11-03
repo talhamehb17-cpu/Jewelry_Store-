@@ -4,7 +4,7 @@ import { requireAdminPage } from '@/lib/auth';
 import { PageHeader } from '@/components/admin/ui';
 import { SettingsForms } from '@/components/admin/settings-forms';
 import { EmailSettingsForm } from '@/components/admin/email-settings';
-import { getEmailSettingsPublic } from '@/lib/mailer';
+import { getEmailSettingsPublic, recentEmailLogs } from '@/lib/mailer';
 import { DatabaseConnection } from '@/components/admin/database-connection';
 import { getDatabaseConnectionPublic } from '@/lib/db-connection';
 import { siteUrl } from '@/lib/utils';
@@ -13,7 +13,7 @@ export const metadata = { title: 'Settings' };
 
 export default async function SettingsAdmin() {
   await requireAdminPage({ adminOnly: true });
-  const [settings, kind, dbStatus, email] = await Promise.all([getSettings(), getDbKind(), getDatabaseConnectionPublic(), getEmailSettingsPublic()]);
+  const [settings, kind, dbStatus, email, logs] = await Promise.all([getSettings(), getDbKind(), getDatabaseConnectionPublic(), getEmailSettingsPublic(), recentEmailLogs(8)]);
   const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
   let host = '';
   try {
@@ -24,7 +24,7 @@ export default async function SettingsAdmin() {
       <PageHeader title="Settings" description="Store details, shipping, payments, navigation and system status." />
       <DatabaseConnection status={dbStatus} />
       <div className="h-6" />
-      <EmailSettingsForm initial={email} />
+      <EmailSettingsForm initial={email} logs={logs.map((l) => ({ id: l.id, kind: l.kind, toEmail: l.toEmail, status: l.status, error: l.error, createdAt: l.createdAt.toISOString() }))} />
       <div className="h-6" />
       <SettingsForms
         settings={settings}

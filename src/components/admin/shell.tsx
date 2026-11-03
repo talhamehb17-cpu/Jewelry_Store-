@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, LogOut, Menu, X, Database, Megaphone,
+  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, LogOut, Menu, X, Database, Megaphone, MapPin, Truck, Coins,
 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,9 @@ const NAV = [
       { href: '/admin/customers', label: 'Customers', icon: Users },
       { href: '/admin/discounts', label: 'Discounts', icon: BadgePercent },
       { href: '/admin/marketing', label: 'Events & campaigns', icon: Megaphone },
+      { href: '/admin/delivery', label: 'Delivery', icon: Truck },
+      { href: '/admin/locations', label: 'Locations', icon: MapPin },
+      { href: '/admin/currency', label: 'Currency', icon: Coins },
       { href: '/admin/reviews', label: 'Reviews', icon: Star, badgeKey: 'reviews' },
     ],
   },
@@ -45,7 +48,7 @@ export function AdminShell({ children, user, badges, dbWarning }: { children: Re
   const sidebar = (
     <div className="flex h-full flex-col">
       <Link href="/admin" className="flex items-center gap-3 px-5 py-5">
-        <Image src="/images/brand/logo.webp" alt="Evermoon Jewels" width={44} height={44} className="h-11 w-11 object-contain" />
+        <Image src="/images/brand/logo.webp" alt="EVERMOON" width={44} height={44} className="h-11 w-11 object-contain" />
         <span>
           <span className="block font-heading text-[1.05rem] leading-none tracking-[0.08em]">EVERMOON</span>
           <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted">Admin</span>
@@ -98,7 +101,7 @@ export function AdminShell({ children, user, badges, dbWarning }: { children: Re
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-white/90 px-4 backdrop-blur lg:hidden">
           <button onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
-          <Image src="/images/brand/logo.webp" alt="Evermoon Jewels" width={36} height={36} className="h-9 w-9 object-contain" />
+          <Image src="/images/brand/logo.webp" alt="EVERMOON" width={36} height={36} className="h-9 w-9 object-contain" />
           <Link href="/" target="_blank" aria-label="View store"><ExternalLink size={18} /></Link>
         </header>
         {dbWarning && (

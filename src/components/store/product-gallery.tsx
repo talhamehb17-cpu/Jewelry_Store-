@@ -124,88 +124,46 @@ function MobileCarousel({ media, onOpen, className }: { media: Media[]; onOpen: 
   );
 }
 
-export function ProductGallery({ media, layout, badge }: { media: Media[]; layout: PdpVariant; badge?: React.ReactNode }) {
+function uniqueMedia(list: Media[]) {
+  const seen = new Set<string>();
+  return list.filter((m) => {
+    const key = `${m.type}:${m.url}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export function ProductGallery({ media: incoming, badge }: { media: Media[]; layout?: PdpVariant; badge?: React.ReactNode }) {
+  const media = uniqueMedia(incoming);
   const [active, setActive] = useState(0);
   const [box, setBox] = useState<number | null>(null);
-  const open = (i: number) => setBox(i);
-  const mobile = <MobileCarousel media={media} onOpen={open} className="mx-auto w-full max-w-[min(100%,400px)] lg:hidden" />;
-  let desktop: React.ReactNode;
-
-  switch (layout) {
-    case 'grid':
-      desktop = (
-        <div className="hidden grid-cols-2 gap-2 lg:grid">
-          {media.map((m, k) => (
-            <div key={k} className={cn('relative overflow-hidden bg-surface rounded-theme-sm', k === 0 && media.length % 2 === 1 ? 'col-span-2 aspect-[5/4]' : 'aspect-[4/5]')}>
-              <ZoomImage m={m} priority={k < 2} onOpen={() => open(k)} zoom={false} />
-            </div>
-          ))}
-        </div>
-      );
-      break;
-    case 'stacked':
-      desktop = (
-        <div className="hidden space-y-3 lg:block">
-          {media.map((m, k) => (
-            <div key={k} className="relative aspect-[4/5] overflow-hidden bg-surface">
-              <ZoomImage m={m} priority={k === 0} onOpen={() => open(k)} />
-            </div>
-          ))}
-        </div>
-      );
-      break;
-    case 'asymmetric':
-      desktop = (
-        <div className="hidden grid-cols-2 gap-3 lg:grid">
-          {media.map((m, k) => (
-            <div key={k} className={cn('relative overflow-hidden bg-surface rounded-theme', k === 0 ? 'col-span-2 aspect-[6/5]' : 'aspect-square')}>
-              <ZoomImage m={m} priority={k === 0} onOpen={() => open(k)} zoom={k === 0} />
-            </div>
-          ))}
-        </div>
-      );
-      break;
-    case 'carousel':
-      desktop = (
-        <div className="hidden lg:block">
-          <div className="group relative aspect-[4/5] overflow-hidden bg-surface rounded-theme">
-            <ZoomImage key={active} m={media[active]!} priority onOpen={() => open(active)} />
-            {media.length > 1 && (
-              <>
-                <button onClick={() => setActive((a) => (a - 1 + media.length) % media.length)} className="absolute left-3 top-1/2 z-[2] -translate-y-1/2 rounded-full bg-bg/85 p-2.5 opacity-0 shadow transition group-hover:opacity-100" aria-label="Previous image"><ChevronLeft size={18} strokeWidth={1.25} /></button>
-                <button onClick={() => setActive((a) => (a + 1) % media.length)} className="absolute right-3 top-1/2 z-[2] -translate-y-1/2 rounded-full bg-bg/85 p-2.5 opacity-0 shadow transition group-hover:opacity-100" aria-label="Next image"><ChevronRight size={18} strokeWidth={1.25} /></button>
-              </>
-            )}
-            {badge}
-          </div>
-          {media.length > 1 && (
-            <div className="mt-3 flex gap-3">
-              {media.map((m, k) => <Thumb key={k} m={m} active={k === active} onClick={() => setActive(k)} className="h-24 w-20" />)}
-            </div>
-          )}
-        </div>
-      );
-      break;
-    case 'thumbs-left':
-    default:
-      desktop = (
-        <div className="hidden gap-4 lg:flex">
-          {media.length > 1 && (
-            <div className="flex w-20 shrink-0 flex-col gap-3">
-              {media.map((m, k) => <Thumb key={k} m={m} active={k === active} onClick={() => setActive(k)} className="aspect-[4/5] w-full" />)}
-            </div>
-          )}
-          <div className="relative aspect-[4/5] flex-1 overflow-hidden bg-surface rounded-theme-sm">
-            <ZoomImage key={active} m={media[active]!} priority onOpen={() => open(active)} />
-            {badge}
-          </div>
-        </div>
-      );
-  }
+  const current = media[Math.min(active, Math.max(0, media.length - 1))] ?? media[0];
+  if (!current) return null;
   return (
     <>
-      {mobile}
-      {desktop}
+      <div className="mx-auto w-full max-w-[min(100%,440px)] lg:hidden">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-theme-sm bg-surface">
+          <ZoomImage key={current.url} m={current} priority onOpen={() => setBox(active)} zoom={false} />
+          {badge}
+        </div>
+        {media.length > 1 && (
+          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+            {media.map((m, k) => <Thumb key={`${m.url}-${k}`} m={m} active={k === active} onClick={() => setActive(k)} className="h-16 w-14 shrink-0" />)}
+          </div>
+        )}
+      </div>
+      <div className="hidden gap-4 lg:flex">
+        {media.length > 1 && (
+          <div className="flex w-20 shrink-0 flex-col gap-3">
+            {media.map((m, k) => <Thumb key={`${m.url}-${k}`} m={m} active={k === active} onClick={() => setActive(k)} className="aspect-[4/5] w-full" />)}
+          </div>
+        )}
+        <div className="relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-theme-sm bg-surface">
+          <ZoomImage key={current.url} m={current} priority onOpen={() => setBox(active)} />
+          {badge}
+        </div>
+      </div>
       {box != null && <Lightbox media={media} index={box} onClose={() => setBox(null)} />}
     </>
   );

@@ -5,6 +5,7 @@ import { getSettings, enabledShippingMethods } from './settings';
 import { productIdsInCollections } from './catalog';
 import { formatMoney } from './money';
 import { campaignHit, discountPrice, getActiveCampaign } from './campaigns';
+import { activeDeliveryServices, formatDuration } from './delivery';
 
 export type CartLineInput = { variantId: number; quantity: number };
 
@@ -34,7 +35,7 @@ export type Quote = {
   discountError: string | null;
   campaign: { id: number; name: string; percent: number; amount: number; endsAt: string; href: string } | null;
   catalogSubtotal: number;
-  shippingMethods: { id: string; name: string; description: string; price: number; originalPrice: number }[];
+  shippingMethods: { id: string; name: string; description: string; price: number; originalPrice: number; durationMinutes: number | null }[];
   shippingMethod: string;
   shipping: number;
   codFee: number;
@@ -212,9 +213,13 @@ export async function buildQuote(input: {
 
   const afterDiscount = Math.max(0, subtotal - (discount?.amount ?? 0));
   const threshold = settings.shipping.freeThreshold;
-  const methods = enabledShippingMethods(settings).map((m) => {
+  const services = await activeDeliveryServices();
+  const source = services.length
+    ? services.map((m) => ({ id: m.code, name: m.name, description: `${m.description} Estimate: ${formatDuration(m.durationMinutes)}. This is an estimate, not a guaranteed arrival.`, price: m.price, durationMinutes: m.durationMinutes }))
+    : enabledShippingMethods(settings).map((m) => ({ id: m.id, name: m.name, description: m.description, price: m.price, durationMinutes: null as number | null }));
+  const methods = source.map((m) => {
     const free = discount?.freeShipping || (m.id === 'standard' && threshold > 0 && afterDiscount >= threshold);
-    return { id: m.id, name: m.name, description: m.description, originalPrice: m.price, price: free ? 0 : m.price };
+    return { id: m.id, name: m.name, description: m.description, originalPrice: m.price, price: free ? 0 : m.price, durationMinutes: m.durationMinutes };
   });
   const chosen = methods.find((m) => m.id === input.shippingMethod) ?? methods[0];
   const shipping = lines.length && chosen ? chosen.price : 0;
