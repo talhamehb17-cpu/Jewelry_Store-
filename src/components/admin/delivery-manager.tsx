@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { deleteDeliveryService, resolveDeliveryIssue, runDeliveryCheck, saveDeliveryService } from '@/app/actions/admin/operations';
-import { minutesToDays } from '@/lib/delivery';
+import { minutesToDays } from '@/lib/delivery-format';
 import { Card, Field } from './ui';
 
 type Service = {

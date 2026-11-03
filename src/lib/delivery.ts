@@ -2,20 +2,7 @@ import { asc, eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { deliveryServices, type DeliveryPlan, type DeliveryService } from '@/db/schema';
 
-export function minutesToDays(minutes: number) {
-  return Math.round((minutes / 1440) * 10) / 10;
-}
-
-export function daysToMinutes(days: number) {
-  if (!Number.isFinite(days) || days <= 0) return 0;
-  return Math.max(1, Math.round(days * 1440));
-}
-
-export function formatDuration(minutes: number | null | undefined) {
-  if (!minutes || minutes <= 0) return 'Estimate set by the atelier';
-  const days = minutesToDays(minutes);
-  return `${days} day${days === 1 ? '' : 's'}`;
-}
+export { daysToMinutes, formatDuration, minutesToDays } from './delivery-format';
 
 export function planFromService(service: Pick<DeliveryService, 'durationMinutes' | 'confirmMinutes' | 'processingMinutes' | 'shipMinutes' | 'outMinutes'>): DeliveryPlan {
   return {
