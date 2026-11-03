@@ -306,6 +306,9 @@ export const orders = pgTable(
     currency: varchar('currency', { length: 3 }).notNull().default('PKR'),
     discountCode: varchar('discount_code', { length: 60 }),
     discountId: integer('discount_id'),
+    campaignId: integer('campaign_id'),
+    campaignName: varchar('campaign_name', { length: 160 }),
+    campaignDiscount: integer('campaign_discount').notNull().default(0),
     customerNote: text('customer_note'),
     adminNote: text('admin_note'),
     trackingCarrier: varchar('tracking_carrier', { length: 80 }),
@@ -357,6 +360,7 @@ export const orderItems = pgTable(
     sku: varchar('sku', { length: 80 }),
     image: text('image'),
     unitPrice: integer('unit_price').notNull(),
+    originalUnitPrice: integer('original_unit_price'),
     quantity: integer('quantity').notNull(),
     lineTotal: integer('line_total').notNull(),
   },
@@ -395,10 +399,55 @@ export const discounts = pgTable(
     usageLimit: integer('usage_limit'),
     usageCount: integer('usage_count').notNull().default(0),
     oncePerCustomer: boolean('once_per_customer').notNull().default(false),
+    perUserLimit: integer('per_user_limit'),
+    maxDiscount: integer('max_discount'),
+    stackable: boolean('stackable').notNull().default(false),
     active: boolean('active').notNull().default(true),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [uniqueIndex('discounts_code_idx').on(t.code)],
+);
+
+export const discountUsages = pgTable(
+  'discount_usages',
+  {
+    id: serial('id').primaryKey(),
+    discountId: integer('discount_id')
+      .notNull()
+      .references(() => discounts.id, { onDelete: 'cascade' }),
+    orderId: integer('order_id'),
+    email: varchar('email', { length: 255 }).notNull(),
+    userId: integer('user_id'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('discount_usages_discount_idx').on(t.discountId), index('discount_usages_email_idx').on(t.email)],
+);
+
+export const campaigns = pgTable(
+  'campaigns',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 160 }).notNull(),
+    slug: varchar('slug', { length: 160 }).notNull(),
+    description: text('description').notNull().default(''),
+    percent: integer('percent').notNull(),
+    image: text('image'),
+    appliesTo: varchar('applies_to', { length: 20 }).notNull().default('all'), // all | products | categories
+    productIds: jsonb('product_ids').$type<number[]>().notNull().default([]),
+    categoryIds: jsonb('category_ids').$type<number[]>().notNull().default([]),
+    startsAt: ts('starts_at').notNull(),
+    endsAt: ts('ends_at').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('draft'), // draft | scheduled | active | paused | expired
+    allowStacking: boolean('allow_stacking').notNull().default(false),
+    notifySubscribers: boolean('notify_subscribers').notNull().default(false),
+    emailSentAt: ts('email_sent_at'),
+    emailRecipientCount: integer('email_recipient_count').notNull().default(0),
+    ctaLabel: varchar('cta_label', { length: 80 }).notNull().default('Shop the sale'),
+    ctaHref: varchar('cta_href', { length: 300 }).notNull().default('/shop'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('campaigns_slug_idx').on(t.slug), index('campaigns_status_idx').on(t.status), index('campaigns_ends_idx').on(t.endsAt)],
 );
 
 /* ------------------------------------------------------------------ */
@@ -454,9 +503,27 @@ export const newsletterSubscribers = pgTable(
     id: serial('id').primaryKey(),
     email: varchar('email', { length: 255 }).notNull(),
     source: varchar('source', { length: 80 }).notNull().default('footer'),
+    status: varchar('status', { length: 20 }).notNull().default('subscribed'), // subscribed | unsubscribed
+    unsubscribedAt: ts('unsubscribed_at'),
+    token: varchar('token', { length: 64 }),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
-  (t) => [uniqueIndex('newsletter_email_idx').on(t.email)],
+  (t) => [uniqueIndex('newsletter_email_idx').on(t.email), uniqueIndex('newsletter_token_idx').on(t.token)],
+);
+
+export const emailLogs = pgTable(
+  'email_logs',
+  {
+    id: serial('id').primaryKey(),
+    kind: varchar('kind', { length: 40 }).notNull(),
+    toEmail: varchar('to_email', { length: 255 }).notNull(),
+    subject: varchar('subject', { length: 255 }).notNull(),
+    campaignId: integer('campaign_id'),
+    status: varchar('status', { length: 20 }).notNull(), // sent | failed | skipped
+    error: text('error'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('email_logs_created_idx').on(t.createdAt), index('email_logs_kind_idx').on(t.kind)],
 );
 
 export const contactMessages = pgTable('contact_messages', {
@@ -479,6 +546,7 @@ export type Collection = typeof collections.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Discount = typeof discounts.$inferSelect;
+export type Campaign = typeof campaigns.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Page = typeof pages.$inferSelect;
 export type Address = typeof addresses.$inferSelect;

@@ -1,3 +1,5 @@
+import { CampaignBanner } from '@/components/store/campaign-banner';
+import { getActiveCampaign } from '@/lib/campaigns';
 import { StoreProvider } from '@/components/store/providers';
 import { Header } from '@/components/store/header';
 import { Footer } from '@/components/store/footer';
@@ -14,7 +16,7 @@ import { themeCssVars, themeStyleTag, themeName } from '@/themes/engine';
 import { THEME_LIST } from '@/themes/presets';
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const [ctx, settings, user, collections] = await Promise.all([getThemeContext(), getSettings(), getCurrentUser(), getCollections()]);
+  const [ctx, settings, user, collections, campaign] = await Promise.all([getThemeContext(), getSettings(), getCurrentUser(), getCollections(), getActiveCampaign()]);
   const s = ctx.config.settings;
   const mega = collections
     .filter((c) => c.featured)
@@ -31,6 +33,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       <div data-theme={ctx.themeId} data-anim={s.animation.style} data-btn-style={s.buttons.style} data-btn-hover={s.buttons.hover} className="flex min-h-screen flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-bg focus:px-4 focus:py-2">Skip to content</a>
         {ctx.isPreview && <PreviewBanner themeName={themeName(ctx.themeId)} mode={ctx.mode} />}
+        {campaign && <CampaignBanner campaign={{ name: campaign.name, percent: campaign.percent, endsAt: campaign.endsAt.toISOString(), href: campaign.ctaHref || '/shop' }} />}
         <AnnouncementBar data={s.announcement} hideOnMobile={!s.mobile.showAnnouncement} />
         <Header
           header={s.header}

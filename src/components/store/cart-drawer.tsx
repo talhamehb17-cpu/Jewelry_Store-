@@ -42,7 +42,7 @@ export function useQuote(extra: { discountCode?: string | null; shippingMethod?:
         })
         .catch(() => {})
         .finally(() => id === seq.current && setLoading(false));
-    }, 180);
+    }, 40);
     return () => clearTimeout(t);
   }, [key, enabled, cartReady]); // eslint-disable-line react-hooks/exhaustive-deps
   return { quote, loading };
@@ -158,7 +158,8 @@ export function CartDrawer() {
               <span>Subtotal</span>
               <span className={loading ? 'opacity-50' : ''}>{formatMoney(subtotal)}</span>
             </div>
-            <p className="text-[0.75rem] text-muted">Shipping, discounts and payment options are calculated at checkout.</p>
+            {quote?.campaign && <p className="text-[0.75rem] text-accent">{quote.campaign.name} · {quote.campaign.percent}% off is included (−{formatMoney(quote.campaign.amount)}).</p>}
+            <p className="text-[0.75rem] text-muted">Shipping and codes are calculated at checkout.</p>
             <div className="grid grid-cols-2 gap-3">
               <Link href="/cart" onClick={() => setCartOpen(false)} className="btn btn-secondary">View bag</Link>
               <Link href="/checkout" onClick={() => setCartOpen(false)} className="btn btn-primary">Checkout</Link>

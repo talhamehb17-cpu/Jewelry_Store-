@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { and, asc, desc, eq, gte, inArray, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { categories, collectionProducts, collections, productImages, products, productVariants, reviews, type Collection } from '@/db/schema';
+import { campaignHit, getActiveCampaign, presentPrice } from './campaigns';
 
 export type CardProduct = {
   id: number;
@@ -130,18 +131,20 @@ export async function hydrateCards(rows: (typeof products.$inferSelect)[]): Prom
   ]);
   const catMap = new Map(cats.map((c) => [c.id, c]));
   const newCutoff = Date.now() - NEW_DAYS * 86_400_000;
+  const campaign = await getActiveCampaign();
   return rows.map((p) => {
     const pi = imgs.filter((i) => i.productId === p.id);
     const pv = vars.filter((v) => v.productId === p.id);
     const total = pv.reduce((a, v) => a + Math.max(0, v.stock), 0);
     const cat = p.categoryId ? catMap.get(p.categoryId) : undefined;
+    const priced = presentPrice(p.price, p.compareAtPrice, campaignHit(campaign, p.id, p.categoryId), campaign?.percent ?? 0);
     return {
       id: p.id,
       slug: p.slug,
       name: p.name,
       subtitle: p.subtitle,
-      price: p.price,
-      compareAtPrice: p.compareAtPrice,
+      price: priced.price,
+      compareAtPrice: priced.compareAt,
       image: pi[0]?.url ?? null,
       image2: pi[1]?.url ?? null,
       badges: p.badges ?? [],
@@ -169,6 +172,20 @@ export async function listProducts(f: ProductFilters) {
     db.select({ count: sql<number>`count(*)::int` }).from(products).where(where),
   ]);
   return { items: await hydrateCards(rows), total: Number(count), page, perPage, pages: Math.max(1, Math.ceil(Number(count) / perPage)) };
+}
+
+export async function listSaleCards(scope: { appliesTo: string; productIds: number[]; categoryIds: number[] }, limit = 8) {
+  const db = await getDb();
+  const conds: SQL[] = [eq(products.status, 'active')];
+  if (scope.appliesTo === 'products') {
+    if (!scope.productIds.length) return [];
+    conds.push(inArray(products.id, scope.productIds));
+  } else if (scope.appliesTo === 'categories') {
+    if (!scope.categoryIds.length) return [];
+    conds.push(inArray(products.categoryId, scope.categoryIds));
+  }
+  const rows = await db.select().from(products).where(and(...conds)).orderBy(desc(products.featured), desc(products.createdAt)).limit(limit);
+  return hydrateCards(rows);
 }
 
 export type Facets = { materials: string[]; sizes: string[]; colors: string[]; minPrice: number; maxPrice: number };

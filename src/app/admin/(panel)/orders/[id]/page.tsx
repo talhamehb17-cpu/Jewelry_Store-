@@ -55,7 +55,8 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               ))}
             </ul>
             <dl className="space-y-1.5 border-t border-line px-5 py-4 text-[0.85rem]">
-              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
+              {o.campaignDiscount > 0 && <div className="flex justify-between"><dt className="text-muted">{o.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
               {o.discountTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Discount {o.discountCode && `(${o.discountCode})`}</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
               <div className="flex justify-between"><dt className="text-muted">{o.shippingMethodName}</dt><dd>{formatMoney(o.shippingTotal)}</dd></div>
               {o.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatMoney(o.codFee)}</dd></div>}

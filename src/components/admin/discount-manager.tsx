@@ -6,9 +6,9 @@ import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { deleteDiscount, saveDiscount, toggleDiscount, type DiscountInput } from '@/app/actions/admin/commerce';
 import { Card, Empty, Field, Pill } from './ui';
 import { formatMoney } from '@/lib/money';
-import { formatDate } from '@/lib/utils';
+import { formatDateTime, toPkInput } from '@/lib/utils';
 
-type D = { id: number; code: string; description: string | null; type: string; value: number; minOrderAmount: number; appliesTo: string; productIds: number[]; collectionIds: number[]; startsAt: string | null; endsAt: string | null; usageLimit: number | null; usageCount: number; oncePerCustomer: boolean; active: boolean };
+type D = { id: number; code: string; description: string | null; type: string; value: number; minOrderAmount: number; appliesTo: string; productIds: number[]; collectionIds: number[]; startsAt: string | null; endsAt: string | null; usageLimit: number | null; usageCount: number; oncePerCustomer: boolean; perUserLimit: number | null; maxDiscount: number | null; stackable: boolean; active: boolean };
 
 function status(d: D) {
   const now = Date.now();
@@ -29,10 +29,13 @@ const toInput = (d?: D): DiscountInput => ({
   appliesTo: (d?.appliesTo as DiscountInput['appliesTo']) ?? 'all',
   productIds: d?.productIds ?? [],
   collectionIds: d?.collectionIds ?? [],
-  startsAt: d?.startsAt ? d.startsAt.slice(0, 10) : '',
-  endsAt: d?.endsAt ? d.endsAt.slice(0, 10) : '',
+  startsAt: toPkInput(d?.startsAt),
+  endsAt: toPkInput(d?.endsAt),
   usageLimit: d?.usageLimit ?? '',
+  perUserLimit: d?.perUserLimit ?? '',
+  maxDiscount: d?.maxDiscount ? d.maxDiscount / 100 : '',
   oncePerCustomer: d?.oncePerCustomer ?? false,
+  stackable: d?.stackable ?? false,
   active: d?.active ?? true,
 });
 
@@ -76,9 +79,11 @@ export function DiscountManager({ discounts, products, collections }: { discount
                 <option value="collections">Specific collections</option>
               </select>
             </Field>
-            <Field label="Starts (optional)"><input type="date" value={form.startsAt} onChange={(e) => set('startsAt', e.target.value)} className="field" /></Field>
-            <Field label="Ends (optional)"><input type="date" value={form.endsAt} onChange={(e) => set('endsAt', e.target.value)} className="field" /></Field>
+            <Field label="Starts (Pakistan time, optional)"><input type="datetime-local" value={form.startsAt} onChange={(e) => set('startsAt', e.target.value)} className="field" /></Field>
+            <Field label="Ends (Pakistan time, optional)"><input type="datetime-local" value={form.endsAt} onChange={(e) => set('endsAt', e.target.value)} className="field" /></Field>
             <Field label="Total usage limit (optional)"><input type="number" min={1} value={String(form.usageLimit ?? '')} onChange={(e) => set('usageLimit', e.target.value === '' ? '' : Number(e.target.value))} className="field" /></Field>
+            <Field label="Uses per customer (optional)"><input type="number" min={1} value={String(form.perUserLimit ?? '')} onChange={(e) => set('perUserLimit', e.target.value === '' ? '' : Number(e.target.value))} className="field" /></Field>
+            {form.type === 'percentage' && <Field label="Maximum discount (Rs, optional)"><input type="number" min={0} value={String(form.maxDiscount ?? '')} onChange={(e) => set('maxDiscount', e.target.value === '' ? '' : Number(e.target.value))} className="field" /></Field>}
           </div>
           {form.appliesTo === 'products' && (
             <div className="mt-4"><p className="label">Products</p><div className="grid max-h-48 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-line p-3 md:grid-cols-3">{products.map((p) => <label key={p.id} className="flex items-center gap-2 text-[0.8rem]"><input type="checkbox" className="checkbox" checked={(form.productIds ?? []).includes(p.id)} onChange={(e) => set('productIds', e.target.checked ? [...(form.productIds ?? []), p.id] : (form.productIds ?? []).filter((x) => x !== p.id))} />{p.name}</label>)}</div></div>
@@ -88,6 +93,7 @@ export function DiscountManager({ discounts, products, collections }: { discount
           )}
           <div className="mt-4 flex flex-wrap gap-6 text-[0.85rem]">
             <label className="flex items-center gap-2"><input type="checkbox" className="checkbox" checked={!!form.oncePerCustomer} onChange={(e) => set('oncePerCustomer', e.target.checked)} /> Limit to one use per customer</label>
+            <label className="flex items-center gap-2"><input type="checkbox" className="checkbox" checked={!!form.stackable} onChange={(e) => set('stackable', e.target.checked)} /> Allow stacking with an event sale</label>
             <label className="flex items-center gap-2"><input type="checkbox" className="checkbox" checked={!!form.active} onChange={(e) => set('active', e.target.checked)} /> Active</label>
           </div>
           <div className="mt-6 flex gap-2">
@@ -112,7 +118,7 @@ export function DiscountManager({ discounts, products, collections }: { discount
                       <td>{d.type === 'percentage' ? `${d.value}% off` : d.type === 'fixed' ? `${formatMoney(d.value)} off` : 'Free shipping'}</td>
                       <td className="text-[0.78rem] text-muted">{d.minOrderAmount ? `Min ${formatMoney(d.minOrderAmount)}` : 'No minimum'}<br />{d.appliesTo === 'all' ? 'Entire order' : d.appliesTo === 'products' ? `${d.productIds.length} products` : `${d.collectionIds.length} collections`}{d.oncePerCustomer ? ' · once per customer' : ''}</td>
                       <td>{d.usageCount}{d.usageLimit != null ? ` / ${d.usageLimit}` : ''}</td>
-                      <td className="text-[0.78rem] text-muted">{d.startsAt ? formatDate(d.startsAt) : 'Now'} → {d.endsAt ? formatDate(d.endsAt) : 'No end'}</td>
+                      <td className="text-[0.78rem] text-muted">{d.startsAt ? formatDateTime(d.startsAt) : 'Now'} → {d.endsAt ? formatDateTime(d.endsAt) : 'No end'}{d.stackable ? ' · stacks' : ''}</td>
                       <td><Pill tone={s.tone}>{s.label}</Pill></td>
                       <td className="whitespace-nowrap text-right">
                         <button onClick={() => start(async () => { await toggleDiscount(d.id, !d.active); router.refresh(); })} className="mr-3 text-[0.75rem] text-muted underline hover:text-ink">{d.active ? 'Deactivate' : 'Activate'}</button>

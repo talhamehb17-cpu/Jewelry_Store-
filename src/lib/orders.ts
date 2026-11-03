@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { discounts, inventoryMovements, orderEvents, orderItems, orders, products, productVariants, type Order, type OrderAddress } from '@/db/schema';
+import { discountUsages, discounts, inventoryMovements, orderEvents, orderItems, orders, products, productVariants, type Order, type OrderAddress } from '@/db/schema';
 import { buildQuote, type CartLineInput } from './pricing';
 
 export class OrderError extends Error {}
@@ -82,6 +82,9 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         total: quote.total,
         discountCode: quote.discount?.code ?? null,
         discountId: quote.discount?.id ?? null,
+        campaignId: quote.campaign?.id ?? null,
+        campaignName: quote.campaign?.name ?? null,
+        campaignDiscount: quote.campaign?.amount ?? 0,
         customerNote: input.customerNote || null,
       })
       .returning();
@@ -97,6 +100,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         sku: l.sku,
         image: l.image,
         unitPrice: l.unitPrice,
+        originalUnitPrice: l.catalogUnitPrice,
         quantity: l.quantity,
         lineTotal: l.lineTotal,
       })),
@@ -107,7 +111,10 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     for (const l of quote.lines) {
       await tx.update(products).set({ salesCount: sql`${products.salesCount} + ${l.quantity}` }).where(eq(products.id, l.productId));
     }
-    if (quote.discount) await tx.update(discounts).set({ usageCount: sql`${discounts.usageCount} + 1` }).where(eq(discounts.id, quote.discount.id));
+    if (quote.discount) {
+      await tx.update(discounts).set({ usageCount: sql`${discounts.usageCount} + 1` }).where(eq(discounts.id, quote.discount.id));
+      await tx.insert(discountUsages).values({ discountId: quote.discount.id, orderId: order!.id, email: input.email.toLowerCase(), userId: input.userId ?? null });
+    }
     const label = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card (Stripe)' }[input.paymentMethod];
     await tx.insert(orderEvents).values({ orderId: order!.id, type: 'created', message: `Order placed via website · ${label}`, actor: 'customer' });
     if (input.paymentRef) await tx.insert(orderEvents).values({ orderId: order!.id, type: 'payment', message: `Customer submitted payment reference ${input.paymentRef} — awaiting verification`, actor: 'customer' });

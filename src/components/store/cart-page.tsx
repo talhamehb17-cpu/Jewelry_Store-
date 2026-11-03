@@ -74,7 +74,8 @@ export function CartPageView() {
             </div>
             {quote && (
               <dl className={cn('space-y-2.5 border-t border-line pt-5 text-[0.9rem]', loading && 'opacity-60')}>
-                <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(quote.subtotal)}</dd></div>
+                <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(quote.catalogSubtotal || quote.subtotal)}</dd></div>
+                {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name}</dt><dd>−{formatMoney(quote.campaign.amount)}</dd></div>}
                 {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Discount</dt><dd>−{formatMoney(quote.discount.amount)}</dd></div>}
                 <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{quote.shipping ? formatMoney(quote.shipping) : 'Complimentary'}</dd></div>
                 <div className="flex items-baseline justify-between border-t border-line pt-4"><dt>Estimated total</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)}</dd></div>

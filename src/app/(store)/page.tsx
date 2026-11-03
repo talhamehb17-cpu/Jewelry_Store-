@@ -1,8 +1,10 @@
+import { CampaignHome } from '@/components/store/campaign-home';
 import { SectionRenderer } from '@/components/sections/renderer';
+import { getActiveCampaign } from '@/lib/campaigns';
+import { applyThemeImagery, themeLook } from '@/themes/language';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings } from '@/lib/settings';
 import { BRAND } from '@/lib/brand';
-import { LOOK } from '@/lib/look';
 import { jsonLd, siteUrl } from '@/lib/utils';
 import { THEMES } from '@/themes/presets';
 import type { Metadata } from 'next';
@@ -13,14 +15,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [ctx, settings] = await Promise.all([getThemeContext(), getSettings()]);
+  const [ctx, settings, campaign] = await Promise.all([getThemeContext(), getSettings(), getActiveCampaign()]);
   const org = {
     '@context': 'https://schema.org',
     '@type': 'JewelryStore',
     name: settings.store.name,
     url: siteUrl(),
     logo: `${siteUrl()}${BRAND.logo}`,
-    image: `${siteUrl()}${LOOK.hero}`,
+    image: `${siteUrl()}${themeLook(ctx.themeId).hero}`,
     telephone: settings.store.phone,
     email: settings.store.email,
     address: { '@type': 'PostalAddress', streetAddress: '42-C Main Boulevard, Gulberg III', addressLocality: 'Lahore', postalCode: '54660', addressCountry: 'PK' },
@@ -34,11 +36,16 @@ export default async function HomePage() {
     url: siteUrl(),
     potentialAction: { '@type': 'SearchAction', target: `${siteUrl()}/search?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
   };
+  const sections = applyThemeImagery(ctx.themeId, ctx.isPreview ? ctx.config.sections : THEMES[ctx.themeId].sections);
+  const hero = sections[0]?.type === 'hero' ? sections[0] : null;
+  const rest = hero ? sections.slice(1) : sections;
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(org) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(site) }} />
-      <SectionRenderer sections={ctx.isPreview ? ctx.config.sections : THEMES[ctx.themeId].sections} config={ctx.config} />
+      {hero && <SectionRenderer sections={[hero]} config={ctx.config} />}
+      {campaign && <CampaignHome campaign={campaign} card={ctx.config.settings.layout.cardVariant} />}
+      <SectionRenderer sections={rest} config={ctx.config} />
     </>
   );
 }

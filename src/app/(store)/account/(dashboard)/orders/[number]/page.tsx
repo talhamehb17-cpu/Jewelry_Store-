@@ -56,7 +56,8 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
             ))}
           </ul>
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-[0.9rem]">
-            <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
+            {o.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{o.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
             {o.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {o.discountCode && `(${o.discountCode})`}</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
             <div className="flex justify-between"><dt className="text-muted">{o.shippingMethodName}</dt><dd>{o.shippingTotal ? formatMoney(o.shippingTotal) : 'Complimentary'}</dd></div>
             {o.refundedAmount > 0 && <div className="flex justify-between text-muted"><dt>Refunded</dt><dd>−{formatMoney(o.refundedAmount)}</dd></div>}

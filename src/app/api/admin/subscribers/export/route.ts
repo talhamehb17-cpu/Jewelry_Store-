@@ -14,6 +14,6 @@ export async function GET() {
   const db = await getDb();
   const rows = await db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.createdAt));
   const esc = (s: string) => (/^[=+\-@]/.test(s) ? `'${s}` : s).replace(/"/g, '""');
-  const csv = '\uFEFFemail,source,subscribed_at\n' + rows.map((r) => `"${esc(r.email)}","${esc(r.source)}",${r.createdAt.toISOString()}`).join('\n');
+  const csv = '\uFEFFemail,source,status,subscribed_at,unsubscribed_at\n' + rows.map((r) => `"${esc(r.email)}","${esc(r.source)}","${esc(r.status)}",${r.createdAt.toISOString()},${r.unsubscribedAt?.toISOString() ?? ''}`).join('\n');
   return new Response(csv, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="aurelle-subscribers.csv"', 'Cache-Control': 'no-store' } });
 }

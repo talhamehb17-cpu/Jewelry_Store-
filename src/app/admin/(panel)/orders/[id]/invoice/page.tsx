@@ -48,7 +48,8 @@ export default async function Invoice({ params }: { params: Promise<{ id: string
           </tbody>
         </table>
         <dl className="ml-auto mt-6 w-64 space-y-1.5">
-          <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal)}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
+          {o.campaignDiscount > 0 && <div className="flex justify-between"><dt className="text-muted">{o.campaignName || 'Event sale'}</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
           {o.discountTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{formatMoney(o.shippingTotal)}</dd></div>
           <div className="flex justify-between border-t border-[#23201d] pt-2 text-[1rem] font-semibold"><dt>Total (PKR)</dt><dd>{formatMoney(o.total)}</dd></div>

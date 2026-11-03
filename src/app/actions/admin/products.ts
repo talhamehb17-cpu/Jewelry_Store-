@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { z } from 'zod';
 import { and, eq, inArray, ne, notInArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -34,6 +35,7 @@ const productSchema = z.object({
   videoUrl: z.string().trim().max(500).optional().default(''),
   seoTitle: z.string().trim().max(200).optional().default(''),
   seoDescription: z.string().trim().max(400).optional().default(''),
+  notifySubscribers: z.boolean().optional().default(false),
   images: z.array(z.object({ url: z.string().trim().min(1).max(1000), alt: z.string().trim().max(255).optional().default('') })).max(20).default([]),
   variants: z
     .array(
@@ -135,6 +137,12 @@ export async function saveProduct(payload: ProductPayload): Promise<SaveResult> 
     return pid;
   });
   revalidatePath('/', 'layout');
+  if (d.notifySubscribers && d.status === 'active' && d.badges.includes('new')) {
+    after(async () => {
+      const { sendNewArrival } = await import('@/lib/promotions');
+      await sendNewArrival(id).catch(() => undefined);
+    });
+  }
   return { ok: true, id };
 }
 

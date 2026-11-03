@@ -91,7 +91,10 @@ const discountSchema = z.object({
   startsAt: z.string().optional().default(''),
   endsAt: z.string().optional().default(''),
   usageLimit: z.union([z.literal(''), z.coerce.number().int().min(1)]).optional(),
+  perUserLimit: z.union([z.literal(''), z.coerce.number().int().min(1).max(100)]).optional(),
+  maxDiscount: z.union([z.literal(''), z.coerce.number().min(0)]).optional(),
   oncePerCustomer: z.boolean().default(false),
+  stackable: z.boolean().default(false),
   active: z.boolean().default(true),
 });
 
@@ -107,7 +110,12 @@ export async function saveDiscount(input: DiscountInput): Promise<R> {
   const db = await getDb();
   const clash = await db.select({ id: discounts.id }).from(discounts).where(and(eq(sql`upper(${discounts.code})`, d.code), d.id ? ne(discounts.id, d.id) : undefined)).limit(1);
   if (clash.length) return { ok: false, message: `The code ${d.code} already exists.` };
-  const toDate = (s: string) => (s ? new Date(s.length === 10 ? `${s}T00:00:00+05:00` : s) : null);
+  const toDate = (s: string, end = false) => {
+    if (!s) return null;
+    if (s.length === 10) return new Date(`${s}T${end ? '23:59:59' : '00:00:00'}+05:00`);
+    if (s.length === 16) return new Date(`${s}:00+05:00`);
+    return new Date(s);
+  };
   const values = {
     code: d.code,
     description: d.description || null,
@@ -118,9 +126,12 @@ export async function saveDiscount(input: DiscountInput): Promise<R> {
     productIds: d.appliesTo === 'products' ? d.productIds : [],
     collectionIds: d.appliesTo === 'collections' ? d.collectionIds : [],
     startsAt: toDate(d.startsAt),
-    endsAt: d.endsAt ? new Date(d.endsAt.length === 10 ? `${d.endsAt}T23:59:59+05:00` : d.endsAt) : null,
+    endsAt: toDate(d.endsAt, true),
     usageLimit: d.usageLimit === '' || d.usageLimit == null ? null : Number(d.usageLimit),
-    oncePerCustomer: d.oncePerCustomer,
+    perUserLimit: d.perUserLimit === '' || d.perUserLimit == null ? null : Number(d.perUserLimit),
+    maxDiscount: d.maxDiscount === '' || d.maxDiscount == null ? null : Math.round(Number(d.maxDiscount) * 100),
+    oncePerCustomer: d.oncePerCustomer || d.perUserLimit === 1,
+    stackable: d.stackable,
     active: d.active,
   };
   if (d.id) await db.update(discounts).set(values).where(eq(discounts.id, d.id));

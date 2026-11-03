@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, LogOut, Menu, X, Database,
+  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, LogOut, Menu, X, Database, Megaphone,
 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ const NAV = [
       { href: '/admin/inventory', label: 'Inventory', icon: Boxes, badgeKey: 'lowStock' },
       { href: '/admin/customers', label: 'Customers', icon: Users },
       { href: '/admin/discounts', label: 'Discounts', icon: BadgePercent },
+      { href: '/admin/marketing', label: 'Events & campaigns', icon: Megaphone },
       { href: '/admin/reviews', label: 'Reviews', icon: Star, badgeKey: 'reviews' },
     ],
   },

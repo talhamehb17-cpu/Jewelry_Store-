@@ -10,6 +10,7 @@ import { ProductCard } from '@/components/store/product-card';
 import { Rail } from '@/components/sections/slider';
 import { Stars } from '@/components/ui/bits';
 import { getCompleteTheLook, getProductBySlug, getRelatedProducts } from '@/lib/catalog';
+import { campaignHit, getActiveCampaign, presentPrice } from '@/lib/campaigns';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings } from '@/lib/settings';
 import { getCurrentUser } from '@/lib/auth';
@@ -37,13 +38,16 @@ export default async function ProductPage({ params }: P) {
   const d = await getProductBySlug(slug);
   if (!d) notFound();
   const p = d.product;
-  const [ctx, settings, related, look, user] = await Promise.all([
+  const [ctx, settings, related, look, user, campaign] = await Promise.all([
     getThemeContext(),
     getSettings(),
     getRelatedProducts(p.id, p.categoryId),
     getCompleteTheLook(p.id, p.categoryId),
     getCurrentUser(),
+    getActiveCampaign(),
   ]);
+  const onSale = campaignHit(campaign, p.id, p.categoryId);
+  const priced = presentPrice(p.price, p.compareAtPrice, onSale, campaign?.percent ?? 0);
   const layout = ctx.config.settings.layout;
   const card = layout.cardVariant;
   const media: Media[] = d.images.map((i) => ({ type: 'image', url: i.url, alt: i.alt || p.name }));
@@ -69,7 +73,7 @@ export default async function ProductPage({ params }: P) {
       '@type': 'Offer',
       url: absoluteUrl(`/products/${p.slug}`),
       priceCurrency: 'PKR',
-      price: (p.price / 100).toFixed(0),
+      price: (priced.price / 100).toFixed(0),
       availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
       seller: { '@type': 'Organization', name: settings.store.name },
@@ -104,8 +108,12 @@ export default async function ProductPage({ params }: P) {
           <div className="min-w-0"><ProductGallery media={media} layout={layout.pdpVariant} /></div>
           <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
             <ProductPurchase
-              product={{ id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, details: p.details, materials: p.materials, care: p.care, price: p.price, compareAtPrice: p.compareAtPrice, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount, badges: p.badges, sku: p.sku }}
-              variants={d.variants.map((v) => ({ id: v.id, title: v.title, size: v.size, color: v.color, stock: v.stock, price: v.price, compareAtPrice: v.compareAtPrice }))}
+              product={{ id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, details: p.details, materials: p.materials, care: p.care, price: priced.price, compareAtPrice: priced.compareAt, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount, badges: onSale ? [...new Set([...p.badges, 'sale'])] : p.badges, sku: p.sku }}
+              variants={d.variants.map((v) => {
+                const base = v.price ?? p.price;
+                const shown = presentPrice(base, v.compareAtPrice ?? p.compareAtPrice, onSale, campaign?.percent ?? 0);
+                return { id: v.id, title: v.title, size: v.size, color: v.color, stock: v.stock, price: shown.price, compareAtPrice: shown.compareAt };
+              })}
               image={d.images[0]?.url ?? null}
               category={d.category ? { name: d.category.name, slug: d.category.slug } : null}
               style={layout.pdpStyle}

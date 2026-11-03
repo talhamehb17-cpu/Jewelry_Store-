@@ -4,6 +4,7 @@ import { discounts, orders, productImages, products, productVariants, type Disco
 import { getSettings, enabledShippingMethods } from './settings';
 import { productIdsInCollections } from './catalog';
 import { formatMoney } from './money';
+import { campaignHit, discountPrice, getActiveCampaign } from './campaigns';
 
 export type CartLineInput = { variantId: number; quantity: number };
 
@@ -15,7 +16,10 @@ export type QuoteLine = {
   variantTitle: string | null;
   image: string | null;
   unitPrice: number;
+  catalogUnitPrice: number;
   compareAtPrice: number | null;
+  categoryId: number | null;
+  campaignHit: boolean;
   quantity: number;
   lineTotal: number;
   stock: number;
@@ -28,6 +32,8 @@ export type Quote = {
   subtotal: number;
   discount: { id: number; code: string; amount: number; freeShipping: boolean; label: string } | null;
   discountError: string | null;
+  campaign: { id: number; name: string; percent: number; amount: number; endsAt: string; href: string } | null;
+  catalogSubtotal: number;
   shippingMethods: { id: string; name: string; description: string; price: number; originalPrice: number }[];
   shippingMethod: string;
   shipping: number;
@@ -65,16 +71,29 @@ export async function validateDiscount(
   }
   if (eligible <= 0 && d.type !== 'free_shipping') return { error: `${d.code} doesn’t apply to the items in your bag.` };
 
-  if (d.oncePerCustomer && (ctx.email || ctx.userId)) {
+  const perUser = d.perUserLimit ?? (d.oncePerCustomer ? 1 : null);
+  if (perUser && (ctx.email || ctx.userId)) {
     const conds = [ctx.email ? eq(sql`lower(${orders.email})`, ctx.email.toLowerCase()) : undefined, ctx.userId ? eq(orders.userId, ctx.userId) : undefined].filter(Boolean);
     const used = await db
       .select({ id: orders.id })
       .from(orders)
       .where(and(eq(orders.discountId, d.id), ne(orders.status, 'cancelled'), or(...(conds as never[]))))
-      .limit(1);
-    if (used.length) return { error: `${d.code} can only be used once per customer.` };
+      .limit(perUser);
+    if (used.length >= perUser) return { error: perUser === 1 ? `${d.code} can only be used once per customer.` : `${d.code} has already been used ${perUser} times on this account.` };
   }
   return { discount: d, eligible };
+}
+
+async function eligibleSubtotal(d: Discount, lines: QuoteLine[]) {
+  if (d.appliesTo === 'products') {
+    const ids = new Set(d.productIds ?? []);
+    return lines.filter((l) => ids.has(l.productId)).reduce((a, l) => a + l.lineTotal, 0);
+  }
+  if (d.appliesTo === 'collections') {
+    const ids = await productIdsInCollections(d.collectionIds ?? []);
+    return lines.filter((l) => ids.has(l.productId)).reduce((a, l) => a + l.lineTotal, 0);
+  }
+  return lines.reduce((a, l) => a + l.lineTotal, 0);
 }
 
 export async function buildQuote(input: {
@@ -107,6 +126,7 @@ export async function buildQuote(input: {
           name: products.name,
           price: products.price,
           compareAtPrice: products.compareAtPrice,
+          categoryId: products.categoryId,
           status: products.status,
         })
         .from(productVariants)
@@ -120,6 +140,7 @@ export async function buildQuote(input: {
         .where(inArray(productImages.productId, [...new Set(rows.map((r) => r.productId))]))
     : [];
 
+  const campaign = clean.length ? await getActiveCampaign() : null;
   const lines: QuoteLine[] = [];
   for (const l of clean) {
     const r = rows.find((x) => x.variantId === l.variantId);
@@ -136,7 +157,9 @@ export async function buildQuote(input: {
       issues.push(`Only ${r.stock} of ${r.name} available — quantity updated.`);
       qty = r.stock;
     }
-    const unit = r.vPrice ?? r.price;
+    const catalogUnit = r.vPrice ?? r.price;
+    const hit = campaignHit(campaign, r.productId, r.categoryId);
+    const unit = hit && campaign ? discountPrice(catalogUnit, campaign.percent) : catalogUnit;
     const image = imgs.filter((i) => i.productId === r.productId).sort((a, b) => a.position - b.position)[0]?.url ?? null;
     const existing = lines.find((x) => x.variantId === r.variantId);
     if (existing) {
@@ -152,7 +175,10 @@ export async function buildQuote(input: {
       variantTitle: r.variantTitle === 'Default' ? null : r.variantTitle,
       image,
       unitPrice: unit,
+      catalogUnitPrice: catalogUnit,
       compareAtPrice: r.vCompare ?? r.compareAtPrice,
+      categoryId: r.categoryId,
+      campaignHit: hit,
       quantity: qty,
       lineTotal: unit * qty,
       stock: r.stock,
@@ -160,6 +186,8 @@ export async function buildQuote(input: {
     });
   }
   const subtotal = lines.reduce((a, l) => a + l.lineTotal, 0);
+  const catalogSubtotal = lines.reduce((a, l) => a + l.catalogUnitPrice * l.quantity, 0);
+  const campaignAmount = Math.max(0, catalogSubtotal - subtotal);
   const itemCount = lines.reduce((a, l) => a + l.quantity, 0);
 
   let discount: Quote['discount'] = null;
@@ -169,9 +197,16 @@ export async function buildQuote(input: {
     if ('error' in res) discountError = res.error;
     else {
       const d = res.discount;
-      const amount = d.type === 'percentage' ? Math.round((res.eligible * Math.min(100, d.value)) / 100) : d.type === 'fixed' ? Math.min(d.value, res.eligible) : 0;
-      const label = d.type === 'percentage' ? `${d.value}% off` : d.type === 'fixed' ? `${formatMoney(d.value)} off` : 'Free shipping';
-      discount = { id: d.id, code: d.code, amount, freeShipping: d.type === 'free_shipping', label };
+      const stack = !!(d.stackable && campaign?.allowStacking);
+      const eligible = !stack && lines.some((l) => l.campaignHit) ? await eligibleSubtotal(d, lines.filter((l) => !l.campaignHit)) : res.eligible;
+      if (!stack && campaign && eligible <= 0 && d.type !== 'free_shipping') {
+        discountError = 'This code can’t be combined with the current event sale. Only one promotional discount applies unless stacking is turned on for both.';
+      } else {
+        let amount = d.type === 'percentage' ? Math.round((eligible * Math.min(100, d.value)) / 100) : d.type === 'fixed' ? Math.min(d.value, eligible) : 0;
+        if (d.type === 'percentage' && d.maxDiscount) amount = Math.min(amount, d.maxDiscount);
+        const label = d.type === 'percentage' ? `${d.value}% off` : d.type === 'fixed' ? `${formatMoney(d.value)} off` : 'Free shipping';
+        discount = { id: d.id, code: d.code, amount, freeShipping: d.type === 'free_shipping', label };
+      }
     }
   }
 
@@ -193,6 +228,8 @@ export async function buildQuote(input: {
     subtotal,
     discount,
     discountError,
+    campaign: campaign && campaignAmount > 0 ? { id: campaign.id, name: campaign.name, percent: campaign.percent, amount: campaignAmount, endsAt: campaign.endsAt.toISOString(), href: campaign.ctaHref || '/shop' } : null,
+    catalogSubtotal,
     shippingMethods: methods,
     shippingMethod: chosen?.id ?? 'standard',
     shipping,

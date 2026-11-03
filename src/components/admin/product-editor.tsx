@@ -44,6 +44,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [notify, setNotify] = useState(false);
   const [pending, start] = useTransition();
   const [sizesText, setSizesText] = useState([...new Set(initial.variants.map((v) => v.size).filter(Boolean))].join(', '));
   const [colorsText, setColorsText] = useState([...new Set(initial.variants.map((v) => v.color).filter(Boolean))].join(', '));
@@ -99,6 +100,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
     start(async () => {
       const res = await saveProduct({
         ...p,
+        notifySubscribers: notify && (p.badges ?? []).includes('new') && p.status === 'active',
         id: productId,
         price: Number(p.price || 0),
         compareAtPrice: p.compareAtPrice === '' ? null : Number(p.compareAtPrice),
@@ -112,6 +114,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
       }
       setDirty(false);
       setSaved(true);
+      setNotify(false);
       if (!productId) router.replace(`/admin/products/${res.id}`);
       else router.refresh();
     });
@@ -132,6 +135,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
           {dirty && <span className="text-[0.75rem] text-amber-700">Unsaved changes</span>}
           {saved && !dirty && <span className="inline-flex items-center gap-1 text-[0.75rem] text-emerald-700"><Check size={14} /> Saved</span>}
           {productId && <a href={`/products/${initial.slug}`} target="_blank" rel="noreferrer" className="btn btn-secondary"><ExternalLink size={14} /> View</a>}
+          <label className="flex items-center gap-2 text-[0.75rem] text-muted"><input type="checkbox" className="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Notify subscribers</label>
           <button onClick={submit} disabled={pending} className="btn btn-primary">{pending ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {productId ? 'Save' : 'Create product'}</button>
         </div>
       </div>

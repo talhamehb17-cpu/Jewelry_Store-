@@ -173,7 +173,7 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
             <div><p className="label">Database</p><p className="font-medium">{system.db === 'postgres' ? 'Neon Postgres (serverless)' : 'Embedded PGlite (local / fallback)'}</p><p className="text-[0.75rem] text-muted">{system.dbHost || '—'}</p></div>
             <div><p className="label">Environment</p><p className="font-medium capitalize">{system.env}</p><p className="text-[0.75rem] text-muted">{system.siteUrl}</p></div>
             <div><p className="label">Card payments</p><p className="font-medium">{system.stripe ? 'Stripe connected' : 'Not configured'}</p></div>
-            <div><p className="label">Transactional email</p><p className="font-medium">{system.email ? 'Resend connected' : 'Not configured'}</p><p className="text-[0.75rem] text-muted">Set RESEND_API_KEY + EMAIL_FROM</p></div>
+            <div><p className="label">Transactional email</p><p className="font-medium">{system.email ? 'Configured' : 'Not configured'}</p><p className="text-[0.75rem] text-muted">Use Email settings above. A Gmail app password stays on the server.</p></div>
           </div>
           {system.claimUrl && (
             <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-[0.85rem] text-amber-950">

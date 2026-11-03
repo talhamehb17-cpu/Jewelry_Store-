@@ -88,7 +88,8 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
               ))}
             </ul>
             <dl className="mt-5 space-y-2 border-t border-line pt-4 text-[0.88rem]">
-              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(order.subtotal)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(order.subtotal + (order.campaignDiscount || 0))}</dd></div>
+              {order.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{order.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(order.campaignDiscount)}</dd></div>}
               {order.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {order.discountCode && `(${order.discountCode})`}</dt><dd>−{formatMoney(order.discountTotal)}</dd></div>}
               <div className="flex justify-between"><dt className="text-muted">{order.shippingMethodName}</dt><dd>{order.shippingTotal ? formatMoney(order.shippingTotal) : 'Complimentary'}</dd></div>
               <div className="flex justify-between border-t border-line pt-3 text-[1rem]"><dt>Total</dt><dd className="font-medium">{formatMoney(order.total)}</dd></div>

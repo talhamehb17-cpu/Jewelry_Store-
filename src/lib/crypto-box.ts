@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 function key() {
-  const secret = process.env.AUTH_SECRET || '';
+  const secret = process.env.AUTH_SECRET || (process.env.NODE_ENV !== 'production' ? 'aurelle-dev-only-secret-change-me-0123456789' : '');
   if (secret.length < 32) throw new Error('AUTH_SECRET is required to protect stored secrets.');
   return crypto.createHash('sha256').update(secret).digest();
 }

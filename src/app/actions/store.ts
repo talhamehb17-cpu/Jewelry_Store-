@@ -1,5 +1,6 @@
 'use server';
 
+import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
 import { refresh } from 'next/cache';
 import { z } from 'zod';
@@ -22,7 +23,10 @@ export async function subscribeNewsletter(_: ActionResult | null, form: FormData
   if (!rateLimit(`nl:${await clientIp()}`, 8, 60_000)) return { ok: false, message: 'Too many attempts. Please try again in a minute.' };
   const source = String(form.get('source') || 'footer').slice(0, 60);
   const db = await getDb();
-  await db.insert(newsletterSubscribers).values({ email: parsed.data, source }).onConflictDoNothing();
+  await db
+    .insert(newsletterSubscribers)
+    .values({ email: parsed.data, source, status: 'subscribed', token: crypto.randomBytes(24).toString('hex') })
+    .onConflictDoUpdate({ target: newsletterSubscribers.email, set: { status: 'subscribed', unsubscribedAt: null, source } });
   return { ok: true, message: 'Welcome to the Evermoon Circle. We’ll write when something beautiful arrives.' };
 }
 
@@ -123,6 +127,9 @@ export async function notifyBackInStock(_: ActionResult | null, form: FormData):
   const product = String(form.get('product') || '').slice(0, 120);
   if (!rateLimit(`bis:${await clientIp()}`, 6, 60_000)) return { ok: false, message: 'Too many attempts. Please try again shortly.' };
   const db = await getDb();
-  await db.insert(newsletterSubscribers).values({ email: parsed.data, source: `back-in-stock:${product}` }).onConflictDoNothing();
+  await db
+    .insert(newsletterSubscribers)
+    .values({ email: parsed.data, source: `back-in-stock:${product}`, status: 'subscribed', token: crypto.randomBytes(24).toString('hex') })
+    .onConflictDoUpdate({ target: newsletterSubscribers.email, set: { status: 'subscribed', unsubscribedAt: null } });
   return { ok: true, message: 'We’ll email you as soon as it’s back in stock.' };
 }

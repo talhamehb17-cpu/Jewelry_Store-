@@ -43,7 +43,7 @@ export default async function MessagesAdmin() {
           <ul className="max-h-[70vh] divide-y divide-line overflow-y-auto">
             {subs.map((s) => (
               <li key={s.id} className="flex items-center justify-between gap-2 px-5 py-2.5 text-[0.82rem]">
-                <span className="min-w-0"><span className="block truncate">{s.email}</span><span className="text-[0.7rem] text-muted">{s.source} · {formatDate(s.createdAt)}</span></span>
+                <span className="min-w-0"><span className="block truncate">{s.email}</span><span className="text-[0.7rem] text-muted">{s.source} · {formatDate(s.createdAt)} · {s.status === 'unsubscribed' ? `unsubscribed ${s.unsubscribedAt ? formatDate(s.unsubscribedAt) : ''}` : 'subscribed'}</span></span>
                 <ActionButton action={removeSubscriber.bind(null, s.id)} confirmText={`Remove ${s.email}?`} showResult={false} className="btn-sm">Remove</ActionButton>
               </li>
             ))}
