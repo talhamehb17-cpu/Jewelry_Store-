@@ -12,7 +12,7 @@ function Form() {
   return (
     <div className="container-x section-y">
       <div className="mx-auto max-w-lg text-center">
-        <p className="eyebrow mb-3">Evermoon Circle</p>
+        <p className="eyebrow mb-3">EVERMOON Circle</p>
         <h1 className="t-2">Unsubscribe</h1>
         <p className="mt-4 text-muted">Promotional letters will stop. Messages about an order you place — confirmation, shipping, delivery — will still be sent.</p>
         {message && <p className="mt-6 text-[0.95rem]">{message}</p>}

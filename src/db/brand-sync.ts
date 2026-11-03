@@ -26,6 +26,7 @@ function rebrand(text: string) {
   return text
     .replaceAll('Maison Aurelle', 'EVERMOON')
     .replaceAll('Evermoon Jewels', 'EVERMOON')
+    .replaceAll('Evermoon', 'EVERMOON')
     .replaceAll('@maisonaurelle', 'EVERMOON')
     .replaceAll('Private appointments available at our Gulberg atelier', 'Client care replies from the contact page')
     .replaceAll('The Gulberg atelier', 'The studio')

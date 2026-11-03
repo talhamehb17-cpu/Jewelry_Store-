@@ -27,7 +27,7 @@ export async function subscribeNewsletter(_: ActionResult | null, form: FormData
     .insert(newsletterSubscribers)
     .values({ email: parsed.data, source, status: 'subscribed', token: crypto.randomBytes(24).toString('hex') })
     .onConflictDoUpdate({ target: newsletterSubscribers.email, set: { status: 'subscribed', unsubscribedAt: null, source } });
-  return { ok: true, message: 'Welcome to the Evermoon Circle. We’ll write when something beautiful arrives.' };
+  return { ok: true, message: 'Welcome to the EVERMOON Circle. We’ll write when something beautiful arrives.' };
 }
 
 export async function setVisitorTheme(themeId: string | null) {

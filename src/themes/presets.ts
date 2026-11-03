@@ -249,7 +249,7 @@ const editorial: ThemeDefinition = {
     },
     buttons: { shape: 'square', style: 'solid', hover: 'invert', uppercase: true, tracking: 0.16, size: 'md', weight: 500 },
     header: { variant: 'masthead', sticky: true, transparentOnHome: false, logoText: 'EVERMOON', logoTagline: 'Issue No. 12 — The Jewelry Issue', logoImage: '', logoSize: 64, borderBottom: true },
-    footer: { variant: 'editorial', tagline: 'Subscribe to The Evermoon Journal.', showNewsletter: true, showSocial: true, showPayments: false },
+    footer: { variant: 'editorial', tagline: 'Subscribe to The EVERMOON Journal.', showNewsletter: true, showSocial: true, showPayments: false },
     announcement: { ...ANNOUNCEMENT, style: 'marquee' },
     mobile: { ...MOBILE, headerVariant: 'left', heroHeight: 'auto' },
     animation: { style: 'rise', speed: 1000 },

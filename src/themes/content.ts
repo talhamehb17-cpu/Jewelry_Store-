@@ -191,8 +191,8 @@ export const CATEGORY_TILES = [
 ];
 
 export const NEWSLETTER = {
-  eyebrow: 'The Evermoon Circle',
-  heading: 'Join the Evermoon Circle',
+  eyebrow: 'The EVERMOON Circle',
+  heading: 'Join the EVERMOON Circle',
   body: 'New collections, private sales and styling notes — plus 10% off your first order.',
   buttonLabel: 'Subscribe',
   disclaimer: 'By subscribing you agree to receive emails from EVERMOON. Unsubscribe anytime.',
@@ -222,7 +222,7 @@ export const STATEMENT = {
   eyebrow: 'Designed in Lahore',
   heading: 'Designed in Lahore. Worn everywhere.',
   body:
-    'Each Evermoon piece is designed in our Lahore studio and finished by hand in 18k gold vermeil, sterling silver and responsibly sourced stones — made to be layered, gifted and treasured for years.',
+    'Each EVERMOON piece is designed in our Lahore studio and finished by hand in 18k gold vermeil, sterling silver and responsibly sourced stones — made to be layered, gifted and treasured for years.',
   ctaLabel: 'Meet the house',
   ctaLink: '/about',
   image: LOOK.story,
@@ -289,7 +289,7 @@ export function buildHome(look: HomeLook): SectionInstance[] {
       imagePosition: 'left',
     }),
     section('trust-badges', 'pillars', {
-      eyebrow: 'Why Evermoon',
+      eyebrow: 'Why EVERMOON',
       heading: 'Made to be worn',
       items: WHY_CHOOSE,
     }),

@@ -16,7 +16,7 @@ export default async function AdminLogin() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <Image src={BRAND.logo} alt={BRAND.name} width={88} height={88} className="mx-auto h-20 w-20 object-contain" />
-          <h1 className="mt-5 font-heading text-[2rem]">Evermoon Admin</h1>
+          <h1 className="mt-5 font-heading text-[2rem]">EVERMOON Admin</h1>
           <p className="mt-1 text-[0.85rem] text-muted">Sign in to manage your store</p>
         </div>
         <div className="admin-card p-7">
