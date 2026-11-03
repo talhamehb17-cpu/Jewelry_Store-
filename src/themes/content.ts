@@ -1,3 +1,4 @@
+import { BRAND } from '@/lib/brand';
 import { IMG } from '@/lib/images';
 import type { SectionInstance, SectionSettings, SectionType } from './types';
 
@@ -22,13 +23,15 @@ export function section(
 /* ----------------------------- shared copy ----------------------------- */
 
 export const HERO_PRIMARY = {
-  eyebrow: 'The Autumn Edit',
-  heading: 'Jewelry Made for Your Moments',
-  subheading: 'Timeless pieces designed to elevate your everyday elegance.',
-  primaryLabel: 'Shop Collection',
+  eyebrow: 'Evermoon Jewels',
+  heading: 'Wear your little wonder.',
+  subheading: 'Pretty little things for your everyday. Handpicked jewellery, finished to be worn — not saved for later.',
+  primaryLabel: 'Shop the collection',
   primaryLink: '/shop',
-  secondaryLabel: 'Explore New Arrivals',
-  secondaryLink: '/collections/new-arrivals',
+  secondaryLabel: 'Our story',
+  secondaryLink: '/about',
+  image: BRAND.campaign,
+  mobileImage: BRAND.jewelry,
 };
 
 export const HERO_PEARL = {
@@ -51,14 +54,25 @@ export const HERO_BRIDAL = {
   secondaryLink: '/contact',
 };
 
-export const BRAND_STORY = {
-  eyebrow: 'Our Philosophy',
-  heading: 'Made to Be Remembered',
-  body:
-    'Our jewelry is crafted to celebrate beauty, confidence, and life’s most meaningful moments. From everyday essentials to statement pieces, every design is created with elegance and individuality in mind.',
-  ctaLabel: 'Discover Our Story',
+export const BRAND_INTRO = {
+  eyebrow: 'The house',
+  heading: 'Pretty little things, made for every day.',
+  body: 'Evermoon Jewels is a Lahore house of handpicked jewellery. Gold vermeil, freshwater pearls and quiet stones — luxury light enough for a Monday, a mehndi, or the market. Every piece is finished to feel considered, and entirely yours.',
+  ctaLabel: 'Read our story',
   ctaLink: '/about',
-  signature: 'Maison Aurelle, Lahore',
+  image: BRAND.jewelry,
+  imagePosition: 'right',
+};
+
+export const BRAND_STORY = {
+  eyebrow: 'Our story',
+  heading: 'A studio table, then a house.',
+  body: 'Evermoon began with a simple idea: jewellery should feel like a little wonder you wear, not a piece you lock away. Designed in Gulberg and finished by hand, our gold vermeil, sterling silver and pearls are made to be gifted, layered and lived in.',
+  ctaLabel: 'Visit the atelier',
+  ctaLink: '/about',
+  signature: 'Evermoon Jewels, Lahore',
+  image: BRAND.tray,
+  image2: BRAND.leaves,
   stats: [
     { value: '18k', label: 'Gold vermeil' },
     { value: '925', label: 'Sterling silver' },
@@ -66,38 +80,49 @@ export const BRAND_STORY = {
   ],
 };
 
+export const EDITORIAL = {
+  eyebrow: 'The edit',
+  heading: 'Handpicked for the light.',
+  body: 'Sun on stone, a flower earring, a chain that sits quietly. This is the Evermoon way of dressing — pretty, unforced, and made for the day you are actually having.',
+  ctaLabel: 'Shop the collection',
+  ctaLink: '/shop',
+  image: BRAND.rings,
+  imagePosition: 'left',
+};
+
+export const PROMO = {
+  eyebrow: 'For someone you love',
+  heading: 'Gifts, wrapped and ready.',
+  body: 'Every order arrives in a signature box with a handwritten note. Pay by Cash on Delivery, EasyPaisa, JazzCash or bank transfer.',
+  ctaLabel: 'Shop gifts',
+  ctaLink: '/collections/gifts',
+  image: BRAND.bracelet,
+};
+
 export const TESTIMONIALS = [
   {
     quote:
-      'The Celeste earrings arrived in the most beautiful box — they look even more delicate in person. I have worn them every single day since.',
-    name: 'Hira A.',
+      'Studio note — not a verified purchase. The Celeste drops are lighter than they look, and the gold hooks sit comfortably for a full day.',
+    name: 'Hira Ahmed',
     location: 'Lahore',
     rating: 5,
     product: 'Celeste Pearl Earrings',
   },
   {
     quote:
-      'I chose the Elara ring for my nikkah and it was perfect. The team helped me with sizing on WhatsApp within minutes.',
-    name: 'Mahnoor S.',
+      'Studio note — not a verified purchase. Elara reads clearly in daylight. The band is smooth, and sizing help on WhatsApp was immediate.',
+    name: 'Mahnoor Siddiqui',
     location: 'Karachi',
     rating: 5,
     product: 'Elara Solitaire Ring',
   },
   {
     quote:
-      'Finally, a brand that understands understated luxury. The Aurelia necklace layers beautifully and still looks brand new.',
-    name: 'Ayesha K.',
+      'Studio note — not a verified purchase. The Aurelia chain lies flat under a neckline and layers without twisting. A quiet everyday piece.',
+    name: 'Ayesha Khan',
     location: 'Islamabad',
     rating: 5,
     product: 'Aurelia Gold Necklace',
-  },
-  {
-    quote:
-      'Gifted the Serene Pearl Set to my mother on Eid and she was in tears. Packaging, quality and delivery were flawless.',
-    name: 'Zainab R.',
-    location: 'Faisalabad',
-    rating: 5,
-    product: 'Serene Pearl Set',
   },
 ];
 
@@ -139,11 +164,11 @@ export const CATEGORY_TILES = [
 ];
 
 export const NEWSLETTER = {
-  eyebrow: 'The Aurelle Circle',
-  heading: 'Join the Aurelle Circle',
-  body: 'Be the first to discover new collections, private sales and styling notes — and enjoy 10% off your first order.',
+  eyebrow: 'The Evermoon Circle',
+  heading: 'Join the Evermoon Circle',
+  body: 'New collections, private sales and styling notes — plus 10% off your first order.',
   buttonLabel: 'Subscribe',
-  disclaimer: 'By subscribing you agree to receive emails from Maison Aurelle. Unsubscribe anytime.',
+  disclaimer: 'By subscribing you agree to receive emails from Evermoon Jewels. Unsubscribe anytime.',
 };
 
 export const COMPLETE_THE_LOOK = {
@@ -170,9 +195,10 @@ export const STATEMENT = {
   eyebrow: 'Designed in Lahore',
   heading: 'Designed in Lahore. Worn everywhere.',
   body:
-    'Each Maison Aurelle piece is designed in our Lahore studio and finished by hand in 18k gold vermeil, sterling silver and responsibly sourced stones — made to be layered, gifted and treasured for years.',
-  ctaLabel: 'Meet the Maison',
+    'Each Evermoon piece is designed in our Lahore studio and finished by hand in 18k gold vermeil, sterling silver and responsibly sourced stones — made to be layered, gifted and treasured for years.',
+  ctaLabel: 'Meet the house',
   ctaLink: '/about',
+  image: BRAND.leaves,
 };
 
 export const VIDEO = {
@@ -184,3 +210,81 @@ export const VIDEO = {
   ctaLabel: 'Our Craft',
   ctaLink: '/about',
 };
+
+export type HomeLook = {
+  hero: 'campaign' | 'split' | 'arch' | 'cinematic' | 'classic' | 'minimal' | 'editorial' | 'mosaic';
+  heroImage?: string;
+  categories?: 'tiles' | 'circles' | 'list' | 'framed' | 'grid' | 'pills';
+  featured?: 'grid' | 'carousel' | 'asymmetric';
+  arrivals?: 'grid' | 'carousel';
+  bestsellers?: 'grid' | 'carousel';
+  story?: 'split' | 'centered' | 'heritage';
+  reviews?: 'cards' | 'slider' | 'letter';
+  editorialImage?: string;
+  promoImage?: string;
+  introImage?: string;
+};
+
+/** Shared premium homepage. Variants change the look; the story stays complete. */
+export function buildHome(look: HomeLook): SectionInstance[] {
+  const heroImage = look.heroImage || (look.hero === 'campaign' || look.hero === 'classic' ? BRAND.campaign : BRAND.jewelry);
+  const slideBase = {
+    ...HERO_PRIMARY,
+    image: heroImage,
+    mobileImage: look.hero === 'campaign' ? BRAND.jewelry : heroImage,
+    image2: BRAND.tray,
+    image3: BRAND.rings,
+    align: 'left' as const,
+    textColor: look.hero === 'cinematic' ? 'light' as const : 'dark' as const,
+    overlay: look.hero === 'cinematic' ? 42 : 0,
+  };
+  return [
+    section('hero', look.hero, {
+      homeVersion: 3,
+      height: look.hero === 'cinematic' ? 'large' : 'large',
+      autoplay: false,
+      slides: [slideBase],
+    }),
+    section('image-text', 'split', {
+      ...BRAND_INTRO,
+      image: look.introImage || BRAND.jewelry,
+      imagePosition: 'right',
+    }),
+    section('categories', look.categories || 'tiles', {
+      eyebrow: 'Shop by category',
+      heading: 'Find your signature',
+      items: CATEGORY_TILES.slice(0, 5),
+    }),
+    section('product-grid', look.featured || 'grid', gridHome('Featured pieces', 'featured', 'The edit', 8, '/shop')),
+    section('image-text', 'magazine', {
+      ...EDITORIAL,
+      image: look.editorialImage || BRAND.rings,
+      imagePosition: 'left',
+    }),
+    section('product-grid', look.arrivals || 'carousel', gridHome('New arrivals', 'new', 'Just in', 8, '/collections/new-arrivals')),
+    section('product-grid', look.bestsellers || 'grid', gridHome('Best sellers', 'bestsellers', 'Most loved', 8, '/collections/best-sellers')),
+    section('brand-story', look.story || 'split', { ...BRAND_STORY, image: BRAND.tray, image2: BRAND.leaves }),
+    section('image-banner', 'promo', { ...PROMO, image: look.promoImage || BRAND.bracelet, align: 'left', textColor: 'dark', overlay: 0, height: 'medium' }),
+    section('testimonials', look.reviews || 'cards', {
+      eyebrow: 'Studio notes',
+      heading: 'Three voices from the styling desk',
+      items: TESTIMONIALS.slice(0, 3),
+    }),
+    section('newsletter', 'centered', NEWSLETTER),
+  ];
+}
+
+function gridHome(heading: string, source: string, eyebrow: string, limit: number, viewAllLink: string) {
+  return {
+    eyebrow,
+    heading,
+    subheading: source === 'new' ? 'The latest pieces from the Lahore studio.' : source === 'bestsellers' ? 'The pieces clients return to, again and again.' : 'A handpicked edit, ready to wear today.',
+    source,
+    collection: '',
+    category: '',
+    products: [] as string[],
+    limit,
+    viewAllLabel: 'View all',
+    viewAllLink,
+  };
+}

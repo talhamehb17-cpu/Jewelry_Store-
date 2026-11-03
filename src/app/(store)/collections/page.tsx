@@ -6,7 +6,7 @@ import { getCollections } from '@/lib/catalog';
 
 export const metadata: Metadata = {
   title: 'Collections',
-  description: 'Explore Maison Aurelle collections — new arrivals, best sellers, The Pearl Edit, Bridal, Everyday Gold and thoughtful gifts.',
+  description: 'Explore Evermoon Jewels collections — new arrivals, best sellers, The Pearl Edit, Bridal, Everyday Gold and thoughtful gifts.',
   alternates: { canonical: '/collections' },
 };
 

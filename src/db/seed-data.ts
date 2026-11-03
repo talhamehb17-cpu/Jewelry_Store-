@@ -1,7 +1,7 @@
 import { IMG, UNSPLASH_CREDITS } from '@/lib/images';
 
 export const CARE_DEFAULT =
-  'Store in the Aurelle pouch provided, away from humidity. Remove before swimming, bathing or exercising. Apply perfume and lotions before wearing, and polish gently with the cloth included.';
+  'Store in the Evermoon pouch provided, away from humidity. Remove before swimming, bathing or exercising. Apply perfume and lotions before wearing, and polish gently with the cloth included.';
 
 export const SEED_CATEGORIES = [
   { slug: 'rings', name: 'Rings', description: 'Solitaires, stacking bands and statement rings in solid gold and gold vermeil.', image: IMG.elara2 },
@@ -652,12 +652,12 @@ export const SEED_PAGES = [
     slug: 'about',
     title: 'Our Story',
     template: 'about',
-    seoDescription: 'Maison Aurelle is a Lahore-born fine jewelry house creating timeless pieces in gold vermeil, solid gold and lab-grown diamonds.',
-    content: md`## Born in Lahore, made for your moments
+    seoDescription: 'Evermoon Jewels is a Lahore studio for pretty jewellery — gold vermeil, pearls and lab-grown diamonds, made to be worn.',
+    content: md`## Born in Lahore, made to be worn
 
-Maison Aurelle began in 2019 at a small studio table in Gulberg, with a simple belief: fine jewelry should feel personal, effortless and made to be worn — not locked away for special occasions.
+Evermoon Jewels began at a small studio table in Gulberg, with a simple belief: jewellery should feel personal, effortless and made to be worn — not locked away for special occasions.
 
-Today, every Aurelle piece is still designed in Lahore and finished by hand. We work with thick 18k gold vermeil over solid 925 sterling silver, 14k solid gold, freshwater pearls and certified lab-grown diamonds, so that each design is as responsible as it is beautiful.
+Today, every Evermoon piece is still designed in Lahore and finished by hand. We work with thick 18k gold vermeil over solid 925 sterling silver, 14k solid gold, freshwater pearls and certified lab-grown diamonds, so that each design is as responsible as it is beautiful.
 
 ## Our promise
 
@@ -674,14 +674,14 @@ Our Gulberg atelier welcomes private appointments for bridal consultations, cust
     slug: 'contact',
     title: 'Contact Us',
     template: 'contact',
-    seoDescription: 'Contact Maison Aurelle client care by phone, WhatsApp or email, or visit our Gulberg atelier in Lahore.',
+    seoDescription: 'Contact Evermoon Jewels client care by phone, WhatsApp or email, or visit our Gulberg atelier in Lahore.',
     content: md`We are here to help with sizing, styling, orders and bridal appointments. Our client care team replies within one working day — usually much sooner on WhatsApp.`,
   },
   {
     slug: 'faq',
     title: 'Frequently Asked Questions',
     template: 'faq',
-    seoDescription: 'Answers about orders, delivery, EasyPaisa, JazzCash, bank transfer, returns, sizing and jewelry care at Maison Aurelle.',
+    seoDescription: 'Answers about orders, delivery, EasyPaisa, JazzCash, bank transfer, returns, sizing and jewelry care at Evermoon Jewels.',
     content: md`## Orders & Payment
 
 ### Which payment methods do you accept?
@@ -724,7 +724,7 @@ Store pieces separately in the pouch provided, avoid perfume and water, and poli
     slug: 'shipping-policy',
     title: 'Shipping Policy',
     template: 'policy',
-    seoDescription: 'Delivery times, shipping costs and coverage across Pakistan for Maison Aurelle orders.',
+    seoDescription: 'Delivery times, shipping costs and coverage across Pakistan for Evermoon Jewels orders.',
     content: md`## Delivery across Pakistan
 
 We deliver to every city in Pakistan through our trusted courier partners (TCS, Leopards and M&P).
@@ -754,7 +754,7 @@ We currently ship within Pakistan only. For international enquiries, please [con
     slug: 'return-policy',
     title: 'Returns & Exchanges',
     template: 'policy',
-    seoDescription: 'Maison Aurelle 7-day returns and exchanges policy.',
+    seoDescription: 'Evermoon Jewels 7-day returns and exchanges policy.',
     content: md`## 7-day returns & exchanges
 
 If you are not completely in love with your piece, you may return or exchange it within **7 days of delivery**.
@@ -779,10 +779,10 @@ If your piece arrives damaged or develops a manufacturing fault within 6 months,
     slug: 'privacy-policy',
     title: 'Privacy Policy',
     template: 'policy',
-    seoDescription: 'How Maison Aurelle collects, uses and protects your personal information.',
+    seoDescription: 'How Evermoon Jewels collects, uses and protects your personal information.',
     content: md`## Your privacy matters
 
-This policy explains what information Maison Aurelle collects when you visit our website or place an order, and how we use it.
+This policy explains what information Evermoon Jewels collects when you visit our website or place an order, and how we use it.
 
 ## Information we collect
 
@@ -810,7 +810,7 @@ Passwords are hashed, connections are encrypted with TLS, and access to customer
     slug: 'terms-of-service',
     title: 'Terms of Service',
     template: 'policy',
-    seoDescription: 'Terms and conditions for shopping with Maison Aurelle.',
+    seoDescription: 'Terms and conditions for shopping with Evermoon Jewels.',
     content: md`## Overview
 
 By using this website and placing an order, you agree to the following terms.
@@ -829,7 +829,7 @@ EasyPaisa, JazzCash and bank-transfer orders are processed only after the receip
 
 ## Intellectual property
 
-All designs, photography and content on this website belong to Maison Aurelle or are used under licence.
+All designs, photography and content on this website belong to Evermoon Jewels or are used under licence.
 
 ## Governing law
 
@@ -858,9 +858,9 @@ Pearls are organic and delicate. Wipe with a soft, damp cloth after wearing, sto
     slug: 'credits',
     title: 'Photography Credits',
     template: 'default',
-    seoDescription: 'Photography credits for imagery used on the Maison Aurelle website.',
+    seoDescription: 'Photography credits for imagery used on the Evermoon Jewels website.',
     content:
-      'Campaign and product imagery for the Aurelia, Amara, Celestine, Luna Crescent and Soleil pieces, as well as our homepage campaign, are original Maison Aurelle artwork.\n\nAdditional photography is used under the [Unsplash License](https://unsplash.com/license), with thanks to the following photographers:\n\n' +
+      'Campaign and product imagery for the Aurelia, Amara, Celestine, Luna Crescent and Soleil pieces, as well as our homepage campaign, are original Evermoon Jewels artwork.\n\nAdditional photography is used under the [Unsplash License](https://unsplash.com/license), with thanks to the following photographers:\n\n' +
       Array.from(new Map(UNSPLASH_CREDITS.map((c) => [c.photographer, c])).values())
         .map((c) => `- [${c.photographer}](${c.profile}) on Unsplash`)
         .join('\n'),
@@ -918,7 +918,7 @@ export const NAVIGATION = {
       ],
     },
     {
-      title: 'The Maison',
+      title: 'The House',
       links: [
         { label: 'Our Story', href: '/about' },
         { label: 'Jewelry Care', href: '/pages/jewelry-care' },
@@ -932,8 +932,8 @@ export const NAVIGATION = {
 
 export const DEFAULT_SETTINGS = {
   store: {
-    name: 'Maison Aurelle',
-    tagline: 'Fine Jewelry',
+    name: 'Evermoon Jewels',
+    tagline: 'Wear Your Little Wonder',
     email: 'care@maisonaurelle.pk',
     phone: '+92 300 1234567',
     whatsapp: '923001234567',
@@ -952,20 +952,20 @@ export const DEFAULT_SETTINGS = {
     bank: {
       enabled: true,
       bankName: 'Meezan Bank',
-      accountTitle: 'Maison Aurelle (Pvt) Ltd',
+      accountTitle: 'Evermoon Jewels',
       accountNumber: '0101-0105678901',
       iban: 'PK36MEZN0001010105678901',
       instructions: 'Transfer the exact order total, then upload a screenshot or PDF of the receipt. The order stays under review until the payment is verified.',
     },
     easypaisa: {
       enabled: true,
-      accountName: 'Maison Aurelle',
+      accountName: 'Evermoon Jewels',
       accountNumber: '0345-1234567',
       instructions: 'Send the exact order total to this EasyPaisa account, then upload a screenshot or PDF of the receipt. The order is confirmed only after the payment is verified.',
     },
     jazzcash: {
       enabled: true,
-      accountName: 'Maison Aurelle',
+      accountName: 'Evermoon Jewels',
       accountNumber: '0300-1234567',
       instructions: 'Send the exact order total to this JazzCash account, then upload a screenshot or PDF of the receipt. The order is confirmed only after the payment is verified.',
     },
@@ -973,7 +973,7 @@ export const DEFAULT_SETTINGS = {
       enabled: false,
       jazzcash: '0300-1234567',
       easypaisa: '0345-1234567',
-      accountTitle: 'Maison Aurelle',
+      accountTitle: 'Evermoon Jewels',
       instructions: 'Legacy combined wallet. Use the separate EasyPaisa and JazzCash methods.',
     },
     card: { enabled: false },
@@ -989,7 +989,7 @@ export const DEFAULT_SETTINGS = {
   search: { popular: ['Pearl earrings', 'Gold hoops', 'Tennis bracelet', 'Solitaire ring', 'Gift sets', 'Bridal'] },
   theme: { active: 'soft-luxury', visitorSwitcher: true },
   seo: {
-    title: 'Maison Aurelle — Fine Jewelry Made for Your Moments',
+    title: 'Evermoon Jewels — Wear Your Little Wonder',
     description:
       'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. Cash on Delivery, EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
   },

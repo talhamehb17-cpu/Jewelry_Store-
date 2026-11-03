@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Img } from '@/components/ui/img';
 import { FadeSlider } from './slider';
+import { BRAND } from '@/lib/brand';
 import { cn } from '@/lib/utils';
 import type { SectionInstance, ThemeConfig } from '@/themes/types';
 
@@ -72,15 +73,40 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
   const h = HEIGHT[(st.height as keyof typeof HEIGHT) ?? 'large'] ?? HEIGHT.large;
   const mh = MOBILE_H[config.settings.mobile.heroHeight] ?? '75svh';
   const vars = { ['--hero-h' as string]: h, ['--hero-h-m' as string]: mh } as React.CSSProperties;
-  const hClass = 'relative overflow-hidden h-[var(--hero-h-m)] md:h-[var(--hero-h)] min-h-[520px]';
+  const hClass = 'relative overflow-hidden h-[min(var(--hero-h-m),85svh)] md:h-[var(--hero-h)] max-md:min-h-[26rem]';
   const first = slides[0]!;
   const light = (first.textColor ?? 'light') === 'light';
 
   switch (section.variant) {
+    case 'campaign':
+      return (
+        <section className="overflow-hidden bg-bg" style={vars}>
+          <div className="relative hidden md:block">
+            <div className="relative aspect-[2056/765] max-h-[78vh] w-full bg-surface">
+              <Img src={first.image || BRAND.campaign} alt="Evermoon Jewels — Wear your little wonder" priority sizes="100vw" className="hero-drift !object-cover !object-center" />
+            </div>
+          </div>
+          <div className="md:hidden">
+            <div className="relative mx-auto aspect-[4/5] max-h-[68svh] w-full overflow-hidden bg-surface">
+              <Img src={first.mobileImage || BRAND.jewelry} alt="Evermoon jewellery arranged in afternoon light" priority sizes="100vw" className="!object-cover !object-[center_40%]" />
+            </div>
+            <div className="container-x py-8">
+              <Copy s={{ ...first, textColor: 'dark' }} light={false} size="1" />
+            </div>
+          </div>
+          <div className="hidden border-b border-line md:block">
+            <div className="container-x flex flex-wrap items-center justify-between gap-4 py-5">
+              <p className="max-w-xl text-[1.02rem] leading-relaxed text-muted">{first.subheading}</p>
+              <Ctas s={first} light={false} className="!mt-0" />
+            </div>
+          </div>
+        </section>
+      );
+
     case 'split':
       return (
         <section className="grid border-b border-line md:min-h-[var(--hero-h)] md:grid-cols-2" style={vars}>
-          <div className="relative order-1 aspect-[4/5] overflow-hidden bg-surface md:order-2 md:aspect-auto">
+          <div className="relative order-1 aspect-[4/5] max-h-[68svh] overflow-hidden bg-surface md:order-2 md:aspect-auto md:max-h-none">
             <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" />
           </div>
           <div className="order-2 flex items-center px-[var(--pad-x)] py-14 md:order-1 md:px-[max(var(--pad-x),5vw)]">
@@ -157,7 +183,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
                 <span>{first.eyebrow}</span>
                 <span>Vol. 12 — {new Date().getFullYear()}</span>
               </div>
-              <h1 className="t-display slide-up mt-8 text-balance md:-ml-[18%] md:mix-blend-multiply" style={{ fontSize: 'calc(clamp(3rem, 7.4vw, 7.5rem) * var(--h-scale))' }}>
+              <h1 className="t-display slide-up mt-8 text-balance" style={{ fontSize: 'calc(clamp(2.4rem, 5.4vw, 5.6rem) * var(--h-scale))' }}>
                 <span className="accent-italic">{(first.heading ?? '').split(' ').slice(0, 2).join(' ')}</span> {(first.heading ?? '').split(' ').slice(2).join(' ')}
               </h1>
               <div className="mt-6 grid grid-cols-2 gap-4 md:gap-6">

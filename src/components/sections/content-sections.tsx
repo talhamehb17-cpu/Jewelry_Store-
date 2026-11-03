@@ -62,13 +62,13 @@ export function BrandStorySection({ section }: Props) {
       return (
         <section className="section-y container-x">
           <div className="grid items-center gap-12 md:grid-cols-2 md:gap-20">
-            <div className="reveal relative pb-16 pr-10 md:pb-24 md:pr-16">
-              <div className="relative aspect-[4/5] overflow-hidden bg-surface rounded-theme-sm">
+            <div className="reveal relative md:pb-24 md:pr-16">
+              <div className="relative aspect-[4/5] max-h-[72svh] overflow-hidden bg-surface rounded-theme-sm md:max-h-none">
                 <Img src={st.image} alt="" sizes="(max-width:768px) 90vw, 40vw" />
               </div>
               {st.image2 && (
-                <div className="absolute bottom-0 right-0 aspect-square w-[46%] overflow-hidden border-[6px] border-bg bg-surface shadow-xl rounded-theme-sm">
-                  <Img src={st.image2} alt="" sizes="20vw" />
+                <div className="relative mt-4 aspect-[4/3] w-full overflow-hidden border border-line bg-surface rounded-theme-sm sm:absolute sm:bottom-0 sm:right-0 sm:mt-0 sm:aspect-square sm:w-[46%] sm:border-[6px] sm:border-bg sm:shadow-xl">
+                  <Img src={st.image2} alt="" sizes="(max-width:640px) 90vw, 20vw" />
                 </div>
               )}
             </div>
@@ -112,7 +112,7 @@ export function ImageBannerSection({ section }: Props) {
     return (
       <section className="section-y-sm container-x">
         <div className="reveal grid overflow-hidden rounded-theme bg-secondary md:grid-cols-2">
-          <div className="flex items-center p-10 md:p-16">
+          <div className="flex items-center p-6 sm:p-10 md:p-16">
             <div className="max-w-md">
               {st.eyebrow && <p className="mb-4 text-[0.72rem] uppercase tracking-[0.26em] text-primary">{st.eyebrow}</p>}
               <h2 className="t-1 text-balance">{st.heading}</h2>
@@ -163,7 +163,7 @@ export function ImageTextSection({ section }: Props) {
       return (
         <section className="section-y container-x">
           <div className="grid gap-10 md:grid-cols-12">
-            <div className={cn('reveal relative aspect-[3/4] overflow-hidden bg-surface md:col-span-7 md:aspect-auto md:min-h-[80vh]', right && 'md:order-2')}><Img src={st.image} alt="" sizes="60vw" /></div>
+            <div className={cn('reveal relative aspect-[3/4] max-h-[70svh] overflow-hidden bg-surface md:col-span-7 md:aspect-auto md:max-h-[760px] md:min-h-[56vh]', right && 'md:order-2')}><Img src={st.image} alt="" sizes="60vw" /></div>
             <div className="reveal flex flex-col justify-center md:col-span-5">
               {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
               <h2 className="t-1 text-balance">{st.heading}</h2>
@@ -213,10 +213,12 @@ export function ImageTextSection({ section }: Props) {
 type T = { quote: string; name: string; location?: string; rating?: number; product?: string; avatar?: string };
 
 const STUDIO_FACES: Record<string, { avatar: string; image: string; href: string }> = {
+  'Hira Ahmed': { avatar: '/images/reviews/hira.webp', image: '/images/products/celeste-pearl-earrings-1.webp', href: '/products/celeste-pearl-earrings' },
+  'Mahnoor Siddiqui': { avatar: '/images/reviews/mahnoor.webp', image: '/images/products/elara-solitaire-ring-1.webp', href: '/products/elara-solitaire-ring' },
+  'Ayesha Khan': { avatar: '/images/reviews/ayesha.webp', image: '/images/products/aurelia-gold-necklace-2.webp', href: '/products/aurelia-gold-necklace' },
   'Hira A.': { avatar: '/images/reviews/hira.webp', image: '/images/products/celeste-pearl-earrings-1.webp', href: '/products/celeste-pearl-earrings' },
   'Mahnoor S.': { avatar: '/images/reviews/mahnoor.webp', image: '/images/products/elara-solitaire-ring-1.webp', href: '/products/elara-solitaire-ring' },
   'Ayesha K.': { avatar: '/images/reviews/ayesha.webp', image: '/images/products/aurelia-gold-necklace-2.webp', href: '/products/aurelia-gold-necklace' },
-  'Zainab R.': { avatar: '', image: '/images/products/serene-pearl-set-1.webp', href: '/products/serene-pearl-set' },
 };
 
 function studioFace(t: T) {
@@ -232,7 +234,7 @@ function StudioPerson({ t, align = 'start' }: { t: T; align?: 'start' | 'center'
       </span>
       <span className={cn('text-left', align === 'center' && 'text-left')}>
         <span className="block text-[0.84rem] font-medium normal-case tracking-normal">{t.name}{t.location ? <span className="font-normal text-muted"> · {t.location}</span> : null}</span>
-        <span className="mt-0.5 block text-[0.62rem] uppercase tracking-[0.16em] text-muted">Studio testimonial</span>
+        <span className="mt-0.5 block text-[0.62rem] uppercase tracking-[0.14em] text-muted">Studio testimonial · not a verified purchase</span>
       </span>
     </span>
   );
@@ -249,7 +251,7 @@ export function TestimonialsSection({ section }: Props) {
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
           <div className={cn('grid gap-[var(--grid-gap)]', items.length >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3')}>
             {items.map((t, i) => (
-              <figure key={i} className="reveal flex flex-col rounded-theme border border-line bg-surface/60 p-7" style={{ ['--d' as string]: `${i * 100}ms` }}>
+              <figure key={i} className="reveal flex flex-col rounded-theme border border-line bg-surface/60 p-5 sm:p-7" style={{ ['--d' as string]: `${i * 100}ms` }}>
                 <Stars value={t.rating ?? 5} size={13} />
                 <blockquote className="mt-5 flex-1 text-[0.95rem] leading-relaxed">“{t.quote}”</blockquote>
                 <figcaption className="mt-6 border-t border-line pt-4 text-[0.82rem]">
@@ -279,7 +281,17 @@ export function TestimonialsSection({ section }: Props) {
               {items.slice(0, 3).map((t, i) => (
                 <figure key={i} className="reveal py-8 first:pt-0">
                   <blockquote className="font-heading text-[clamp(1.25rem,2vw,1.65rem)] italic leading-snug">“{t.quote}”</blockquote>
-                  <figcaption><StudioPerson t={t} /></figcaption>
+                  <figcaption>
+                    <StudioPerson t={t} />
+                    {studioFace(t)?.image && (
+                      <Link href={studioFace(t)!.href} className="mt-4 flex items-center gap-3 text-[0.82rem]">
+                        <span className="relative block h-16 w-14 shrink-0 overflow-hidden rounded-theme-sm bg-bg">
+                          <Img src={studioFace(t)!.image} alt="" sizes="64px" />
+                        </span>
+                        <span>Related piece: {t.product || 'View'}</span>
+                      </Link>
+                    )}
+                  </figcaption>
                 </figure>
               ))}
             </div>

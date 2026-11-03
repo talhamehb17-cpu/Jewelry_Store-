@@ -23,7 +23,7 @@ export async function subscribeNewsletter(_: ActionResult | null, form: FormData
   const source = String(form.get('source') || 'footer').slice(0, 60);
   const db = await getDb();
   await db.insert(newsletterSubscribers).values({ email: parsed.data, source }).onConflictDoNothing();
-  return { ok: true, message: 'Welcome to the Aurelle Circle. We’ll write when something beautiful arrives.' };
+  return { ok: true, message: 'Welcome to the Evermoon Circle. We’ll write when something beautiful arrives.' };
 }
 
 export async function setVisitorTheme(themeId: string | null) {

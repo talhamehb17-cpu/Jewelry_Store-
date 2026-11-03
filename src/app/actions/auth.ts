@@ -109,7 +109,7 @@ export async function requestResetAction(_: FormState, form: FormData): Promise<
   const generic = 'If an account exists for that email, we’ve sent a reset link. It expires in 60 minutes.';
   if (!u || u.status !== 'active') return { ok: true, message: generic };
   const link = await createResetLink(u.id);
-  const res = await sendEmail(u.email, 'Reset your Maison Aurelle password', resetEmail(link));
+  const res = await sendEmail(u.email, 'Reset your Evermoon Jewels password', resetEmail(link));
   if (!res.sent) return { ok: true, message: `${generic} (Email delivery isn’t configured on this store yet — please contact client care, who can issue a reset link.)` };
   return { ok: true, message: generic };
 }

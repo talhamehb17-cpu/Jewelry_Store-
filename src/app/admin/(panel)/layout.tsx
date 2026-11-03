@@ -5,7 +5,7 @@ import { requireAdminPage } from '@/lib/auth';
 import { getDb, getDbKind } from '@/db';
 import { contactMessages, orders, productVariants, reviews } from '@/db/schema';
 
-export const metadata: Metadata = { title: { default: 'Admin', template: '%s · Aurelle Admin' }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: { default: 'Admin', template: '%s · Evermoon Admin' }, robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdminPage();

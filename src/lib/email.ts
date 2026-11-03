@@ -6,7 +6,7 @@ import { siteUrl } from './utils';
 export async function sendEmail(to: string, subject: string, html: string) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { sent: false as const, reason: 'Email provider not configured' };
-  const from = process.env.EMAIL_FROM || 'Maison Aurelle <onboarding@resend.dev>';
+  const from = process.env.EMAIL_FROM || 'Evermoon Jewels <onboarding@resend.dev>';
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -27,7 +27,7 @@ function layout(title: string, body: string) {
     <p style="text-align:center;font-family:Georgia,serif;letter-spacing:6px;font-size:22px;margin:0 0 32px">AURELLE</p>
     <h1 style="font-family:Georgia,serif;font-weight:400;font-size:26px;margin:0 0 16px">${esc(title)}</h1>
     ${body}
-    <p style="margin-top:40px;font-size:12px;color:#8A7F74">Maison Aurelle · Gulberg III, Lahore · <a href="${siteUrl()}" style="color:#8A7F74">${siteUrl().replace(/^https?:\/\//, '')}</a></p>
+    <p style="margin-top:40px;font-size:12px;color:#8A7F74">Evermoon Jewels · Gulberg III, Lahore · <a href="${siteUrl()}" style="color:#8A7F74">${siteUrl().replace(/^https?:\/\//, '')}</a></p>
   </div></body></html>`;
 }
 

@@ -168,7 +168,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
       { id: 'heritage', label: 'Heritage' },
     ],
     fields: [eyebrow, heading, { key: 'body', label: 'Text', type: 'textarea' }, { key: 'image', label: 'Image', type: 'image' }, { key: 'image2', label: 'Secondary image', type: 'image' }, { key: 'signature', label: 'Signature line', type: 'text' }, ...cta],
-    defaults: () => ({ eyebrow: 'Our Philosophy', heading: 'Made to Be Remembered', body: 'Our jewelry is crafted to celebrate beauty, confidence, and life’s most meaningful moments.', image: IMG.aurelia2, image2: '', signature: 'Maison Aurelle', ctaLabel: 'Our Story', ctaLink: '/about' }),
+    defaults: () => ({ eyebrow: 'Our Philosophy', heading: 'Made to Be Remembered', body: 'Our jewelry is crafted to celebrate beauty, confidence, and life’s most meaningful moments.', image: IMG.aurelia2, image2: '', signature: 'Evermoon Jewels', ctaLabel: 'Our Story', ctaLink: '/about' }),
   },
   'image-banner': {
     label: 'Image Banner',

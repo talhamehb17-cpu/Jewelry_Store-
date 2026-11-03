@@ -22,9 +22,9 @@ export function CategoriesSection({ section }: Props) {
       return (
         <section className="section-y-sm container-x">
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
-          <div className="no-scrollbar -mx-[var(--pad-x)] flex justify-start gap-6 overflow-x-auto px-[var(--pad-x)] md:justify-center md:gap-10">
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-6 md:gap-10">
             {items.map((t, i) => (
-              <Link key={t.link + i} href={t.link} className="reveal group flex shrink-0 flex-col items-center" style={{ ['--d' as string]: `${i * 70}ms` }}>
+              <Link key={t.link + i} href={t.link} className="reveal group flex w-[42%] max-w-[9rem] flex-col items-center sm:w-36" style={{ ['--d' as string]: `${i * 70}ms` }}>
                 <span className="relative block h-24 w-24 overflow-hidden rounded-full border-4 border-bg bg-surface shadow-[0_10px_30px_-18px_rgba(0,0,0,.4)] ring-1 ring-line transition duration-500 group-hover:ring-primary md:h-36 md:w-36">
                   <Img src={t.image} alt={t.title} sizes="150px" className="transition duration-700 group-hover:scale-110" />
                 </span>
@@ -100,9 +100,9 @@ export function CategoriesSection({ section }: Props) {
       return (
         <section className="section-y-sm container-x">
           {st.heading && <h2 className="t-3 mb-6">{st.heading}</h2>}
-          <div className="no-scrollbar -mx-[var(--pad-x)] flex gap-3 overflow-x-auto px-[var(--pad-x)]">
+          <div className="flex flex-wrap gap-3">
             {items.map((t, i) => (
-              <Link key={t.link + i} href={t.link} className="group flex shrink-0 items-center gap-3 rounded-full border border-line bg-bg py-2 pl-2 pr-6 transition hover:border-ink hover:bg-ink hover:text-bg">
+              <Link key={t.link + i} href={t.link} className="group flex min-w-0 items-center gap-3 rounded-full border border-line bg-bg py-2 pl-2 pr-6 transition hover:border-ink hover:bg-ink hover:text-bg">
                 <span className="relative block h-12 w-12 overflow-hidden rounded-full bg-surface"><Img src={t.image} alt="" sizes="48px" /></span>
                 <span className="text-[0.95rem] font-medium">{t.title}</span>
               </Link>
@@ -115,9 +115,9 @@ export function CategoriesSection({ section }: Props) {
       return (
         <section className="section-y container-x">
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
-          <div className="no-scrollbar -mx-[var(--pad-x)] flex gap-4 overflow-x-auto px-[var(--pad-x)] md:mx-0 md:grid md:overflow-visible md:px-0" style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 6)}, minmax(0,1fr))` }}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
             {items.map((t, i) => (
-              <Link key={t.link + i} href={t.link} className="reveal group w-[42%] shrink-0 md:w-auto" style={{ ['--d' as string]: `${i * 80}ms` }}>
+              <Link key={t.link + i} href={t.link} className="reveal group min-w-0 md:w-auto" style={{ ['--d' as string]: `${i * 80}ms` }}>
                 <span className="relative block aspect-[3/4] overflow-hidden bg-surface rounded-theme-sm">
                   <Img src={t.image} alt={t.title} sizes="(max-width:768px) 45vw, 20vw" className="transition duration-[1200ms] group-hover:scale-105" />
                 </span>

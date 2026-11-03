@@ -1,12 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, Phone, CalendarDays, Plus, Minus } from 'lucide-react';
 import { useStore } from './providers';
 import { Drawer } from '@/components/ui/overlay';
 import { Img } from '@/components/ui/img';
+import { BRAND } from '@/lib/brand';
+import { activeNavHref } from '@/lib/nav';
 import { cn } from '@/lib/utils';
 import type { ThemeHeader } from '@/themes/types';
 import type { NavItem } from '@/lib/settings';
@@ -48,63 +51,27 @@ function useAnnouncementHeight() {
 }
 
 export function Logo({ header, className, size }: { header: ThemeHeader; className?: string; size?: number }) {
-  const s = size ?? header.logoSize;
-  if (header.logoImage) {
-    return (
-      <span className={cn('relative block', className)} style={{ height: s * 1.4, width: s * 5 }}>
-        <Img src={header.logoImage} alt={header.logoText} className="!object-contain" />
-      </span>
-    );
-  }
-  const v = header.variant;
-  const style: React.CSSProperties = { fontSize: `min(${s}px, calc(var(--logo-size) * ${s} / ${header.logoSize}))` };
-  const word =
-    v === 'luxe' ? (
-      <span className="text-foil font-heading tracking-[0.32em]">{header.logoText}</span>
-    ) : v === 'boutique' || v === 'parisian' ? (
-      <span className="font-heading italic tracking-[-0.01em]">{header.logoText}</span>
-    ) : v === 'inline' || v === 'floating' || v === 'menu' ? (
-      <span className="font-heading font-semibold tracking-[-0.03em]">{header.logoText}</span>
-    ) : v === 'heritage' ? (
-      <span className="font-heading tracking-[0.12em]">{header.logoText}</span>
-    ) : v === 'masthead' ? (
-      <span className="font-heading tracking-[0.06em]">{header.logoText}</span>
-    ) : (
-      <span className="font-heading tracking-[0.28em]">{header.logoText}</span>
-    );
+  const s = size ?? Math.min(Math.max(header.logoSize, 56), 84);
   return (
-    <span className={cn('inline-flex flex-col items-center leading-none', className)}>
-      <span style={style} className="whitespace-nowrap">{word}</span>
-      {header.logoTagline && !['masthead', 'inline', 'floating', 'menu'].includes(v) && (
-        <span className="mt-1.5 text-[0.58rem] uppercase tracking-[0.34em] opacity-70">{header.logoTagline}</span>
-      )}
+    <span className={cn('relative block shrink-0', className)} style={{ height: s, width: s }}>
+      <Image src={BRAND.logo} alt={`${BRAND.name} — ${BRAND.tagline}`} fill sizes="96px" className="object-contain" priority />
     </span>
   );
 }
 
-function Crest() {
-  return (
-    <svg width="34" height="34" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden className="mx-auto mb-2 opacity-80">
-      <circle cx="20" cy="20" r="18.5" />
-      <circle cx="20" cy="20" r="15.5" strokeDasharray="1 2" />
-      <path d="M20 10 L27 29 H24.4 L22.8 24.6 H17.2 L15.6 29 H13 Z M18 22.4 H22 L20 16.8 Z" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function NavDropdown({ item, mega, luxe }: { item: NavItem; mega: HeaderProps['mega']; luxe?: boolean }) {
-  const pathname = usePathname();
-  const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+function NavDropdown({ item, current, mega, luxe }: { item: NavItem; current: string | null; mega: HeaderProps['mega']; luxe?: boolean }) {
+  const pathname = usePathname().split('?')[0] || '/';
+  const active = current === item.href;
   if (!item.children?.length) {
     return (
-      <Link href={item.href} className="nav-link link-u py-2" aria-current={active ? 'page' : undefined}>
+      <Link href={item.href} onClick={(e) => e.currentTarget.blur()} className="nav-link link-u py-2" aria-current={active ? 'page' : undefined}>
         {item.label}
       </Link>
     );
   }
   return (
     <div className="group/dd relative">
-      <Link href={item.href} className="nav-link link-u inline-flex items-center gap-1 py-2" aria-current={active ? 'page' : undefined} aria-haspopup="true">
+      <Link href={item.href} onClick={(e) => e.currentTarget.blur()} className="nav-link link-u inline-flex items-center gap-1 py-2" aria-current={active ? 'page' : undefined} aria-haspopup="true">
         {item.label}
         <ChevronDown size={12} strokeWidth={1.5} className="opacity-60 transition group-hover/dd:rotate-180" />
       </Link>
@@ -117,7 +84,7 @@ function NavDropdown({ item, mega, luxe }: { item: NavItem; mega: HeaderProps['m
           <ul className={cn(luxe && 'min-w-[180px] space-y-1')}>
             {item.children.map((c) => (
               <li key={c.href}>
-                <Link href={c.href} className={cn('block whitespace-nowrap text-[0.86rem] transition hover:text-accent', luxe ? 'py-1.5' : 'px-5 py-2 hover:bg-surface')}>
+                <Link href={c.href} onClick={(e) => e.currentTarget.blur()} className={cn('block whitespace-nowrap text-[0.86rem] transition hover:text-accent', (pathname === c.href || pathname.startsWith(`${c.href}/`)) && 'font-medium text-accent', luxe ? 'py-1.5' : 'px-5 py-2 hover:bg-surface')}>
                   {c.label}
                 </Link>
               </li>
@@ -177,7 +144,7 @@ function Icons({ textLabels, user, compact }: { textLabels?: boolean; user: Head
   );
 }
 
-function MobileMenu({ nav, user, phone }: { nav: NavItem[]; user: HeaderProps['user']; phone: string }) {
+function MobileMenu({ nav, user, phone, current }: { nav: NavItem[]; user: HeaderProps['user']; phone: string; current: string | null }) {
   const { menuOpen, setMenuOpen } = useStore();
   const [openIdx, setOpenIdx] = useState<number | null>(0);
   const pathname = usePathname();
@@ -189,7 +156,7 @@ function MobileMenu({ nav, user, phone }: { nav: NavItem[]; user: HeaderProps['u
           <div key={item.href} className="border-b border-line">
             {item.children?.length ? (
               <>
-                <button className="flex w-full items-center justify-between py-4 text-left font-heading text-xl" onClick={() => setOpenIdx(openIdx === i ? null : i)} aria-expanded={openIdx === i}>
+                <button className={cn('flex w-full items-center justify-between py-4 text-left font-heading text-xl', current === item.href && 'text-accent')} onClick={() => setOpenIdx(openIdx === i ? null : i)} aria-expanded={openIdx === i} aria-current={current === item.href ? 'page' : undefined}>
                   {item.label}
                   {openIdx === i ? <Minus size={16} strokeWidth={SW} /> : <Plus size={16} strokeWidth={SW} />}
                 </button>
@@ -204,7 +171,7 @@ function MobileMenu({ nav, user, phone }: { nav: NavItem[]; user: HeaderProps['u
                 </div>
               </>
             ) : (
-              <Link href={item.href} className="block py-4 font-heading text-xl">{item.label}</Link>
+              <Link href={item.href} className={cn('block py-4 font-heading text-xl', current === item.href && 'text-accent')} aria-current={current === item.href ? 'page' : undefined}>{item.label}</Link>
             )}
           </div>
         ))}
@@ -253,6 +220,7 @@ function FullscreenMenu({ nav, open, onClose }: { nav: NavItem[]; open: boolean;
 
 export function Header({ header, mobileVariant, nav, user, mega, phone }: HeaderProps) {
   const pathname = usePathname();
+  const current = activeNavHref(pathname, nav);
   const { setMenuOpen } = useStore();
   const y = useScrollY();
   const annH = useAnnouncementHeight();
@@ -272,13 +240,13 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
   );
 
   const mobileBar = (
-    <div className={cn('flex h-16 items-center justify-between lg:hidden', mobileVariant === 'left' && 'gap-2')}>
+    <div className={cn('flex h-[72px] items-center justify-between lg:hidden', mobileVariant === 'left' && 'gap-2')}>
       {mobileVariant === 'center' ? (
         <>
           <button onClick={() => setMenuOpen(true)} className="grid h-10 w-10 place-items-center" aria-label="Open menu">
             <Menu size={21} strokeWidth={SW} />
           </button>
-          <Link href="/" aria-label="Home" className="absolute left-1/2 -translate-x-1/2"><Logo header={header} size={Math.min(header.logoSize, 30)} /></Link>
+          <Link href="/" aria-label="Home" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"><Logo header={header} size={52} /></Link>
           <Icons user={user} compact />
         </>
       ) : (
@@ -287,7 +255,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             <button onClick={() => setMenuOpen(true)} className="-ml-2 grid h-10 w-10 place-items-center" aria-label="Open menu">
               <Menu size={21} strokeWidth={SW} />
             </button>
-            <Link href="/" aria-label="Home"><Logo header={header} size={Math.min(header.logoSize, 26)} /></Link>
+            <Link href="/" aria-label="Home"><Logo header={header} size={48} /></Link>
           </div>
           <Icons user={user} compact />
         </>
@@ -299,9 +267,9 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
   switch (v) {
     case 'inline':
       desktop = (
-        <div className="hidden h-[68px] grid-cols-[1fr_auto_1fr] items-center lg:grid">
-          <Link href="/" aria-label="Home" className="justify-self-start"><Logo header={header} /></Link>
-          <nav className="flex items-center gap-9">{nav.map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}</nav>
+        <div className="hidden min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-2 lg:grid">
+          <Link href="/" aria-label="Home" className="justify-self-start"><Logo header={header} size={56} /></Link>
+          <nav className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-1">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
           <div className="justify-self-end"><Icons user={user} /></div>
         </div>
       );
@@ -318,7 +286,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             {nav.map((n, i) => (
               <span key={n.href} className="flex items-center gap-3">
                 {i > 0 && <span className="text-accent">·</span>}
-                <NavDropdown item={n} mega={mega} />
+                <NavDropdown item={n} current={current} mega={mega} />
               </span>
             ))}
           </nav>
@@ -327,11 +295,11 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
       break;
     case 'split':
       desktop = (
-        <div className="hidden h-[88px] grid-cols-[1fr_auto_1fr] items-center lg:grid">
-          <nav className="flex items-center gap-8">{nav.slice(0, half).map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}</nav>
-          <Link href="/" aria-label="Home" className="px-10"><Logo header={header} /></Link>
-          <div className="flex items-center justify-end gap-8">
-            <nav className="flex items-center gap-8">{nav.slice(half).map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}</nav>
+        <div className="hidden min-h-[88px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 lg:grid">
+          <nav className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">{nav.slice(0, half).map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
+          <Link href="/" aria-label="Home" className="px-2 xl:px-6"><Logo header={header} size={64} /></Link>
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
+            <nav className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-1">{nav.slice(half).map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
             <Icons user={user} />
           </div>
         </div>
@@ -348,8 +316,8 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             <Link href="/" aria-label="Home" className="inline-block leading-none"><Logo header={header} /></Link>
           </div>
           <nav className="flex items-center justify-center gap-10 border-t border-ink py-3">
-            {scrolled && <Link href="/" className="font-heading mr-4 text-xl tracking-[0.1em]">{header.logoText}</Link>}
-            {nav.map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}
+            {scrolled && <Link href="/" aria-label="Home" className="mr-3"><Logo header={header} size={40} /></Link>}
+            {nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}
           </nav>
         </div>
       );
@@ -363,10 +331,10 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           </div>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center py-5">
             <span />
-            <Link href="/" aria-label="Home" className="text-center"><Crest /><Logo header={header} /></Link>
+            <Link href="/" aria-label="Home" className="text-center"><Logo header={header} /></Link>
             <div className="justify-self-end"><Icons user={user} /></div>
           </div>
-          <nav className="flex items-center justify-center gap-12 border-t border-line py-3.5 [font-variant:small-caps]">{nav.map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}</nav>
+          <nav className="flex items-center justify-center gap-12 border-t border-line py-3.5 [font-variant:small-caps]">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
         </div>
       );
       break;
@@ -375,7 +343,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
         <div className="hidden h-[84px] items-center justify-between lg:flex">
           <Link href="/" aria-label="Home"><Logo header={header} /></Link>
           <div className="flex items-center gap-6">
-            <nav className="flex items-center gap-8">{nav.slice(0, 3).map((n) => <Link key={n.href} href={n.href} className="nav-link link-u">{n.label}</Link>)}</nav>
+            <nav className="flex items-center gap-8">{nav.slice(0, 3).map((n) => <Link key={n.href} href={n.href} onClick={(e) => e.currentTarget.blur()} className="nav-link link-u" aria-current={current === n.href ? 'page' : undefined}>{n.label}</Link>)}</nav>
             <button onClick={() => setFsOpen(true)} className="nav-link inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 transition hover:border-ink">
               <Menu size={15} strokeWidth={SW} /> Menu
             </button>
@@ -387,7 +355,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
     case 'parisian':
       desktop = (
         <div className="hidden h-[96px] grid-cols-[1fr_auto_1fr] items-center lg:grid">
-          <nav className="flex items-center gap-7">{nav.slice(0, 3).map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}</nav>
+          <nav className="flex items-center gap-7">{nav.slice(0, 3).map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
           <Link href="/" aria-label="Home" className="px-8"><Logo header={header} /></Link>
           <div className="justify-self-end"><Icons user={user} textLabels /></div>
         </div>
@@ -402,7 +370,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             <div className="justify-self-end"><Icons user={user} /></div>
           </div>
           <div className="hairline-gold" />
-          <nav className="flex items-center justify-center gap-11 py-3">{nav.map((n) => <NavDropdown key={n.href} item={n} mega={mega} luxe />)}</nav>
+          <nav className="flex items-center justify-center gap-6 py-3 xl:gap-11">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} luxe />)}</nav>
         </div>
       );
       break;
@@ -418,7 +386,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             <Link href="/" aria-label="Home"><Logo header={header} /></Link>
             <div className="justify-self-end"><Icons user={user} /></div>
           </div>
-          <nav className="flex items-center justify-center gap-11 pb-4">{nav.map((n) => <NavDropdown key={n.href} item={n} mega={mega} />)}</nav>
+          <nav className="flex items-center justify-center gap-11 pb-4">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
         </div>
       );
   }
@@ -434,13 +402,13 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             </div>
             <nav className="hidden items-center gap-1 lg:flex">
               {nav.map((n) => (
-                <Link key={n.href} href={n.href} className={cn('nav-link rounded-full px-4 py-2 transition hover:bg-surface', pathname.startsWith(n.href) && n.href !== '/' && 'bg-surface')}>{n.label}</Link>
+                <Link key={n.href} href={n.href} onClick={(e) => e.currentTarget.blur()} aria-current={current === n.href ? 'page' : undefined} className={cn('nav-link rounded-full px-4 py-2 transition hover:bg-surface', current === n.href && 'bg-surface text-accent')}>{n.label}</Link>
               ))}
             </nav>
             <Icons user={user} compact />
           </div>
         </div>
-        <MobileMenu nav={nav} user={user} phone={phone} />
+        <MobileMenu nav={nav} user={user} phone={phone} current={current} />
       </>
     );
   }
@@ -453,7 +421,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           {mobileBar}
         </div>
       </header>
-      <MobileMenu nav={nav} user={user} phone={phone} />
+      <MobileMenu nav={nav} user={user} phone={phone} current={current} />
       {v === 'menu' && <FullscreenMenu nav={nav} open={fsOpen} onClose={() => setFsOpen(false)} />}
     </>
   );

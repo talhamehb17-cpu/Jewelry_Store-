@@ -30,7 +30,7 @@ export async function createCheckoutSession(order: Order, origin: string) {
         price_data: {
           currency: order.currency.toLowerCase(),
           unit_amount: order.total,
-          product_data: { name: `Maison Aurelle — order ${order.number}`, description: 'Fine jewelry, shipping and applicable discounts included' },
+          product_data: { name: `Evermoon Jewels — order ${order.number}`, description: 'Fine jewellery, shipping and applicable discounts included' },
         },
       },
     ],

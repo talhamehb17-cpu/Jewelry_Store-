@@ -29,7 +29,7 @@ function ZoomImage({ m, priority, onOpen, zoom = true }: { m: Media; priority?: 
         setZ({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
       }}
       onMouseLeave={() => setZ(null)}
-      className="group absolute inset-0 block cursor-zoom-in overflow-hidden"
+        className="group absolute inset-0 block cursor-zoom-in overflow-hidden"
       aria-label={`Enlarge image: ${m.alt}`}
     >
       <Img
@@ -38,7 +38,7 @@ function ZoomImage({ m, priority, onOpen, zoom = true }: { m: Media; priority?: 
         priority={priority}
         sizes="(max-width:768px) 100vw, 55vw"
         quality={90}
-        className="transition-transform duration-300 ease-out will-change-transform"
+        className="!object-contain transition-transform duration-300 ease-out will-change-transform"
       />
       {z && (
         <span className="pointer-events-none absolute inset-0 hidden md:block" style={{ transformOrigin: `${z.x}% ${z.y}%`, transform: 'scale(2)' }}>
@@ -108,7 +108,7 @@ function MobileCarousel({ media, onOpen, className }: { media: Media[]; onOpen: 
     <div className={cn('relative', className)}>
       <div ref={ref} onScroll={(e) => setI(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))} className="no-scrollbar snap-x-mandatory flex overflow-x-auto">
         {media.map((m, k) => (
-          <div key={k} className="relative aspect-[4/5] w-full shrink-0 snap-start bg-surface">
+          <div key={k} className="relative aspect-[4/5] max-h-[68svh] w-full shrink-0 snap-start bg-surface">
             <ZoomImage m={m} priority={k === 0} onOpen={() => onOpen(k)} zoom={false} />
           </div>
         ))}
@@ -128,13 +128,13 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
   const [active, setActive] = useState(0);
   const [box, setBox] = useState<number | null>(null);
   const open = (i: number) => setBox(i);
-  const mobile = <MobileCarousel media={media} onOpen={open} className="-mx-[var(--pad-x)] md:hidden" />;
+  const mobile = <MobileCarousel media={media} onOpen={open} className="mx-auto w-full max-w-[440px] lg:hidden" />;
   let desktop: React.ReactNode;
 
   switch (layout) {
     case 'grid':
       desktop = (
-        <div className="hidden grid-cols-2 gap-2 md:grid">
+        <div className="hidden grid-cols-2 gap-2 lg:grid">
           {media.map((m, k) => (
             <div key={k} className={cn('relative overflow-hidden bg-surface rounded-theme-sm', k === 0 && media.length % 2 === 1 ? 'col-span-2 aspect-[5/4]' : 'aspect-[4/5]')}>
               <ZoomImage m={m} priority={k < 2} onOpen={() => open(k)} zoom={false} />
@@ -145,7 +145,7 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
       break;
     case 'stacked':
       desktop = (
-        <div className="hidden space-y-3 md:block">
+        <div className="hidden space-y-3 lg:block">
           {media.map((m, k) => (
             <div key={k} className="relative aspect-[4/5] overflow-hidden bg-surface">
               <ZoomImage m={m} priority={k === 0} onOpen={() => open(k)} />
@@ -156,7 +156,7 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
       break;
     case 'asymmetric':
       desktop = (
-        <div className="hidden grid-cols-2 gap-3 md:grid">
+        <div className="hidden grid-cols-2 gap-3 lg:grid">
           {media.map((m, k) => (
             <div key={k} className={cn('relative overflow-hidden bg-surface rounded-theme', k === 0 ? 'col-span-2 aspect-[6/5]' : 'aspect-square')}>
               <ZoomImage m={m} priority={k === 0} onOpen={() => open(k)} zoom={k === 0} />
@@ -167,7 +167,7 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
       break;
     case 'carousel':
       desktop = (
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <div className="group relative aspect-[4/5] overflow-hidden bg-surface rounded-theme">
             <ZoomImage key={active} m={media[active]!} priority onOpen={() => open(active)} />
             {media.length > 1 && (
@@ -189,7 +189,7 @@ export function ProductGallery({ media, layout, badge }: { media: Media[]; layou
     case 'thumbs-left':
     default:
       desktop = (
-        <div className="hidden gap-4 md:flex">
+        <div className="hidden gap-4 lg:flex">
           {media.length > 1 && (
             <div className="flex w-20 shrink-0 flex-col gap-3">
               {media.map((m, k) => <Thumb key={k} m={m} active={k === active} onClick={() => setActive(k)} className="aspect-[4/5] w-full" />)}

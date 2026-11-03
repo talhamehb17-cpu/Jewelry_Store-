@@ -53,6 +53,36 @@ function WishButton({ p, className }: { p: CardProduct; className?: string }) {
   );
 }
 
+function CardFoot({
+  p,
+  href,
+  center,
+  quickAdd,
+  quickView,
+  addLabel,
+}: {
+  p: CardProduct;
+  href: string;
+  center?: boolean;
+  quickAdd: () => void;
+  quickView: () => void;
+  addLabel: string;
+}) {
+  const short = p.inStock ? (p.variantCount > 1 ? 'Options' : 'Add') : 'Sold out';
+  return (
+    <div className={cn('mt-3 flex min-h-[8.5rem] flex-1 flex-col gap-1.5', center && 'items-center text-center')}>
+      <Link href={href} className="line-clamp-2 font-heading text-[1.05rem] leading-snug">{p.name}</Link>
+      <Stars value={p.ratingAvg || 0} count={p.ratingCount || undefined} size={11} className={center ? 'justify-center' : undefined} />
+      <Price price={p.price} compareAt={p.compareAtPrice} className={cn('text-[0.92rem]', center && 'justify-center')} />
+      <div className={cn('mt-auto flex w-full flex-wrap items-center gap-1.5 pt-2', center && 'justify-center')}>
+        <button type="button" onClick={quickAdd} disabled={!p.inStock} className="btn btn-primary btn-sm min-w-[4.25rem] flex-1 basis-[4.25rem]">{short}</button>
+        <button type="button" onClick={quickView} className="btn btn-secondary btn-sm shrink-0 px-3" aria-label={`Quick view ${p.name}`}><Eye size={15} strokeWidth={1.5} /></button>
+        <WishButton p={p} className="shrink-0 border border-line bg-bg text-ink" />
+      </div>
+    </div>
+  );
+}
+
 function Badges({ p, className }: { p: CardProduct; className?: string }) {
   const b = productBadges(p);
   if (!b.length) return null;
@@ -115,20 +145,14 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
 
     case 'noir':
       return (
-        <article className="group">
-          <Link href={href} className="relative block overflow-hidden bg-surface ratio-product">
+        <article className="group flex h-full flex-col">
+          <Link href={href} className="relative block overflow-hidden border border-accent/50 bg-surface ratio-product">
             <Images p={p} priority={priority} />
             <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
             <span className="pointer-events-none absolute inset-3 border border-accent/0 transition duration-700 group-hover:border-accent/60" />
             <Badges p={p} className="[&>span]:bg-accent [&>span]:text-black" />
           </Link>
-          <div className="mt-5 text-center">
-            <Link href={href} className="nav-link block text-[0.8rem] text-ink !tracking-[0.22em] !uppercase">{p.name}</Link>
-            <div className="mt-2 text-[0.85rem] text-accent"><Price price={p.price} compareAt={p.compareAtPrice} className="justify-center" saleClass="text-accent" /></div>
-            <button onClick={quickAdd} disabled={!p.inStock} className="mt-3 inline-flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.22em] text-muted opacity-0 transition group-hover:opacity-100 hover:text-accent max-md:opacity-100 disabled:opacity-40">
-              {addLabel} <ArrowRight size={12} strokeWidth={1.25} />
-            </button>
-          </div>
+          <CardFoot p={p} href={href} center quickAdd={quickAdd} quickView={quickView} addLabel={addLabel} />
         </article>
       );
 
@@ -247,21 +271,15 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
     case 'classic':
     default:
       return (
-        <article className="group">
-          <div className="relative overflow-hidden bg-surface ratio-product rounded-theme-sm">
+        <article className="group flex h-full flex-col">
+          <div className="relative overflow-hidden border border-line bg-surface ratio-product rounded-theme-sm">
             <Link href={href} aria-label={p.name} className="absolute inset-0 block">
               <Images p={p} priority={priority} />
             </Link>
             <Badges p={p} />
             <WishButton p={p} className="absolute right-2 top-2 z-[3] bg-bg/80 text-ink opacity-0 backdrop-blur transition group-hover:opacity-100 max-md:opacity-100" />
-            <button onClick={quickAdd} disabled={!p.inStock} className="absolute inset-x-0 bottom-0 z-[3] translate-y-full bg-bg/92 py-3 text-[0.7rem] uppercase tracking-[0.2em] text-ink backdrop-blur transition duration-500 group-hover:translate-y-0 max-md:hidden disabled:cursor-not-allowed">
-              {addLabel}
-            </button>
           </div>
-          <div className="mt-4 text-center">
-            <Link href={href} className="font-heading text-[1.15rem] leading-snug">{p.name}</Link>
-            <div className="mt-1 text-[0.85rem] tracking-wide text-muted"><Price price={p.price} compareAt={p.compareAtPrice} className="justify-center" /></div>
-          </div>
+          <CardFoot p={p} href={href} center quickAdd={quickAdd} quickView={quickView} addLabel={addLabel} />
         </article>
       );
   }
@@ -269,7 +287,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
 
 export function ProductGrid({ products, variant, className }: { products: CardProduct[]; variant: CardVariant; className?: string }) {
   return (
-    <div className={cn('product-grid', className)}>
+    <div className={cn('product-grid items-stretch', className)}>
       {products.map((p, i) => (
         <div key={p.id} className="reveal" style={{ ['--d' as string]: `${(i % 4) * 90}ms` }}>
           <ProductCard p={p} variant={variant} index={i} priority={i < 2} />

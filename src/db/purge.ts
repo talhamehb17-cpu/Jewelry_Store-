@@ -53,7 +53,7 @@ export async function applyStorePolicy(db: DB, log: (m: string) => void = () => 
       jazzcash?: { enabled: boolean; accountName: string; accountNumber: string; instructions: string };
     };
     p.cod = { ...(p.cod ?? {}), enabled: false };
-    const title = p.wallet?.accountTitle || 'Maison Aurelle';
+    const title = p.wallet?.accountTitle || 'Evermoon Jewels';
     const proof = 'Send the exact order total, then upload a screenshot or PDF of the receipt. The order stays under review until the payment is verified.';
     if (!p.easypaisa) {
       p.easypaisa = { enabled: true, accountName: title, accountNumber: p.wallet?.easypaisa || '', instructions: proof };

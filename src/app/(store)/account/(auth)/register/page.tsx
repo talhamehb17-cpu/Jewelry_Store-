@@ -11,7 +11,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   if (await getCurrentUser()) redirect('/account');
   return (
     <>
-      <p className="eyebrow">Join the Aurelle Circle</p>
+      <p className="eyebrow">Join the Evermoon Circle</p>
       <h1 className="t-2 mt-3">Create an account</h1>
       <p className="mt-3 text-[0.92rem] text-muted">Enjoy faster checkout, order tracking and early access to new collections.</p>
       <div className="mt-8"><RegisterForm next={next} /></div>

@@ -1,7 +1,9 @@
 import { SectionRenderer } from '@/components/sections/renderer';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings } from '@/lib/settings';
+import { BRAND } from '@/lib/brand';
 import { jsonLd, siteUrl } from '@/lib/utils';
+import { THEMES } from '@/themes/presets';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,8 +18,8 @@ export default async function HomePage() {
     '@type': 'JewelryStore',
     name: settings.store.name,
     url: siteUrl(),
-    logo: `${siteUrl()}/icon.svg`,
-    image: `${siteUrl()}/images/og-default.jpg`,
+    logo: `${siteUrl()}${BRAND.logo}`,
+    image: `${siteUrl()}${BRAND.campaign}`,
     telephone: settings.store.phone,
     email: settings.store.email,
     address: { '@type': 'PostalAddress', streetAddress: '42-C Main Boulevard, Gulberg III', addressLocality: 'Lahore', postalCode: '54660', addressCountry: 'PK' },
@@ -35,7 +37,7 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(org) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(site) }} />
-      <SectionRenderer sections={ctx.config.sections} config={ctx.config} />
+      <SectionRenderer sections={ctx.isPreview ? ctx.config.sections : THEMES[ctx.themeId].sections} config={ctx.config} />
     </>
   );
 }

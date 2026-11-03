@@ -180,7 +180,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
                 <span className={cn('h-2 w-2 rounded-full', low ? 'bg-sale' : 'bg-emerald-600')} />
                 {low ? `Only ${v!.stock} left — order soon` : state.needsSize ? 'Select a size to see availability' : 'In stock — dispatched within 24 hours'}
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <QtyStepper value={qty} onChange={setQty} max={Math.max(1, Math.min(20, v?.stock ?? 20))} />
                 <button onClick={() => add(false)} disabled={allSoldOut} className="btn btn-primary flex-1">{allSoldOut ? 'Sold out' : 'Add to bag'}</button>
                 <button onClick={() => toggleWishlist(p.id, p.name)} aria-pressed={wished} className="grid w-12 shrink-0 place-items-center border border-line transition hover:border-ink rounded-theme-sm" aria-label={wished ? 'Remove from wishlist' : 'Save to wishlist'}>

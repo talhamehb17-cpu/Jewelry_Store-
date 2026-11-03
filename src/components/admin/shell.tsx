@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
@@ -43,9 +44,9 @@ export function AdminShell({ children, user, badges, dbWarning }: { children: Re
   const sidebar = (
     <div className="flex h-full flex-col">
       <Link href="/admin" className="flex items-center gap-3 px-5 py-5">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-ink font-heading text-lg text-[#d8b878]">A</span>
+        <Image src="/images/brand/logo.webp" alt="Evermoon Jewels" width={44} height={44} className="h-11 w-11 object-contain" />
         <span>
-          <span className="block font-heading text-[1.15rem] leading-none tracking-[0.12em]">AURELLE</span>
+          <span className="block font-heading text-[1.05rem] leading-none tracking-[0.08em]">EVERMOON</span>
           <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted">Admin</span>
         </span>
       </Link>
@@ -96,7 +97,7 @@ export function AdminShell({ children, user, badges, dbWarning }: { children: Re
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-white/90 px-4 backdrop-blur lg:hidden">
           <button onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
-          <span className="font-heading tracking-[0.14em]">AURELLE</span>
+          <Image src="/images/brand/logo.webp" alt="Evermoon Jewels" width={36} height={36} className="h-9 w-9 object-contain" />
           <Link href="/" target="_blank" aria-label="View store"><ExternalLink size={18} /></Link>
         </header>
         {dbWarning && (

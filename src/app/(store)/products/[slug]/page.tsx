@@ -60,7 +60,7 @@ export default async function ProductPage({ params }: P) {
     description: p.description,
     sku: p.sku ?? undefined,
     gtin13: p.barcode ?? undefined,
-    brand: { '@type': 'Brand', name: 'Maison Aurelle' },
+    brand: { '@type': 'Brand', name: settings.store.name },
     category: d.category?.name,
     material: p.materials.join(', '),
     image: d.images.map((i) => (isRemote(i.url) ? `${i.url.split('?')[0]}?auto=format&w=1200&q=80` : absoluteUrl(i.url))),
@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: P) {
       price: (p.price / 100).toFixed(0),
       availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
-      seller: { '@type': 'Organization', name: 'Maison Aurelle' },
+      seller: { '@type': 'Organization', name: settings.store.name },
     },
     ...(p.ratingCount > 0 && { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.ratingAvg.toFixed(1), reviewCount: p.ratingCount } }),
     ...(d.reviews.length > 0 && {
@@ -95,14 +95,14 @@ export default async function ProductPage({ params }: P) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(crumbs) }} />
       <TrackRecentlyViewed slug={p.slug} />
       <div className="container-x pt-6 md:pt-8">
-        <nav aria-label="Breadcrumb" className="mb-6 text-[0.75rem] text-muted">
-          <Link href="/" className="hover:text-ink">Home</Link> <span className="mx-1.5">/</span>
-          {d.category && <><Link href={`/collections/${d.category.slug}`} className="hover:text-ink">{d.category.name}</Link> <span className="mx-1.5">/</span></>}
-          <span className="text-ink">{p.name}</span>
+        <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.75rem] text-muted">
+          <Link href="/" className="hover:text-ink">Home</Link> <span>/</span>
+          {d.category && <><Link href={`/collections/${d.category.slug}`} className="hover:text-ink">{d.category.name}</Link> <span>/</span></>}
+          <span className="min-w-0 break-words text-ink">{p.name}</span>
         </nav>
-        <div className={cn('grid gap-10 lg:gap-16', layout.pdpVariant === 'stacked' || layout.pdpVariant === 'grid' ? 'md:grid-cols-[1.25fr_1fr]' : 'md:grid-cols-[1.1fr_1fr]')}>
-          <div><ProductGallery media={media} layout={layout.pdpVariant} /></div>
-          <div className="md:sticky md:top-28 md:self-start">
+        <div className={cn('grid gap-8 lg:gap-16', layout.pdpVariant === 'stacked' || layout.pdpVariant === 'grid' ? 'lg:grid-cols-[1.25fr_1fr]' : 'lg:grid-cols-[1.1fr_1fr]')}>
+          <div className="min-w-0"><ProductGallery media={media} layout={layout.pdpVariant} /></div>
+          <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
             <ProductPurchase
               product={{ id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, details: p.details, materials: p.materials, care: p.care, price: p.price, compareAtPrice: p.compareAtPrice, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount, badges: p.badges, sku: p.sku }}
               variants={d.variants.map((v) => ({ id: v.id, title: v.title, size: v.size, color: v.color, stock: v.stock, price: v.price, compareAtPrice: v.compareAtPrice }))}

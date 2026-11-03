@@ -33,7 +33,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   return (
     <>
       {denied && <p className="mb-4 rounded-lg bg-rose-50 px-4 py-2 text-[0.85rem] text-rose-800">That area requires an administrator account.</p>}
-      <PageHeader title={`${greet}, ${user?.firstName ?? 'there'}`} description="Here’s how Maison Aurelle is performing over the last 30 days." actions={<><Link href="/admin/analytics" className="btn btn-secondary">Full analytics</Link><Link href="/admin/products/new" className="btn btn-primary">Add product</Link></>} />
+      <PageHeader title={`${greet}, ${user?.firstName ?? 'there'}`} description="Here’s how Evermoon Jewels is performing over the last 30 days." actions={<><Link href="/admin/analytics" className="btn btn-secondary">Full analytics</Link><Link href="/admin/products/new" className="btn btn-primary">Add product</Link></>} />
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-6">
         <Stat label="Revenue" value={formatMoney(k.revenue)} change={k.revenueChange} hint="vs prev. 30d" icon={<Wallet size={16} />} />
         <Stat label="Orders" value={k.orders} change={k.ordersChange} hint="vs prev. 30d" icon={<ShoppingBag size={16} />} />

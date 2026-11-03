@@ -24,7 +24,7 @@ export default async function Invoice({ params }: { params: Promise<{ id: string
       <div className="mx-auto max-w-3xl p-10 text-[0.88rem]">
         <div className="flex items-start justify-between">
           <div>
-            <p className="font-heading text-[2rem] tracking-[0.28em]">AURELLE</p>
+            <p className="font-heading text-[1.6rem] tracking-[0.18em]">EVERMOON</p>
             <p className="text-[0.7rem] uppercase tracking-[0.3em] text-muted">Fine Jewelry</p>
             <p className="mt-4 max-w-xs text-[0.8rem] text-muted">{s.address}<br />{s.phone} · {s.email}</p>
           </div>
@@ -53,7 +53,7 @@ export default async function Invoice({ params }: { params: Promise<{ id: string
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{formatMoney(o.shippingTotal)}</dd></div>
           <div className="flex justify-between border-t border-[#23201d] pt-2 text-[1rem] font-semibold"><dt>Total (PKR)</dt><dd>{formatMoney(o.total)}</dd></div>
         </dl>
-        <p className="mt-16 border-t border-line pt-5 text-center text-[0.75rem] text-muted">Thank you for choosing Maison Aurelle. Unworn pieces may be returned within 7 days of delivery.</p>
+        <p className="mt-16 border-t border-line pt-5 text-center text-[0.75rem] text-muted">Thank you for choosing Evermoon Jewels. Unworn pieces may be returned within 7 days of delivery.</p>
       </div>
     </div>
   );

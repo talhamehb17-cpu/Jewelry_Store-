@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Img } from '@/components/ui/img';
 import { getPage } from '@/lib/pages';
 import { renderMarkdown } from '@/lib/markdown';
-import { IMG } from '@/lib/images';
+import { BRAND } from '@/lib/brand';
 
 export async function generateMetadata(): Promise<Metadata> {
   const p = await getPage('about');
@@ -16,21 +16,25 @@ export default async function AboutPage() {
   if (!page) notFound();
   return (
     <>
-      <section className="relative flex min-h-[62vh] items-end overflow-hidden">
-        <Img src={IMG.heroMain} alt="Maison Aurelle" sizes="100vw" priority />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-        <div className="container-x relative pb-14 text-white">
-          <p className="mb-3 text-[0.72rem] uppercase tracking-[0.3em] text-white/80">Maison Aurelle · Est. 2019</p>
-          <h1 className="t-display max-w-3xl">{page.title}</h1>
+      <section className="border-b border-line">
+        <div className="container-x grid items-end gap-8 py-10 md:grid-cols-[1.1fr_0.9fr] md:py-16">
+          <div>
+            <p className="eyebrow mb-4">Evermoon Jewels · Lahore</p>
+            <h1 className="t-display max-w-xl text-balance">{page.title}</h1>
+            <p className="mt-5 max-w-md text-[1.05rem] leading-relaxed text-muted">Wear your little wonder. Pretty jewellery, handpicked and finished to be worn every day.</p>
+          </div>
+          <div className="relative aspect-[16/10] overflow-hidden rounded-theme-sm bg-surface">
+            <Img src={BRAND.campaign} alt="Evermoon Jewels campaign — jewellery in afternoon light" sizes="(max-width:768px) 100vw, 45vw" priority className="!object-cover !object-[center_30%]" />
+          </div>
         </div>
       </section>
       <section className="section-y container-x">
         <div className="grid gap-14 md:grid-cols-[1fr_1.3fr]">
           <div className="space-y-4 md:sticky md:top-28 md:self-start">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-theme-sm bg-surface"><Img src={IMG.aurelia2} alt="" sizes="40vw" /></div>
+            <div className="relative aspect-[4/5] max-h-[70svh] overflow-hidden rounded-theme-sm bg-surface md:max-h-none"><Img src={BRAND.jewelry} alt="Evermoon jewellery on stone" sizes="40vw" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative aspect-square overflow-hidden rounded-theme-sm bg-surface"><Img src={IMG.crescent1} alt="" sizes="20vw" /></div>
-              <div className="relative aspect-square overflow-hidden rounded-theme-sm bg-surface"><Img src={IMG.celestine1} alt="" sizes="20vw" /></div>
+              <div className="relative aspect-square overflow-hidden rounded-theme-sm bg-surface"><Img src={BRAND.tray} alt="Pearl flower earrings and a fine chain" sizes="20vw" /></div>
+              <div className="relative aspect-square overflow-hidden rounded-theme-sm bg-surface"><Img src={BRAND.bracelet} alt="Floral bracelet on sage silk" sizes="20vw" /></div>
             </div>
           </div>
           <div>

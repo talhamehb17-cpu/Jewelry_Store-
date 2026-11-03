@@ -153,16 +153,16 @@ export function Footer({ footer, header, settings }: Props) {
         <footer className={cn(shell, 'overflow-hidden')}>
           <div className="container-x grid gap-12 pb-10 pt-20 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-              <p className="eyebrow !text-current opacity-60">The Aurelle Journal</p>
+              <p className="eyebrow !text-current opacity-60">The Evermoon Journal</p>
               <p className="font-heading mt-3 text-3xl italic">{footer.tagline}</p>
               {footer.showNewsletter && <NewsletterForm className="mt-6 max-w-sm" variant="line" dark />}
             </div>
             <Columns settings={settings} />
           </div>
           <div className="container-x flex flex-wrap items-center justify-between gap-4 py-6 text-[0.75rem]">{copy}{footer.showSocial && <Social settings={settings} />}</div>
-          <p aria-hidden className="font-heading select-none whitespace-nowrap text-center leading-[0.78] tracking-[-0.04em] opacity-95" style={{ fontSize: 'clamp(4rem, 19vw, 20rem)' }}>
-            {header.logoText}
-          </p>
+          <div aria-hidden className="flex justify-center py-6 opacity-90">
+            <Logo header={header} size={88} />
+          </div>
         </footer>
       );
     case 'heritage':
@@ -229,7 +229,7 @@ export function Footer({ footer, header, settings }: Props) {
             <div className="border-b border-white/10">
               <div className="container-x grid items-center gap-8 py-14 md:grid-cols-2">
                 <div>
-                  <p className="text-[0.72rem] uppercase tracking-[0.26em] text-accent">✦ The Aurelle Circle ✦</p>
+                  <p className="text-[0.72rem] uppercase tracking-[0.26em] text-accent">✦ The Evermoon Circle ✦</p>
                   <p className="font-heading mt-3 text-[clamp(1.8rem,3vw,2.6rem)] leading-tight">Join &amp; enjoy 10% off your first order</p>
                 </div>
                 <NewsletterForm variant="pill" buttonLabel="Unlock 10%" className="[&_input]:text-ink" />
@@ -284,7 +284,7 @@ export function Footer({ footer, header, settings }: Props) {
           {footer.showNewsletter && (
             <div className="border-b border-line">
               <div className="container-x mx-auto max-w-xl py-16 text-center">
-                <p className="eyebrow">The Aurelle Circle</p>
+                <p className="eyebrow">The Evermoon Circle</p>
                 <p className="font-heading mt-3 text-3xl">Join for early access &amp; 10% off</p>
                 <NewsletterForm className="mx-auto mt-7 max-w-md" variant="line" />
               </div>

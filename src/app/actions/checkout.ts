@@ -127,7 +127,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
 
   after(async () => {
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
-    await sendEmail(order.email, `Your Maison Aurelle order ${order.number}`, orderConfirmationEmail(order, items, link));
+    await sendEmail(order.email, `Your Evermoon Jewels order ${order.number}`, orderConfirmationEmail(order, items, link));
   });
   return { ok: true, redirect: `/checkout/success?order=${encodeURIComponent(order.number)}&token=${token}` };
 }

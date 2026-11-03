@@ -1,6 +1,6 @@
 import { FONT_LIST, type FontKey } from './font-list';
 import { THEMES, DEFAULT_THEME } from './presets';
-import { THEME_IDS, SECTION_TYPES, type SectionInstance, type ThemeConfig, type ThemeId, type ThemeSettings } from './types';
+import { THEME_IDS, SECTION_TYPES, type SectionInstance, type ThemeColors, type ThemeConfig, type ThemeId, type ThemeSettings } from './types';
 
 export function isThemeId(v: unknown): v is ThemeId {
   return typeof v === 'string' && (THEME_IDS as readonly string[]).includes(v);
@@ -156,6 +156,49 @@ export function defaultThemeConfig(themeId: ThemeId): ThemeConfig {
   return { settings: structuredClone(THEMES[themeId].settings), sections: structuredClone(THEMES[themeId].sections) };
 }
 
+function hexToRgb(hex: string) {
+  const h = hex.replace('#', '').trim();
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h.slice(0, 6);
+  const n = Number.parseInt(full, 16);
+  if (!Number.isFinite(n) || full.length < 6) return { r: 0, g: 0, b: 0 };
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+function luminance(hex: string) {
+  const { r, g, b } = hexToRgb(hex);
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
+function mixHex(a: string, b: string, t: number) {
+  const A = hexToRgb(a);
+  const B = hexToRgb(b);
+  const ch = (x: number, y: number) => Math.round(x + (y - x) * t);
+  return `#${[ch(A.r, B.r), ch(A.g, B.g), ch(A.b, B.b)].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Stops a dark theme from collapsing into one black mass, and a light theme from losing its type. */
+function ensureContrast(colors: ThemeColors): ThemeColors {
+  const out = { ...colors };
+  const bg = luminance(out.background);
+  const text = luminance(out.text);
+  if (Math.abs(bg - text) < 0.42) out.text = bg < 0.45 ? '#F7F1E6' : '#1C1917';
+  if (bg < 0.22) {
+    if (luminance(out.surface) < bg + 0.06) out.surface = mixHex(out.background, '#F7F1E6', 0.14);
+    if (luminance(out.secondary) < bg + 0.08) out.secondary = mixHex(out.background, '#F7F1E6', 0.2);
+    if (luminance(out.border) < 0.32) out.border = mixHex(out.background, out.accent || '#C9A96E', 0.62);
+    if (luminance(out.muted) < 0.55) out.muted = mixHex(out.text, out.accent || '#E4C98A', 0.35);
+    if (luminance(out.headerBg) < 0.08) out.headerBg = mixHex(out.background, '#F7F1E6', 0.06);
+    if (Math.abs(luminance(out.headerText) - luminance(out.headerBg)) < 0.4) out.headerText = '#F7F1E6';
+    if (Math.abs(luminance(out.footerText) - luminance(out.footerBg)) < 0.4) out.footerText = '#F7F1E6';
+    if (luminance(out.primary) < 0.35) out.primary = '#C9A96E';
+    if (luminance(out.primaryText) > 0.55) out.primaryText = '#14110E';
+  } else if (bg > 0.82 && luminance(out.text) > 0.62) {
+    out.text = '#1C1917';
+  }
+  if (Math.abs(luminance(out.surface) - bg) < 0.03) {
+    out.surface = bg < 0.5 ? mixHex(out.background, '#F7F1E6', 0.12) : mixHex(out.background, '#1C1917', 0.05);
+  }
+  return out;
+}
+
 const RATIO = { square: '1 / 1', portrait: '4 / 5', tall: '3 / 4' } as const;
 const BTN_RADIUS = { square: '0px', soft: '4px', rounded: '10px', pill: '999px' } as const;
 const BTN_SIZE = {
@@ -166,7 +209,7 @@ const BTN_SIZE = {
 
 /** CSS custom properties for the storefront. All values pass through sanitizeSettings first. */
 export function themeCssVars(s: ThemeSettings): { desktop: Record<string, string>; mobile: Record<string, string> } {
-  const c = s.colors;
+  const c = ensureContrast(s.colors);
   const t = s.typography;
   const l = s.layout;
   const b = s.buttons;

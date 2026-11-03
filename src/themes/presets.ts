@@ -1,4 +1,5 @@
 import { IMG } from '@/lib/images';
+import { BRAND } from '@/lib/brand';
 import {
   BRAND_STORY,
   CATEGORY_TILES,
@@ -14,6 +15,7 @@ import {
   TESTIMONIALS,
   TRUST_BADGES,
   VIDEO,
+  buildHome,
   section,
 } from './content';
 import type { ThemeAnnouncement, ThemeDefinition, ThemeId, ThemeMobile } from './types';
@@ -39,7 +41,7 @@ const MOBILE: ThemeMobile = {
   containerPadding: 20,
 };
 
-const slide = (base: typeof HERO_PRIMARY, image: string, extra: Record<string, unknown> = {}) => ({
+const slide = (base: Record<string, unknown>, image: string, extra: Record<string, unknown> = {}) => ({
   ...base,
   image,
   mobileImage: '',
@@ -87,8 +89,8 @@ const softLuxury: ThemeDefinition = {
       cardVariant: 'classic', pdpVariant: 'thumbs-left', pdpStyle: 'soft', collectionVariant: 'sidebar',
     },
     buttons: { shape: 'square', style: 'solid', hover: 'fill', uppercase: true, tracking: 0.18, size: 'md', weight: 500 },
-    header: { variant: 'centered', sticky: true, transparentOnHome: false, logoText: 'AURELLE', logoTagline: 'Fine Jewelry', logoImage: '', logoSize: 30, borderBottom: true },
-    footer: { variant: 'soft', tagline: 'Timeless jewelry, thoughtfully made in Lahore.', showNewsletter: true, showSocial: true, showPayments: true },
+    header: { variant: 'centered', sticky: true, transparentOnHome: false, logoText: 'EVERMOON', logoTagline: BRAND.tagline, logoImage: BRAND.logo, logoSize: 72, borderBottom: true },
+    footer: { variant: 'soft', tagline: 'Pretty little things, made for everyday.', showNewsletter: true, showSocial: true, showPayments: true },
     announcement: ANNOUNCEMENT,
     mobile: { ...MOBILE },
     animation: { style: 'fade-up', speed: 900 },
@@ -193,9 +195,9 @@ const darkLuxury: ThemeDefinition = {
   mood: ['Noir', 'Gold leaf', 'Cinematic'],
   settings: {
     colors: {
-      background: '#0E0D0C', surface: '#241F1B', text: '#F7F1E7', muted: '#C8BBA8', primary: '#C9A96E', primaryText: '#0E0D0C',
-      secondary: '#2C2722', accent: '#E0C48A', border: '#6A5A46', sale: '#E7A08A', headerBg: '#0E0D0C', headerText: '#F7F1E7',
-      footerBg: '#080707', footerText: '#F7F1E7', announcementBg: '#C9A96E', announcementText: '#0E0D0C',
+      background: '#0C0B0A', surface: '#221C17', text: '#F7F1E6', muted: '#D7C7B0', primary: '#C9A96E', primaryText: '#14110E',
+      secondary: '#322A23', accent: '#E4C98A', border: '#B08958', sale: '#E7A08A', headerBg: '#100E0C', headerText: '#F7F1E6',
+      footerBg: '#080706', footerText: '#F7F1E6', announcementBg: '#C9A96E', announcementText: '#14110E',
     },
     typography: {
       headingFont: 'marcellus', bodyFont: 'montserrat', navFont: 'marcellus', accentFont: 'cormorant', baseSize: 14, headingScale: 1.0,
@@ -205,9 +207,9 @@ const darkLuxury: ThemeDefinition = {
       containerWidth: 1400, sectionSpacing: 136, gridColumns: 4, gridGap: 20, radius: 0, imageRatio: 'portrait',
       cardVariant: 'noir', pdpVariant: 'stacked', pdpStyle: 'noir', collectionVariant: 'drawer',
     },
-    buttons: { shape: 'square', style: 'outline', hover: 'fill', uppercase: true, tracking: 0.24, size: 'lg', weight: 500 },
-    header: { variant: 'split', sticky: true, transparentOnHome: true, logoText: 'AURELLE', logoTagline: 'Maison de Joaillerie', logoImage: '', logoSize: 26, borderBottom: false },
-    footer: { variant: 'noir', tagline: 'Fine jewelry for evenings worth remembering.', showNewsletter: true, showSocial: true, showPayments: true },
+    buttons: { shape: 'square', style: 'solid', hover: 'darken', uppercase: true, tracking: 0.18, size: 'md', weight: 500 },
+    header: { variant: 'split', sticky: true, transparentOnHome: false, logoText: 'EVERMOON', logoTagline: BRAND.tagline, logoImage: BRAND.logo, logoSize: 72, borderBottom: true },
+    footer: { variant: 'noir', tagline: 'Fine jewellery for evenings worth remembering.', showNewsletter: true, showSocial: true, showPayments: true },
     announcement: { ...ANNOUNCEMENT, style: 'rotate' },
     mobile: { ...MOBILE, heroHeight: '90', sectionSpacing: 72 },
     animation: { style: 'reveal', speed: 1100 },
@@ -246,7 +248,7 @@ const editorial: ThemeDefinition = {
     },
     buttons: { shape: 'square', style: 'solid', hover: 'invert', uppercase: true, tracking: 0.16, size: 'md', weight: 500 },
     header: { variant: 'masthead', sticky: true, transparentOnHome: false, logoText: 'AURELLE', logoTagline: 'Issue No. 12 — The Jewelry Issue', logoImage: '', logoSize: 64, borderBottom: true },
-    footer: { variant: 'editorial', tagline: 'Subscribe to The Aurelle Journal.', showNewsletter: true, showSocial: true, showPayments: false },
+    footer: { variant: 'editorial', tagline: 'Subscribe to The Evermoon Journal.', showNewsletter: true, showSocial: true, showPayments: false },
     announcement: { ...ANNOUNCEMENT, style: 'marquee' },
     mobile: { ...MOBILE, headerVariant: 'left', heroHeight: 'auto' },
     animation: { style: 'rise', speed: 1000 },
@@ -469,6 +471,29 @@ const contemporary: ThemeDefinition = {
     section('newsletter', 'card', { ...NEWSLETTER, heading: 'Get on the list' }),
   ],
 };
+
+const LOGO = { logoText: 'EVERMOON', logoTagline: BRAND.tagline, logoImage: BRAND.logo, logoSize: 72 };
+softLuxury.settings.header = { ...softLuxury.settings.header, ...LOGO };
+modernMinimal.settings.header = { ...modernMinimal.settings.header, ...LOGO, logoSize: 64 };
+roseBoutique.settings.header = { ...roseBoutique.settings.header, ...LOGO };
+darkLuxury.settings.header = { ...darkLuxury.settings.header, ...LOGO };
+editorial.settings.header = { ...editorial.settings.header, ...LOGO, logoSize: 68 };
+oldMoney.settings.header = { ...oldMoney.settings.header, ...LOGO };
+scandinavian.settings.header = { ...scandinavian.settings.header, ...LOGO, logoSize: 64 };
+parisian.settings.header = { ...parisian.settings.header, ...LOGO };
+goldenGlamour.settings.header = { ...goldenGlamour.settings.header, ...LOGO };
+contemporary.settings.header = { ...contemporary.settings.header, ...LOGO, logoSize: 60 };
+
+softLuxury.sections = buildHome({ hero: 'campaign', categories: 'tiles', featured: 'grid', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards' });
+modernMinimal.sections = buildHome({ hero: 'split', heroImage: BRAND.jewelry, categories: 'list', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', editorialImage: BRAND.leaves, introImage: BRAND.tray });
+roseBoutique.sections = buildHome({ hero: 'arch', heroImage: BRAND.tray, categories: 'circles', featured: 'grid', arrivals: 'carousel', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: BRAND.bracelet, promoImage: BRAND.rings });
+darkLuxury.sections = buildHome({ hero: 'split', heroImage: BRAND.jewelry, categories: 'tiles', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'centered', reviews: 'letter', editorialImage: BRAND.rings, introImage: BRAND.bracelet });
+editorial.sections = buildHome({ hero: 'editorial', heroImage: BRAND.campaign, categories: 'framed', featured: 'asymmetric', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'letter', editorialImage: BRAND.leaves });
+oldMoney.sections = buildHome({ hero: 'classic', heroImage: BRAND.campaign, categories: 'framed', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'heritage', reviews: 'letter', editorialImage: BRAND.tray });
+scandinavian.sections = buildHome({ hero: 'minimal', heroImage: BRAND.jewelry, categories: 'grid', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', introImage: BRAND.leaves });
+parisian.sections = buildHome({ hero: 'split', heroImage: BRAND.tray, categories: 'circles', featured: 'carousel', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'slider', editorialImage: BRAND.rings });
+goldenGlamour.sections = buildHome({ hero: 'split', heroImage: BRAND.jewelry, categories: 'tiles', featured: 'grid', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards', promoImage: BRAND.rings, editorialImage: BRAND.bracelet });
+contemporary.sections = buildHome({ hero: 'mosaic', heroImage: BRAND.jewelry, categories: 'pills', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: BRAND.leaves, introImage: BRAND.tray });
 
 export const THEMES: Record<ThemeId, ThemeDefinition> = {
   'soft-luxury': softLuxury,

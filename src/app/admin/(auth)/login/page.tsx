@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import Image from 'next/image';
+import { BRAND } from '@/lib/brand';
 import { LoginForm } from '@/components/store/auth-forms';
 import { getCurrentUser, isStaff } from '@/lib/auth';
 
@@ -13,8 +15,8 @@ export default async function AdminLogin() {
     <div className="admin-root grid min-h-screen place-items-center bg-[#f7f5f1] px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-ink font-heading text-2xl text-[#d8b878]">A</span>
-          <h1 className="mt-5 font-heading text-[2rem]">Aurelle Admin</h1>
+          <Image src={BRAND.logo} alt={BRAND.name} width={88} height={88} className="mx-auto h-20 w-20 object-contain" />
+          <h1 className="mt-5 font-heading text-[2rem]">Evermoon Admin</h1>
           <p className="mt-1 text-[0.85rem] text-muted">Sign in to manage your store</p>
         </div>
         <div className="admin-card p-7">
