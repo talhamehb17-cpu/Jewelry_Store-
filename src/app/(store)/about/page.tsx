@@ -40,7 +40,7 @@ export default async function AboutPage() {
           <div>
             <div className="prose-aurelle" dangerouslySetInnerHTML={{ __html: renderMarkdown(page.content) }} />
             <dl className="mt-12 grid grid-cols-3 gap-6 border-y border-line py-8">
-              {[['2019', 'Founded in Lahore'], ['12k+', 'Pieces delivered'], ['4.9★', 'Average rating']].map(([v, l]) => (
+              {[['Lahore', 'Designed in Gulberg'], ['18k', 'Gold vermeil'], ['7 days', 'Easy returns']].map(([v, l]) => (
                 <div key={l}><dt className="font-heading text-[2rem] leading-none">{v}</dt><dd className="mt-2 text-[0.72rem] uppercase tracking-[0.14em] text-muted">{l}</dd></div>
               ))}
             </dl>

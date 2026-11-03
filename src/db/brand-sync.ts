@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { DB } from './index';
 import { pages, settings, themeConfigs } from './schema';
 import { BRAND } from '@/lib/brand';
@@ -69,6 +69,10 @@ export async function applyBrandHome(db: DB, log: (m: string) => void = () => {}
     const next = rebrandValue(row.value);
     await db.update(settings).set({ value: next as never, updatedAt: new Date() }).where(eq(settings.key, key));
   }
+
+  await db.execute(sql`update products set care = replace(care, 'Aurelle', 'Evermoon') where care like '%Aurelle%'`);
+  await db.execute(sql`update products set description = replace(description, 'Maison Aurelle', 'Evermoon Jewels') where description like '%Maison Aurelle%'`);
+  await db.execute(sql`update products set description = replace(description, 'Aurelle', 'Evermoon') where description like '%Aurelle%'`);
 
   const pageRows = await db.select().from(pages);
   for (const page of pageRows) {
