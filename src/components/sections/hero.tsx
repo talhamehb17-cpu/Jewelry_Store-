@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Img } from '@/components/ui/img';
 import { FadeSlider } from './slider';
 import { BRAND } from '@/lib/brand';
@@ -81,25 +82,36 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
     case 'campaign':
       return (
         <section className="overflow-hidden bg-bg" style={vars}>
-          <div className="relative hidden md:block">
-            <div className="relative aspect-[2056/765] max-h-[78vh] w-full bg-surface">
-              <Img src={first.image || BRAND.campaign} alt="Evermoon Jewels — Wear your little wonder" priority sizes="100vw" className="hero-drift !object-cover !object-center" />
+          <div className="relative hidden bg-surface md:block">
+            <div className="relative mx-auto aspect-[2056/765] max-h-[70vh] w-full max-w-[1680px] bg-surface xl:my-6">
+              <Img src={first.image || BRAND.campaign} alt="Evermoon Jewels — Wear your little wonder" priority sizes="(max-width:1680px) 100vw, 1680px" className="hero-drift !object-cover !object-center" />
             </div>
           </div>
           <div className="md:hidden">
-            <div className="relative mx-auto aspect-[4/5] max-h-[68svh] w-full overflow-hidden bg-surface">
-              <Img src={first.mobileImage || BRAND.jewelry} alt="Evermoon jewellery arranged in afternoon light" priority sizes="100vw" className="!object-cover !object-[center_40%]" />
+            <div className="relative mx-auto aspect-[4/5] max-h-[62svh] w-full overflow-hidden bg-surface">
+              <Img src={first.mobileImage || BRAND.jewelry} alt="Evermoon jewellery arranged in afternoon light" priority sizes="100vw" className="!object-cover !object-[center_42%]" />
             </div>
             <div className="container-x py-8">
+              <Image src={BRAND.logo} alt="" width={64} height={64} className="mb-5 h-16 w-16 object-contain" />
               <Copy s={{ ...first, textColor: 'dark' }} light={false} size="1" />
             </div>
           </div>
-          <div className="hidden border-b border-line md:block">
-            <div className="container-x flex flex-wrap items-center justify-between gap-4 py-5">
-              <p className="max-w-xl text-[1.02rem] leading-relaxed text-muted">{first.subheading}</p>
+          <div className="hidden border-y border-line md:block">
+            <div className="container-x grid items-center gap-6 py-7 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:gap-10">
+              <Image src={BRAND.logo} alt={BRAND.name} width={72} height={72} className="h-[4.5rem] w-[4.5rem] object-contain" />
+              <div className="min-w-0">
+                <p className="eyebrow">Designed in Lahore</p>
+                <p className="mt-2 max-w-xl text-[1.05rem] leading-relaxed text-muted">{first.subheading}</p>
+              </div>
               <Ctas s={first} light={false} className="!mt-0" />
             </div>
           </div>
+          <ul className="container-x flex flex-wrap gap-x-6 gap-y-2 py-3 text-[0.68rem] uppercase tracking-[0.16em] text-muted">
+            <li>18k gold vermeil</li>
+            <li>Freshwater pearls</li>
+            <li>Cash on delivery</li>
+            <li>EasyPaisa · JazzCash · Bank</li>
+          </ul>
         </section>
       );
 

@@ -117,11 +117,14 @@ export function CategoriesSection({ section }: Props) {
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
             {items.map((t, i) => (
-              <Link key={t.link + i} href={t.link} className="reveal group min-w-0 md:w-auto" style={{ ['--d' as string]: `${i * 80}ms` }}>
-                <span className="relative block aspect-[3/4] overflow-hidden bg-surface rounded-theme-sm">
-                  <Img src={t.image} alt={t.title} sizes="(max-width:768px) 45vw, 20vw" className="transition duration-[1200ms] group-hover:scale-105" />
+              <Link key={t.link + i} href={t.link} className="reveal group min-w-0" style={{ ['--d' as string]: `${i * 80}ms` }}>
+                <span className="frame-inset relative block aspect-[3/4] overflow-hidden border border-line bg-surface">
+                  <Img src={t.image} alt={t.title} sizes="(max-width:768px) 46vw, 18vw" className="transition duration-[1200ms] group-hover:scale-[1.04]" />
                 </span>
-                <span className="font-heading mt-4 block text-center text-[1.2rem]">{t.title}</span>
+                <span className="mt-3 block text-center">
+                  <span className="font-heading block text-[1.02rem] leading-tight sm:text-[1.2rem]">{t.title}</span>
+                  <span className="mt-1 block text-[0.62rem] uppercase tracking-[0.16em] text-muted transition group-hover:text-accent">Shop</span>
+                </span>
               </Link>
             ))}
           </div>
@@ -229,7 +232,7 @@ export async function ProductGridSection({ section, config }: Props) {
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} sub={st.subheading} align="left">{viewAll}</SectionHeading>
           <div className="grid grid-cols-2 gap-x-[var(--grid-gap)] gap-y-12 md:grid-cols-4">
             {products.map((p, i) => (
-              <div key={p.id} className={cn('reveal', i === 0 && 'col-span-2 row-span-2', i === 3 && 'md:col-start-3')} style={{ ['--d' as string]: `${(i % 3) * 120}ms` }}>
+              <div key={p.id} className={cn('reveal', i === 0 && 'col-span-2 md:row-span-2')} style={{ ['--d' as string]: `${(i % 3) * 120}ms` }}>
                 <ProductCard p={p} variant={variant} index={i} priority={i === 0} />
               </div>
             ))}
@@ -240,9 +243,9 @@ export async function ProductGridSection({ section, config }: Props) {
       return (
         <section className="section-y container-x">
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} sub={st.subheading} align="left">{viewAll}</SectionHeading>
-          <div className="product-grid md:pb-16">
+          <div className="product-grid">
             {products.map((p, i) => (
-              <div key={p.id} className={cn('reveal', i % 2 === 1 && 'md:translate-y-16')} style={{ ['--d' as string]: `${(i % 4) * 90}ms` }}>
+              <div key={p.id} className={cn('reveal', i % 2 === 1 && 'md:mt-10')} style={{ ['--d' as string]: `${(i % 4) * 90}ms` }}>
                 <ProductCard p={p} variant={variant} index={i} />
               </div>
             ))}

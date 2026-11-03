@@ -47,8 +47,8 @@ export function BrandStorySection({ section }: Props) {
               <Img src={st.image} alt="" sizes="(max-width:768px) 100vw, 45vw" />
             </div>
             <div className="reveal">
-              <p className="font-heading text-[clamp(4rem,9vw,8rem)] leading-none text-accent/30">2019</p>
-              {st.eyebrow && <p className="eyebrow -mt-3 mb-4">{st.eyebrow}</p>}
+              <p className="font-heading text-[clamp(3rem,8vw,6.5rem)] leading-none text-accent/30">LHR</p>
+              {st.eyebrow && <p className="eyebrow -mt-2 mb-4">{st.eyebrow}</p>}
               <h2 className="t-1">{st.heading}</h2>
               <p className="mt-6 text-[1.02rem] leading-[1.9] text-muted">{st.body}</p>
               {st.signature && <p className="accent-italic mt-8 border-t border-line pt-6 text-xl">{st.signature}</p>}
@@ -110,17 +110,22 @@ export function ImageBannerSection({ section }: Props) {
   );
   if (section.variant === 'promo') {
     return (
-      <section className="section-y-sm container-x">
-        <div className="reveal grid overflow-hidden rounded-theme bg-secondary md:grid-cols-2">
-          <div className="flex items-center p-6 sm:p-10 md:p-16">
-            <div className="max-w-md">
-              {st.eyebrow && <p className="mb-4 text-[0.72rem] uppercase tracking-[0.26em] text-primary">{st.eyebrow}</p>}
-              <h2 className="t-1 text-balance">{st.heading}</h2>
-              {st.body && <p className="mt-4 text-muted">{st.body}</p>}
-              <Cta label={st.ctaLabel} link={st.ctaLink} className="mt-8" />
+      <section className="section-y">
+        <div className="container-x">
+          <div className="reveal grid items-center overflow-hidden border border-line bg-secondary md:grid-cols-2">
+            <div className="relative aspect-[5/4] max-h-[58svh] md:aspect-auto md:max-h-none md:min-h-[460px]">
+              <Img src={st.image} alt="A floral bracelet on sage silk" sizes="(max-width:768px) 100vw, 50vw" className="!object-cover !object-[center_60%]" />
+            </div>
+            <div className="flex items-center px-6 py-10 sm:px-10 md:px-14 md:py-16">
+              <div className="max-w-md">
+                {st.eyebrow && <p className="mb-4 text-[0.72rem] uppercase tracking-[0.26em] text-primary">{st.eyebrow}</p>}
+                <h2 className="t-1 text-balance">{st.heading}</h2>
+                <div className="hairline-gold my-6 w-20" />
+                {st.body && <p className="text-[1.02rem] leading-relaxed text-muted">{st.body}</p>}
+                <Cta label={st.ctaLabel} link={st.ctaLink} className="mt-8" />
+              </div>
             </div>
           </div>
-          <div className="relative min-h-[320px]"><Img src={st.image} alt="" sizes="(max-width:768px) 100vw, 50vw" /></div>
         </div>
       </section>
     );
@@ -141,7 +146,42 @@ export function ImageBannerSection({ section }: Props) {
 export function ImageTextSection({ section }: Props) {
   const st = section.settings;
   const right = st.imagePosition === 'right';
+  const notes: { k: string; v: string }[] = Array.isArray(st.notes) ? st.notes : [];
   switch (section.variant) {
+    case 'studio':
+      return (
+        <section className="section-y bg-surface/70">
+          <div className="container-x grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            <div className={cn('reveal', right && 'lg:order-2')}>
+              <div className="relative aspect-[4/5] max-h-[70svh] overflow-hidden bg-bg">
+                <Img src={st.image} alt="Evermoon jewellery in afternoon light" sizes="(max-width:1024px) 100vw, 50vw" className="!object-cover" />
+              </div>
+              {st.image2 && (
+                <div className="relative mt-3 aspect-[5/4] w-full overflow-hidden border border-line bg-bg sm:ml-auto sm:-mt-16 sm:aspect-square sm:w-[46%] sm:max-w-[240px] sm:border-[8px] sm:border-surface sm:shadow-[0_24px_50px_-28px_rgba(0,0,0,.45)]">
+                  <Img src={st.image2} alt="A closer look at the rings and enamel bangles" sizes="240px" />
+                </div>
+              )}
+            </div>
+            <div className="reveal min-w-0 lg:py-6">
+              {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
+              <h2 className="t-1 text-balance">{st.heading}</h2>
+              <div className="hairline-gold my-7 w-24" />
+              <p className="max-w-lg text-[1.05rem] leading-[1.85] text-muted">{st.body}</p>
+              {notes.length > 0 && (
+                <dl className="mt-8 grid max-w-md grid-cols-3 gap-4 border-y border-line py-5">
+                  {notes.map((n) => (
+                    <div key={n.v}>
+                      <dt className="font-heading text-[1.35rem] leading-none">{n.k}</dt>
+                      <dd className="mt-1.5 text-[0.68rem] uppercase tracking-[0.14em] text-muted">{n.v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              <Cta label={st.ctaLabel} link={st.ctaLink} className="mt-8" />
+            </div>
+          </div>
+        </section>
+      );
     case 'overlap':
       return (
         <section className="section-y container-x">
@@ -163,7 +203,12 @@ export function ImageTextSection({ section }: Props) {
       return (
         <section className="section-y container-x">
           <div className="grid gap-10 md:grid-cols-12">
-            <div className={cn('reveal relative aspect-[3/4] max-h-[70svh] overflow-hidden bg-surface md:col-span-7 md:aspect-auto md:max-h-[760px] md:min-h-[56vh]', right && 'md:order-2')}><Img src={st.image} alt="" sizes="60vw" /></div>
+            <div className={cn('reveal md:col-span-7', right && 'md:order-2')}>
+              <div className="relative aspect-[3/4] max-h-[70svh] overflow-hidden bg-surface md:aspect-auto md:max-h-[720px] md:min-h-[52vh]">
+                <Img src={st.image} alt="Enamel bangles and gold rings in afternoon light" sizes="(max-width:768px) 100vw, 55vw" />
+              </div>
+              {st.caption && <p className="mt-3 text-[0.72rem] uppercase tracking-[0.18em] text-muted">{st.caption}</p>}
+            </div>
             <div className="reveal flex flex-col justify-center md:col-span-5">
               {st.eyebrow && <p className="eyebrow mb-4">{st.eyebrow}</p>}
               <h2 className="t-1 text-balance">{st.heading}</h2>
@@ -225,10 +270,10 @@ function studioFace(t: T) {
   return STUDIO_FACES[t.name] ?? (t.avatar ? { avatar: t.avatar, image: '', href: '' } : null);
 }
 
-function StudioPerson({ t, align = 'start' }: { t: T; align?: 'start' | 'center' }) {
+function StudioPerson({ t, align = 'start', className }: { t: T; align?: 'start' | 'center'; className?: string }) {
   const face = studioFace(t);
   return (
-    <span className={cn('mt-4 flex items-center gap-3', align === 'center' && 'justify-center')}>
+    <span className={cn('mt-4 flex items-center gap-3', align === 'center' && 'justify-center', className)}>
       <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface">
         {face?.avatar ? <Img src={face.avatar} alt="" sizes="44px" /> : <span className="grid h-full place-items-center text-[0.72rem] tracking-wide">{t.name.slice(0, 1)}</span>}
       </span>
@@ -247,24 +292,34 @@ export function TestimonialsSection({ section }: Props) {
   switch (section.variant) {
     case 'cards':
       return (
-        <section className="section-y container-x">
+        <section className="section-y bg-surface/60">
+          <div className="container-x">
           <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
-          <div className={cn('grid gap-[var(--grid-gap)]', items.length >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3')}>
-            {items.map((t, i) => (
-              <figure key={i} className="reveal flex flex-col rounded-theme border border-line bg-surface/60 p-5 sm:p-7" style={{ ['--d' as string]: `${i * 100}ms` }}>
-                <Stars value={t.rating ?? 5} size={13} />
-                <blockquote className="mt-5 flex-1 text-[0.95rem] leading-relaxed">“{t.quote}”</blockquote>
-                <figcaption className="mt-6 border-t border-line pt-4 text-[0.82rem]">
-                  <StudioPerson t={t} />
-                  {t.product && <span className="mt-3 block text-[0.75rem] text-muted">Featured piece: {t.product}</span>}
-                  {studioFace(t)?.image && (
-                    <Link href={studioFace(t)!.href} className="relative mt-4 block aspect-[4/5] overflow-hidden rounded-theme-sm bg-surface">
-                      <Img src={studioFace(t)!.image} alt="" sizes="240px" />
-                    </Link>
-                  )}
+          <div className="grid gap-4 md:grid-cols-3">
+            {items.slice(0, 3).map((t, i) => {
+              const face = studioFace(t);
+              return (
+              <figure key={i} className="reveal flex h-full flex-col border border-line bg-bg" style={{ ['--d' as string]: `${i * 100}ms` }}>
+                <figcaption className="border-b border-line px-5 py-4">
+                  <StudioPerson t={t} className="mt-0" />
                 </figcaption>
+                <Stars value={t.rating ?? 5} size={13} className="px-5 pt-5" />
+                <blockquote className="flex-1 px-5 py-4 font-heading text-[1.15rem] italic leading-snug">“{t.quote}”</blockquote>
+                {face?.image && (
+                  <Link href={face.href} className="mt-auto flex items-center gap-3 border-t border-line px-4 py-3 text-[0.82rem] transition hover:bg-surface">
+                    <span className="relative block h-16 w-14 shrink-0 overflow-hidden bg-surface">
+                      <Img src={face.image} alt="" sizes="64px" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[0.62rem] uppercase tracking-[0.14em] text-muted">Related piece</span>
+                      <span className="mt-1 block truncate font-medium">{t.product || 'View the piece'}</span>
+                    </span>
+                  </Link>
+                )}
               </figure>
-            ))}
+              );
+            })}
+          </div>
           </div>
         </section>
       );

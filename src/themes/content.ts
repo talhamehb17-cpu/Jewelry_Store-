@@ -61,7 +61,13 @@ export const BRAND_INTRO = {
   ctaLabel: 'Read our story',
   ctaLink: '/about',
   image: BRAND.jewelry,
+  image2: BRAND.rings,
   imagePosition: 'right',
+  notes: [
+    { k: '18k', v: 'Gold vermeil' },
+    { k: 'Pearl', v: 'Freshwater' },
+    { k: 'Lahore', v: 'Studio made' },
+  ],
 };
 
 export const BRAND_STORY = {
@@ -84,9 +90,12 @@ export const EDITORIAL = {
   eyebrow: 'The edit',
   heading: 'Handpicked for the light.',
   body: 'Sun on stone, a flower earring, a chain that sits quietly. This is the Evermoon way of dressing — pretty, unforced, and made for the day you are actually having.',
+  quote: 'Luxury light enough for a Monday.',
+  caption: 'Afternoon light, Gulberg studio',
   ctaLabel: 'Shop the collection',
   ctaLink: '/shop',
   image: BRAND.rings,
+  image2: BRAND.leaves,
   imagePosition: 'left',
 };
 
@@ -245,24 +254,25 @@ export function buildHome(look: HomeLook): SectionInstance[] {
       autoplay: false,
       slides: [slideBase],
     }),
-    section('image-text', 'split', {
+    section('image-text', 'studio', {
       ...BRAND_INTRO,
       image: look.introImage || BRAND.jewelry,
-      imagePosition: 'right',
+      image2: look.introImage === BRAND.tray ? BRAND.bracelet : BRAND.rings,
+      imagePosition: 'left',
     }),
     section('categories', look.categories || 'tiles', {
       eyebrow: 'Shop by category',
       heading: 'Find your signature',
       items: CATEGORY_TILES.slice(0, 5),
     }),
-    section('product-grid', look.featured || 'grid', gridHome('Featured pieces', 'featured', 'The edit', 8, '/shop')),
+    section('product-grid', look.featured === 'carousel' ? 'carousel' : 'asymmetric', gridHome('Featured pieces', 'featured', 'The edit', 5, '/shop')),
     section('image-text', 'magazine', {
       ...EDITORIAL,
       image: look.editorialImage || BRAND.rings,
       imagePosition: 'left',
     }),
     section('product-grid', look.arrivals || 'carousel', gridHome('New arrivals', 'new', 'Just in', 8, '/collections/new-arrivals')),
-    section('product-grid', look.bestsellers || 'grid', gridHome('Best sellers', 'bestsellers', 'Most loved', 8, '/collections/best-sellers')),
+    section('product-grid', look.bestsellers === 'carousel' ? 'carousel' : 'offset', gridHome('Best sellers', 'bestsellers', 'Most loved', 4, '/collections/best-sellers')),
     section('brand-story', look.story || 'split', { ...BRAND_STORY, image: BRAND.tray, image2: BRAND.leaves }),
     section('image-banner', 'promo', { ...PROMO, image: look.promoImage || BRAND.bracelet, align: 'left', textColor: 'dark', overlay: 0, height: 'medium' }),
     section('testimonials', look.reviews || 'cards', {
