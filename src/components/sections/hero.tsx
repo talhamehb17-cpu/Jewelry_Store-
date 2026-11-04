@@ -279,29 +279,34 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
         </section>
       );
 
-    case 'mosaic':
+    case 'mosaic': {
+      // Copy lives in the first row, beside the stills — not on top of them.
+      // A fixed half-height row let the second CTA ("Our story") spill into the
+      // image cells painted after it. About stays in the header and studio section.
+      const copy = { ...first, secondaryLabel: undefined, secondaryLink: undefined };
       return (
-        <section className="container-x pb-6 pt-6 md:pt-10" style={vars}>
-          <div className="grid gap-3 md:h-[min(86vh,820px)] md:grid-cols-4 md:grid-rows-2">
-            <div className="flex flex-col justify-between rounded-theme bg-surface p-7 md:col-span-2 md:p-10">
+        <section className="container-x min-w-0 pb-6 pt-6 md:pt-10" style={vars}>
+          <div className="grid min-w-0 gap-3 md:min-h-[min(86vh,820px)] md:grid-cols-4 md:grid-rows-[minmax(min-content,1fr)_minmax(11rem,1fr)]">
+            <div className="flex min-w-0 flex-col justify-between gap-8 rounded-theme bg-surface p-7 md:col-span-2 md:col-start-1 md:row-start-1 md:p-10">
               <p className="text-[0.8rem] text-muted">{first.eyebrow ?? 'Collection 2026'}</p>
-              <div>
+              <div className="min-w-0">
                 <h1 className="font-heading slide-up text-balance leading-[0.98]" style={{ fontSize: 'calc(clamp(2.3rem, 3.7vw, 3.9rem) * var(--h-scale))', fontWeight: 'var(--h-weight)', letterSpacing: 'var(--h-tracking)' }}>{first.heading}</h1>
-                {first.subheading && <p className="mt-4 max-w-md text-muted">{first.subheading}</p>}
-                <Ctas s={first} light={false} className="!mt-6" />
+                {first.subheading && <p className="mt-4 max-w-md text-pretty text-muted">{first.subheading}</p>}
+                <Ctas s={copy} light={false} className="!mt-6 max-w-full [&_.btn]:max-w-full [&_.btn]:whitespace-normal" />
               </div>
             </div>
-            <div className="relative aspect-[4/5] overflow-hidden rounded-theme bg-surface md:col-span-2 md:row-span-2 md:aspect-auto">
+            <div className="relative aspect-[4/5] min-h-0 overflow-hidden rounded-theme bg-surface md:col-span-2 md:col-start-3 md:row-span-2 md:row-start-1 md:aspect-auto">
               <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" slot="hero" />
-              <span className="absolute bottom-4 left-4 rounded-full bg-bg/90 px-4 py-2 text-[0.78rem] backdrop-blur">New season ↗</span>
+              <span className="absolute bottom-4 left-4 max-w-[calc(100%-2rem)] rounded-full bg-bg/90 px-4 py-2 text-[0.78rem] backdrop-blur">New season ↗</span>
             </div>
-            <div className="relative hidden overflow-hidden rounded-theme bg-surface md:block"><Img src={publicImage(first.image2, LOOK.editorial)} alt="" sizes="25vw" /></div>
-            <div className="relative hidden overflow-hidden rounded-theme bg-accent md:block">
+            <div className="relative hidden min-h-0 overflow-hidden rounded-theme bg-surface md:col-start-1 md:row-start-2 md:block"><Img src={publicImage(first.image2, LOOK.editorial)} alt="" sizes="25vw" /></div>
+            <div className="relative hidden min-h-0 overflow-hidden rounded-theme bg-accent md:col-start-2 md:row-start-2 md:block">
               <Img src={publicImage(first.image3, LOOK.story)} alt="" sizes="25vw" className="mix-blend-multiply" />
             </div>
           </div>
         </section>
       );
+    }
 
     case 'fullbleed':
     default:
