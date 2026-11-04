@@ -166,10 +166,15 @@ async function copyTable(source, dest, table) {
 
 async function resetSequences(dest, tables) {
   for (const table of tables) {
+    const column = await dest.query(
+      `select 1 from information_schema.columns where table_schema = 'public' and table_name = $1 and column_name = 'id' limit 1`,
+      [table],
+    );
+    if (!column.rowCount) continue;
     const seq = await dest.query(`select pg_get_serial_sequence($1, 'id') as seq`, [table]);
     const name = seq.rows[0]?.seq;
     if (!name) continue;
-    await dest.query(`select setval($1, coalesce((select max(id) from ${quoteIdent(table)}), 1), true)`, [name]);
+    await dest.query(`select setval($1::regclass, coalesce((select max(id) from ${quoteIdent(table)}), 1), true)`, [name]);
   }
 }
 
@@ -212,13 +217,14 @@ async function main() {
         log(`destination already marked migrated ${JSON.stringify(after)}`);
         return;
       }
-      await dest.query('begin');
+      const client = await dest.connect();
       try {
-        await dest.query(`set session_replication_role = 'replica'`).catch(() => undefined);
+        await client.query('begin');
+        await client.query(`set session_replication_role = 'replica'`).catch(() => undefined);
         const sourceEmails = await source.query(`select email from users`);
         const emails = sourceEmails.rows.map((row) => row.email).filter(Boolean);
         if (emails.length) {
-          const removed = await dest.query(
+          const removed = await client.query(
             `delete from users u
              where u.email = any($1::text[])
                and not exists (select 1 from orders o where o.user_id = u.id)
@@ -231,29 +237,48 @@ async function main() {
           log(`reconciled destination users with no orders or addresses removed=${removed.rowCount}`);
         }
         for (const table of tables) {
-          const result = await copyTable(source, dest, table);
+          const result = await copyTable(source, client, table);
           log(`${table} inserted=${result.inserted} updated=${result.updated}`);
         }
-        await resetSequences(dest, tables);
-        const afterTx = await counts(dest, tables);
+        await resetSequences(client, tables);
+        const afterTx = await counts(client, tables);
         const missing = tables.filter((table) => afterTx[table] < sourceCounts[table]);
         if (missing.length) throw new Error(`missing rows in ${missing.join(', ')}`);
         const srcOrders = await source.query(`select number from orders order by number`);
-        const dstOrders = await dest.query(`select number from orders order by number`);
+        const dstOrders = await client.query(`select number from orders order by number`);
         log(`order numbers match=${srcOrders.rows.map((row) => row.number).join(',') === dstOrders.rows.map((row) => row.number).join(',')} count=${dstOrders.rowCount}`);
-        await dest.query(
+        await client.query(
           `insert into settings (key, value, updated_at) values ('neon_migration_v1', $1::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()`,
           [JSON.stringify({ at: new Date().toISOString(), sourceHost: hostOf(sourceUrl), counts: afterTx })],
         );
-        await dest.query('commit');
+        await client.query(`set session_replication_role = 'origin'`).catch(() => undefined);
+        await client.query('commit');
+        log('transaction committed');
       } catch (error) {
-        await dest.query('rollback');
+        await client.query('rollback').catch(() => undefined);
         throw error;
+      } finally {
+        client.release();
       }
       const after = await counts(dest, tables);
       const mismatches = tables.filter((table) => after[table] < sourceCounts[table]);
       log(`destination after ${JSON.stringify(after)}`);
       log(mismatches.length ? `missing rows in ${mismatches.join(', ')}` : 'destination counts cover every source table');
+      const sequences = await dest.query(`
+        select c.relname as table, s.relname as sequence, last_value
+        from pg_class c
+        join pg_depend d on d.refobjid = c.oid
+        join pg_class s on s.oid = d.objid and s.relkind = 'S'
+        join pg_sequences q on q.sequencename = s.relname
+        where c.relkind = 'r' and c.relnamespace = 'public'::regnamespace
+        order by c.relname
+      `).catch(() => ({ rows: [] }));
+      for (const row of sequences.rows) log(`sequence ${row.table} ${row.sequence} last=${row.last_value}`);
+      await dest.query(`insert into settings (key, value, updated_at) values ('migration_write_test', '{"ok":true}'::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()`);
+      await dest.query(`delete from settings where key = 'migration_write_test'`);
+      const proofs = await dest.query(`select count(*)::int as n, count(data)::int as with_data, count(url)::int as with_url from payment_proofs`);
+      log(`payment proofs n=${proofs.rows[0].n} with_data=${proofs.rows[0].with_data} with_url=${proofs.rows[0].with_url}`);
+      log('destination write test ok');
     } finally {
       await dest.end().catch(() => undefined);
     }
