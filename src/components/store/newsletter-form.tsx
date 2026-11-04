@@ -1,8 +1,10 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState, useTransition } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
-import { subscribeNewsletter } from '@/app/actions/store';
+import { lookupSubscriberOffers, subscribeNewsletter } from '@/app/actions/store';
+import { SubscriberOffers } from './subscriber-offers';
+import type { SubscriberOffer } from '@/lib/subscriber-offers';
 import { cn } from '@/lib/utils';
 
 export function NewsletterForm({
@@ -19,11 +21,18 @@ export function NewsletterForm({
   dark?: boolean;
 }) {
   const [state, action, pending] = useActionState(subscribeNewsletter, null);
+  const [lookupEmail, setLookupEmail] = useState('');
+  const [lookup, setLookup] = useState<{ message: string; offers: SubscriberOffer[] } | null>(null);
+  const [looking, startLookup] = useTransition();
   if (state?.ok) {
     return (
-      <p role="status" className={cn('flex items-start gap-2 text-[0.9rem]', className)}>
-        <Check size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent" /> {state.message}
-      </p>
+      <div className={className}>
+        <p role="status" className="flex items-start gap-2 text-[0.9rem]">
+          <Check size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-accent" /> {state.message}
+        </p>
+        <SubscriberOffers offers={state.offers ?? []} />
+        <p className="mt-2 text-[0.75rem] text-muted">No email was sent with these codes. They stay available in the store while you are subscribed.</p>
+      </div>
     );
   }
   return (
@@ -63,6 +72,25 @@ export function NewsletterForm({
         )}
       </div>
       {state && !state.ok && <p className="mt-2 text-[0.8rem] text-sale" role="alert">{state.message}</p>}
+      <div className="mt-3">
+        <label className="text-[0.75rem] text-muted" htmlFor={`offers-${source}`}>Already subscribed? See current offers</label>
+        <div className="mt-1 flex gap-2">
+          <input id={`offers-${source}`} type="email" value={lookupEmail} onChange={(e) => setLookupEmail(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} placeholder="Your subscribed email" className="field min-w-0 flex-1" />
+          <button
+            type="button"
+            disabled={looking}
+            className="btn btn-secondary shrink-0"
+            onClick={() => startLookup(async () => {
+              const result = await lookupSubscriberOffers(lookupEmail);
+              setLookup({ message: result.message, offers: result.offers ?? [] });
+            })}
+          >
+            {looking ? 'Checking…' : 'Show offers'}
+          </button>
+        </div>
+        {lookup && <p className="mt-2 text-[0.78rem] text-muted" role="status">{lookup.message}</p>}
+        {lookup && <SubscriberOffers offers={lookup.offers} title="Current offers" />}
+      </div>
     </form>
   );
 }

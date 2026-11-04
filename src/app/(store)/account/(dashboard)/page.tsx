@@ -8,6 +8,8 @@ import { requireUser } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { formatDate } from '@/lib/utils';
 import { StatusBadge } from '@/components/store/order-status';
+import { SubscriberOffers } from '@/components/store/subscriber-offers';
+import { listSubscriberOffers } from '@/lib/subscriber-offers';
 
 export const metadata: Metadata = { title: 'My account', robots: { index: false } };
 
@@ -15,6 +17,7 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
   const user = await requireUser('/account');
   const { reset } = await searchParams;
   const db = await getDb();
+  const offers = await listSubscriberOffers(user.email);
   const [recent, [stats], [wish], [addr]] = await Promise.all([
     db.select().from(orders).where(eq(orders.userId, user.id)).orderBy(desc(orders.createdAt)).limit(3),
     db.select({ count: sql<number>`count(*)::int`, spent: sql<number>`coalesce(sum(case when ${orders.status} <> 'cancelled' then ${orders.total} else 0 end),0)::int` }).from(orders).where(eq(orders.userId, user.id)),
@@ -41,6 +44,10 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
           <p className="text-[0.82rem] text-muted">Default address</p>
         </Link>
       </div>
+      <section>
+        <h2 className="t-3">Subscriber offers</h2>
+        {offers.length ? <SubscriberOffers offers={offers} /> : <p className="mt-3 text-[0.88rem] text-muted">No active subscriber-only codes for this email right now. A code shows here when it is active and this email is subscribed. You do not need to subscribe again for a future code.</p>}
+      </section>
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="t-3">Recent orders</h2>

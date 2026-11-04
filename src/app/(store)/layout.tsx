@@ -21,6 +21,7 @@ import { getSettings, type NavItem } from '@/lib/settings';
 import { getCurrentUser, isStaff } from '@/lib/auth';
 import { getCollections } from '@/lib/catalog';
 import { themeCssVars, themeStyleTag, themeName } from '@/themes/engine';
+import { themeBootScript } from '@/lib/theme-boot';
 import { THEME_LIST } from '@/themes/presets';
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     <ThemeLiveProvider initialId={ctx.themeId} looks={looks}>
     <StoreProvider loggedIn={!!user}>
       <style dangerouslySetInnerHTML={{ __html: themeStyleTag(s) }} />
+      {!user && <script dangerouslySetInnerHTML={{ __html: themeBootScript(chips) }} />}
       <div data-store-frame data-theme={ctx.themeId} data-anim={s.animation.style} data-btn-style={s.buttons.style} data-btn-hover={s.buttons.hover} className="flex min-h-screen flex-col">
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-bg focus:px-4 focus:py-2">Skip to content</a>
         {ctx.isPreview && <PreviewBanner themeName={themeName(ctx.themeId)} mode={ctx.mode} />}

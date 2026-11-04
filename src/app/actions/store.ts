@@ -3,11 +3,13 @@
 import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
 import { refresh } from 'next/cache';
+
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { contactMessages, newsletterSubscribers, products, reviews, users } from '@/db/schema';
+import { listSubscriberOffers, type SubscriberOffer } from '@/lib/subscriber-offers';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { isThemeId } from '@/themes/engine';
 import { VISITOR_THEME_COOKIE } from '@/lib/theme-server';
@@ -15,7 +17,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { savePublicImage } from '@/lib/image-upload';
 import { eligiblePurchases } from '@/lib/reviews';
 
-export type ActionResult = { ok: boolean; message: string; fieldErrors?: Record<string, string> };
+export type ActionResult = { ok: boolean; message: string; fieldErrors?: Record<string, string>; offers?: SubscriberOffer[] };
 
 const email = z.string().trim().toLowerCase().email('Please enter a valid email address.').max(255);
 
@@ -29,7 +31,26 @@ export async function subscribeNewsletter(_: ActionResult | null, form: FormData
     .insert(newsletterSubscribers)
     .values({ email: parsed.data, source, status: 'subscribed', token: crypto.randomBytes(24).toString('hex') })
     .onConflictDoUpdate({ target: newsletterSubscribers.email, set: { status: 'subscribed', unsubscribedAt: null, source } });
-  return { ok: true, message: 'Welcome to the EVERMOON Circle. We’ll write when something beautiful arrives.' };
+  const offers = await listSubscriberOffers(parsed.data);
+  return {
+    ok: true,
+    offers,
+    message: offers.length
+      ? 'You are subscribed. Current subscriber offers are below. A future code appears here and in your account when it becomes active — you do not need to subscribe again.'
+      : 'You are subscribed. There is no active subscriber code right now. A future code will appear here and in your account when it becomes active.',
+  };
+}
+
+export async function lookupSubscriberOffers(emailInput: string): Promise<ActionResult> {
+  const parsed = email.safeParse(emailInput);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]!.message, offers: [] };
+  if (!rateLimit(`offers:${await clientIp()}`, 12, 60_000)) return { ok: false, message: 'Too many attempts. Please try again in a minute.', offers: [] };
+  const offers = await listSubscriberOffers(parsed.data);
+  return {
+    ok: true,
+    offers,
+    message: offers.length ? 'Current subscriber offers for this email.' : 'There are no active subscriber offers for that email right now.',
+  };
 }
 
 export async function setVisitorTheme(themeId: string | null) {
@@ -48,7 +69,6 @@ export async function setVisitorTheme(themeId: string | null) {
     const db = await getDb();
     await db.update(users).set({ themePreference: value }).where(eq(users.id, user.id));
   }
-  refresh();
 }
 
 const contactSchema = z.object({

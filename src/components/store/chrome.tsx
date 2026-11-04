@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, Palette, X, Eye } from 'lucide-react';
 import { flushSync } from 'react-dom';
 import { useStore } from './providers';
@@ -79,8 +79,8 @@ function paintTheme(chip: ThemeChip) {
 
 export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip[]; current: string; activeId: string }) {
   const [open, setOpen] = useState(false);
-  const [pending, start] = useTransition();
   const live = useThemeLive();
+  const shown = live?.themeId ?? current;
   const [inFrame, setInFrame] = useState(false);
   useEffect(() => setInFrame(window.self !== window.top && document.referrer.includes('/admin')), []);
   useEffect(() => {
@@ -109,7 +109,6 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
             {themes.map((t) => (
               <li key={t.id}>
                 <button
-                  disabled={pending && current === t.id}
                   onClick={() => {
                     const next = t.id === activeId ? null : t.id;
                     const chip = next ? t : themes.find((x) => x.id === activeId) ?? t;
@@ -117,9 +116,9 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
                     paintTheme(chip);
                     if (next) localStorage.setItem('aurelle_theme', next);
                     else localStorage.removeItem('aurelle_theme');
-                    start(() => setVisitorTheme(next));
+                    void setVisitorTheme(next);
                   }}
-                  className={cn('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[.04]', current === t.id && 'bg-black/[.05]')}
+                  className={cn('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[.04]', shown === t.id && 'bg-black/[.05]')}
                 >
                   <span className="flex shrink-0 overflow-hidden rounded-full border border-black/10">
                     {t.swatch.map((c, i) => <span key={i} className="h-6 w-3" style={{ background: c }} />)}
@@ -128,7 +127,7 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
                     <span className="block text-[0.82rem] font-medium">{t.name}{t.id === activeId && <span className="ml-1.5 text-[0.65rem] font-normal text-[#a8844a]">· live</span>}</span>
                     <span className="block truncate text-[0.7rem] text-[#7c756d]">{t.tagline}</span>
                   </span>
-                  {current === t.id && <Check size={15} className="text-[#a8844a]" />}
+                  {shown === t.id && <Check size={15} className="text-[#a8844a]" />}
                 </button>
               </li>
             ))}
@@ -136,7 +135,7 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
         </div>
       )}
       <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-full bg-[#23201d] px-4 py-2.5 text-[0.78rem] font-medium text-white shadow-xl transition hover:scale-[1.03]" aria-expanded={open}>
-        <Palette size={15} strokeWidth={1.5} /> {pending ? 'Switching…' : 'Themes'}
+        <Palette size={15} strokeWidth={1.5} /> Themes
       </button>
     </div>
   );

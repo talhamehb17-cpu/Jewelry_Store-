@@ -11,6 +11,7 @@ import { placeOrder } from '@/app/actions/checkout';
 import { formatMoney } from '@/lib/money';
 import { PayLine } from './currency-context';
 import { cn } from '@/lib/utils';
+import { discountFieldChange, discountToSubmit } from '@/lib/shopping-rules';
 
 type AccountMethod = { enabled: boolean; accountName: string; accountNumber: string; instructions: string };
 type Payments = {
@@ -103,7 +104,11 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
 
   useEffect(() => {
     if (quote && !quote.shippingMethods.some((m) => m.id === shippingMethod) && quote.shippingMethods[0]) setShippingMethod(quote.shippingMethods[0].id);
-  }, [quote, shippingMethod]);
+    if (quote?.highValue?.applied && !quote.highValue.advanceMethods.includes(paymentMethod as 'easypaisa' | 'jazzcash' | 'bank')) {
+      const next = quote.highValue.advanceMethods.find((id) => payments[id]?.enabled);
+      if (next) setPaymentMethod(next);
+    }
+  }, [quote, shippingMethod, paymentMethod, payments]);
 
   const set = (k: keyof Prefill) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((p) => ({ ...p, [k]: e.target.value }));
 
@@ -119,22 +124,39 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
     );
   }
 
+  const split = quote?.highValue?.applied ? quote.highValue : null;
+  const pmOptions = [
+    payments.cod.enabled && { id: 'cod' as const, label: 'Cash on Delivery', sub: 'Pay in cash when your order arrives', icon: Banknote },
+    payments.easypaisa.enabled && { id: 'easypaisa' as const, label: 'EasyPaisa', sub: 'Transfer, then upload your receipt', icon: Smartphone },
+    payments.jazzcash.enabled && { id: 'jazzcash' as const, label: 'JazzCash', sub: 'Transfer, then upload your receipt', icon: Smartphone },
+    payments.bank.enabled && { id: 'bank' as const, label: 'Bank Transfer', sub: 'Transfer, then upload your receipt', icon: Landmark },
+  ].filter(Boolean) as { id: PayId; label: string; sub: string; icon: typeof Banknote }[];
+  const visiblePayments = split
+    ? pmOptions.filter((option) => split.advanceMethods.includes(option.id as 'easypaisa' | 'jazzcash' | 'bank'))
+    : pmOptions.filter((option) => !(option.id === 'cod' && quote && payments.cod.maxOrder > 0 && quote.total > payments.cod.maxOrder));
+  const selectedPayment = visiblePayments.some((option) => option.id === paymentMethod) ? paymentMethod : visiblePayments[0]?.id ?? paymentMethod;
+  const needsProof = split ? split.requireSlip : selectedPayment === 'bank' || selectedPayment === 'easypaisa' || selectedPayment === 'jazzcash';
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     setFormError('');
-    if ((paymentMethod === 'bank' || paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && !proofToken) {
-      setFormError('Upload a payment receipt before placing the order.');
+    if (needsProof && !proofToken) {
+      setFormError('Upload a payment receipt before placing the order. The upload does not confirm the payment.');
+      return;
+    }
+    if (quote?.checkoutBlock) {
+      setFormError(quote.checkoutBlock);
       return;
     }
     start(async () => {
       const res = await placeOrder({
         ...f,
         shippingMethod,
-        paymentMethod,
+        paymentMethod: selectedPayment,
         paymentRef,
         proofToken: proofToken ?? '',
-        discountCode: code ?? '',
+        discountCode: discountToSubmit(codeInput, code),
         note,
         saveAddress: loggedIn && saveAddress,
         lines: cart.map((c) => ({ variantId: c.variantId, quantity: c.quantity })),
@@ -153,13 +175,6 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
       router.push(res.redirect);
     });
   };
-
-  const pmOptions = [
-    payments.cod.enabled && { id: 'cod' as const, label: 'Cash on Delivery', sub: 'Pay in cash when your order arrives', icon: Banknote },
-    payments.easypaisa.enabled && { id: 'easypaisa' as const, label: 'EasyPaisa', sub: 'Transfer, then upload your receipt', icon: Smartphone },
-    payments.jazzcash.enabled && { id: 'jazzcash' as const, label: 'JazzCash', sub: 'Transfer, then upload your receipt', icon: Smartphone },
-    payments.bank.enabled && { id: 'bank' as const, label: 'Bank Transfer', sub: 'Transfer, then upload your receipt', icon: Landmark },
-  ].filter(Boolean) as { id: PayId; label: string; sub: string; icon: typeof Banknote }[];
 
   const summary = (
     <div className="space-y-5">
@@ -187,8 +202,8 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         ) : (
           <div>
             <div className="flex gap-2">
-              <input value={codeInput} onChange={(e) => setCodeInput(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (codeInput.trim()) setCode(codeInput.trim()); } }} placeholder="Discount code" className="field" aria-label="Discount code" />
-              <button type="button" onClick={() => codeInput.trim() && setCode(codeInput.trim())} className="btn btn-secondary shrink-0">Apply</button>
+              <input value={codeInput} onChange={(e) => { const next = e.target.value.toUpperCase(); setCodeInput(next); setCode((applied) => discountFieldChange(next, applied)); setFormError((err) => (/discount|code/i.test(err) ? '' : err)); }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const next = codeInput.trim().toUpperCase(); if (next) { setCodeInput(next); setCode(next); } } }} placeholder="Discount code" className="field" aria-label="Discount code" />
+              <button type="button" onClick={() => { const next = codeInput.trim().toUpperCase(); if (!next) { setCode(null); setCodeInput(''); return; } setCodeInput(next); setCode(next); }} className="btn btn-secondary shrink-0">Apply</button>
             </div>
             {code && quote?.discountError && <p className="mt-2 text-[0.8rem] text-sale" role="alert">{quote.discountError}</p>}
           </div>
@@ -202,6 +217,12 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{quote.shipping === 0 ? 'Complimentary' : formatMoney(quote.shipping)}</dd></div>
           {quote.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatMoney(quote.codFee)}</dd></div>}
           {quote.tax > 0 && <div className="flex justify-between"><dt className="text-muted">{quote.taxLabel}</dt><dd>{formatMoney(quote.tax)}</dd></div>}
+          {quote.highValue?.applied && (
+            <>
+              <div className="flex justify-between"><dt className="text-muted">Pay now</dt><dd>{formatMoney(quote.highValue.advanceAmount)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Cash on delivery</dt><dd>{formatMoney(quote.highValue.remainingAmount)}</dd></div>
+            </>
+          )}
           <div className="flex items-baseline justify-between border-t border-line pt-4 text-[1.1rem]"><dt>Total to pay</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)} PKR</dd></div>
           <PayLine minor={quote.total} />
         </dl>
@@ -283,20 +304,24 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         <section>
           <h2 className="t-4 mb-1">Payment</h2>
           <p className="mb-5 flex items-center gap-2 text-[0.8rem] text-muted"><Lock size={13} /> All transactions are secure and encrypted.</p>
+          {quote?.checkoutBlock && <p className="mb-4 rounded-theme-sm border border-sale/40 bg-sale/5 px-4 py-3 text-[0.85rem] text-sale" role="alert">{quote.checkoutBlock}</p>}
+          {split && <p className="mb-4 text-[0.85rem] text-muted">Pay {formatMoney(split.advanceAmount)} now. The remaining {formatMoney(split.remainingAmount)} is cash on delivery. These amounts come from the store’s saved payment rule.</p>}
+          {!split && quote && payments.cod.maxOrder > 0 && quote.total > payments.cod.maxOrder && <p className="mb-4 text-[0.85rem] text-muted">Cash on Delivery is not available for this order total. Choose an online method.</p>}
           <div className="divide-y divide-line overflow-hidden rounded-theme-sm border border-line">
-            {pmOptions.map((o) => (
+            {visiblePayments.map((o) => (
               <div key={o.id}>
-                <label className={cn('flex cursor-pointer items-center gap-4 p-4 transition', paymentMethod === o.id && 'bg-surface/60')}>
-                  <input type="radio" name="pm" className="checkbox" checked={paymentMethod === o.id} onChange={() => setPaymentMethod(o.id)} />
+                <label className={cn('flex cursor-pointer items-center gap-4 p-4 transition', selectedPayment === o.id && 'bg-surface/60')}>
+                  <input type="radio" name="pm" className="checkbox" checked={selectedPayment === o.id} onChange={() => setPaymentMethod(o.id)} />
                   <o.icon size={20} strokeWidth={1.25} />
                   <span className="flex-1">
                     <span className="block text-[0.92rem]">{o.label}</span>
                     <span className="block text-[0.78rem] text-muted">{o.sub}</span>
                   </span>
                 </label>
-                {paymentMethod === o.id && (
+                {selectedPayment === o.id && (
                   <div className="border-t border-line bg-surface/40 px-5 py-4 text-[0.85rem] leading-relaxed">
                     {o.id === 'cod' && <p className="text-muted">{payments.cod.instructions}</p>}
+                    {split && selectedPayment === o.id && <p>Transfer <strong>{formatMoney(split.advanceAmount)}</strong> now. Keep <strong>{formatMoney(split.remainingAmount)}</strong> for the courier. Uploading the receipt does not confirm the payment.</p>}
                     {o.id === 'bank' && (
                       <div className="space-y-3">
                         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
@@ -317,7 +342,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
                         <p className="text-muted">{payments[o.id].instructions}</p>
                       </div>
                     )}
-                    {(o.id === 'bank' || o.id === 'easypaisa' || o.id === 'jazzcash') && (
+                    {needsProof && selectedPayment === o.id && (
                       <div className="mt-4 space-y-3">
                         <Field label="Transaction reference (optional)"><input value={paymentRef} onChange={(e) => setPaymentRef(e.target.value)} placeholder="TID or transfer reference" className="field" /></Field>
                         <ProofUpload token={proofToken} onToken={setProofToken} />
@@ -335,8 +360,8 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
           <Field label="Order note (optional)"><textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Gift message, engraving text or delivery instructions" className="field" /></Field>
         </section>
 
-        <button type="submit" disabled={pending || !quote || loading || ((paymentMethod === 'bank' || paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && !proofToken)} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
-          {pending ? 'Placing your order and sending the confirmation…' : `Place order · ${quote ? formatMoney(quote.total) : ''}`}
+        <button type="submit" disabled={pending || !quote || loading || !!quote.checkoutBlock || (needsProof && !proofToken) || visiblePayments.length === 0} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
+          {pending ? 'Placing your order and sending the confirmation…' : `Place order · ${quote ? formatMoney(split ? split.advanceAmount : quote.total) : ''}`}
         </button>
         <p className="flex items-center justify-center gap-2 text-[0.75rem] text-muted"><ShieldCheck size={14} /> By placing your order you agree to our <Link href="/policies/terms-of-service" className="underline">Terms</Link> and <Link href="/policies/privacy-policy" className="underline">Privacy Policy</Link>.</p>
       </div>

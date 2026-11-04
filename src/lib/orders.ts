@@ -1,11 +1,13 @@
 import crypto from 'node:crypto';
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte, ne, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { discountUsages, discounts, inventoryMovements, orderEvents, orderItems, orders, products, productVariants, type Order, type OrderAddress } from '@/db/schema';
 import { buildQuote, type CartLineInput } from './pricing';
 import { deliveryServiceByCode, planFromService } from './delivery';
 import { nextPatch, scheduleStartPatch, syncDeliverySideEffects } from './delivery-effects';
 import { notificationDueAt, STATUS_RANK } from './delivery-schedule';
+import { formatMoney } from './money';
+import { advanceBlocksFulfilment, methodAllowedForQuote, snapshotPlan, type AdvanceMethod, type PaymentPlan } from './shopping-rules';
 
 export class OrderError extends Error {}
 
@@ -49,7 +51,14 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     userId: input.userId,
   });
   if (!quote.lines.length) throw new OrderError('Your bag is empty or the items are no longer available.');
+  if (quote.checkoutBlock) throw new OrderError(quote.checkoutBlock);
   if (input.discountCode && quote.discountError) throw new OrderError(quote.discountError);
+  if (quote.highValue.applied && !methodAllowedForQuote(input.paymentMethod, quote.highValue)) {
+    throw new OrderError('This order needs an advance by EasyPaisa, JazzCash or bank transfer. Cash on Delivery covers only the remaining balance.');
+  }
+  const paymentPlan: PaymentPlan | null = quote.highValue.applied && (input.paymentMethod === 'easypaisa' || input.paymentMethod === 'jazzcash' || input.paymentMethod === 'bank')
+    ? snapshotPlan(quote.highValue, input.paymentMethod as AdvanceMethod, quote.total)
+    : null;
   const db = await getDb();
   const service = await deliveryServiceByCode(quote.shippingMethod);
   const plan = service ? planFromService(service) : null;
@@ -75,7 +84,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         phone: input.phone,
         customerName: `${input.address.firstName} ${input.address.lastName}`.trim(),
         status: 'pending',
-        paymentStatus: input.paymentMethod === 'cod' ? 'unpaid' : 'awaiting',
+        paymentStatus: paymentPlan ? 'awaiting' : input.paymentMethod === 'cod' ? 'unpaid' : 'awaiting',
         paymentMethod: input.paymentMethod,
         paymentRef: input.paymentRef || null,
         shippingMethod: quote.shippingMethod,
@@ -95,6 +104,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         customerNote: input.customerNote || null,
         displayCurrency: input.displayCurrency || null,
         displayRate: input.displayRate && input.displayRate > 0 ? input.displayRate : null,
+        paymentPlan,
         deliveryCode: service?.code ?? quote.shippingMethod,
         deliveryMinutes: plan?.durationMinutes ?? null,
         deliveryPlan: plan,
@@ -127,11 +137,33 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       await tx.update(products).set({ salesCount: sql`${products.salesCount} + ${l.quantity}` }).where(eq(products.id, l.productId));
     }
     if (quote.discount) {
-      await tx.update(discounts).set({ usageCount: sql`${discounts.usageCount} + 1` }).where(eq(discounts.id, quote.discount.id));
+      const [locked] = await tx.select().from(discounts).where(eq(discounts.id, quote.discount.id)).for('update');
+      if (!locked || (locked.usageLimit != null && locked.usageCount >= locked.usageLimit)) throw new OrderError('This discount code has reached its usage limit.');
+      const perUser = locked.perUserLimit ?? (locked.oncePerCustomer ? 1 : null);
+      if (perUser) {
+        const used = await tx
+          .select({ id: discountUsages.id })
+          .from(discountUsages)
+          .innerJoin(orders, eq(orders.id, discountUsages.orderId))
+          .where(and(eq(discountUsages.discountId, locked.id), ne(orders.status, 'cancelled'), eq(sql`lower(${discountUsages.email})`, input.email.toLowerCase())))
+          .limit(perUser);
+        if (used.length >= perUser) throw new OrderError(perUser === 1 ? `${locked.code} can only be used once per customer.` : `${locked.code} has already been used ${perUser} times on this account.`);
+      }
+      const claimed = await tx
+        .update(discounts)
+        .set({ usageCount: sql`${discounts.usageCount} + 1` })
+        .where(and(eq(discounts.id, locked.id), sql`(${discounts.usageLimit} is null or ${discounts.usageCount} < ${discounts.usageLimit})`))
+        .returning({ id: discounts.id });
+      if (!claimed.length) throw new OrderError('This discount code has reached its usage limit.');
       await tx.insert(discountUsages).values({ discountId: quote.discount.id, orderId: order!.id, email: input.email.toLowerCase(), userId: input.userId ?? null });
     }
     const label = { cod: 'Cash on Delivery', bank: 'Bank Transfer', wallet: 'JazzCash / EasyPaisa', easypaisa: 'EasyPaisa', jazzcash: 'JazzCash', card: 'Card (Stripe)' }[input.paymentMethod];
-    await tx.insert(orderEvents).values({ orderId: order!.id, type: 'created', message: `Order placed via website · ${label}`, actor: 'customer' });
+    await tx.insert(orderEvents).values({
+      orderId: order!.id,
+      type: 'created',
+      message: paymentPlan ? `Order placed via website · advance ${formatMoney(paymentPlan.advanceAmount)} by ${label}, remaining ${formatMoney(paymentPlan.remainingAmount)} cash on delivery` : `Order placed via website · ${label}`,
+      actor: 'customer',
+    });
     if (input.paymentRef) await tx.insert(orderEvents).values({ orderId: order!.id, type: 'payment', message: `Customer submitted payment reference ${input.paymentRef} — awaiting verification`, actor: 'customer' });
     return { ...order!, number };
   });
@@ -171,6 +203,7 @@ export async function markOrderPaid(orderId: number, opts: { actor: string; acto
   return db.transaction(async (tx) => {
     const [o] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
     if (!o || o.paymentStatus === 'paid' || o.status === 'cancelled') return o;
+    if (o.paymentPlan?.applied) throw new OrderError('This order uses an advance payment. Approve or reject the advance after checking the receipt. The remaining cash is not paid yet.');
     const now = new Date();
     const nextStatus = o.status === 'pending' ? 'confirmed' : o.status;
     const schedule = await scheduleStartPatch(tx as unknown as typeof db, o, nextStatus, now);
@@ -210,6 +243,61 @@ export async function markOrderPaid(orderId: number, opts: { actor: string; acto
         actorId: opts.actorId ?? null,
         source: opts.actorId ? 'admin' : 'automatic',
       });
+    }
+    return updated;
+  });
+}
+
+export async function reviewAdvancePayment(orderId: number, decision: 'approve' | 'reject', opts: { actor: string; actorId: number; reason?: string }) {
+  const db = await getDb();
+  return db.transaction(async (tx) => {
+    const [o] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
+    if (!o) throw new OrderError('Order not found.');
+    if (o.status === 'cancelled') throw new OrderError('Cancelled orders cannot be reviewed.');
+    const plan = o.paymentPlan;
+    if (!plan?.applied) throw new OrderError('This order has no advance payment to review.');
+    if (plan.advanceStatus === 'verified' && decision === 'approve') return o;
+    if (plan.advanceStatus === 'rejected' && decision === 'reject') return o;
+    const now = new Date();
+    if (decision === 'reject') {
+      const reason = opts.reason?.trim();
+      if (!reason) throw new OrderError('Enter a rejection reason. The payment was not changed.');
+      const next: PaymentPlan = { ...plan, advanceStatus: 'rejected', rejectedReason: reason.slice(0, 500), rejectedByName: opts.actor, rejectedAt: now.toISOString() };
+      const [updated] = await tx
+        .update(orders)
+        .set({ paymentPlan: next, paymentStatus: 'failed', automationState: 'paused', nextStatus: null, nextStatusAt: null, updatedAt: now, adminNote: reason.slice(0, 500) })
+        .where(and(eq(orders.id, orderId), eq(orders.status, o.status)))
+        .returning();
+      await tx.insert(orderEvents).values({ orderId, type: 'payment', message: `Advance rejected by ${opts.actor}: ${reason}`, actor: opts.actor, actorType: 'admin', actorId: opts.actorId, source: 'admin' });
+      return updated ?? o;
+    }
+    const next: PaymentPlan = { ...plan, advanceStatus: 'verified', verifiedById: opts.actorId, verifiedByName: opts.actor, verifiedAt: now.toISOString() };
+    const nextStatus = o.status === 'pending' ? 'confirmed' : o.status;
+    const schedule = o.status === 'pending' ? await scheduleStartPatch(tx as unknown as typeof db, o, nextStatus, now) : null;
+    const [updated] = await tx
+      .update(orders)
+      .set({
+        paymentPlan: next,
+        paymentStatus: 'awaiting',
+        status: nextStatus,
+        statusVersion: o.statusVersion + 1,
+        ...(schedule ?? {}),
+        updatedAt: now,
+      })
+      .where(and(eq(orders.id, orderId), eq(orders.status, o.status)))
+      .returning();
+    if (!updated) throw new OrderError('This order was updated by someone else. Refresh and try again.');
+    await tx.insert(orderEvents).values({
+      orderId,
+      type: 'payment',
+      message: `Advance of ${formatMoney(plan.advanceAmount)} verified by ${opts.actor}. Remaining ${formatMoney(plan.remainingAmount)} is still cash on delivery. The receipt alone was not treated as payment.`,
+      actor: opts.actor,
+      actorType: 'admin',
+      actorId: opts.actorId,
+      source: 'admin',
+    });
+    if (o.status !== nextStatus) {
+      await tx.insert(orderEvents).values({ orderId, type: 'status', message: `${o.status} → confirmed · advance verified`, actor: opts.actor, fromStatus: o.status, toStatus: nextStatus, actorType: 'admin', actorId: opts.actorId, source: 'admin' });
     }
     return updated;
   });
@@ -261,10 +349,14 @@ export async function changeOrderStatus(orderId: number, status: string, actor: 
       return row ?? o;
     }
     if (!ORDER_STATUSES.includes(status as (typeof ORDER_STATUSES)[number])) throw new OrderError('Unknown order status.');
+    if (['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(status) && advanceBlocksFulfilment(o.paymentPlan)) {
+      throw new OrderError('Verify the advance payment before preparing this order. The uploaded receipt is not proof of payment.');
+    }
     if (extra.source === 'automatic') {
       if (status === 'delivered' || status === 'cancelled') throw new OrderError('Automation cannot mark an order delivered or cancelled.');
       if (o.automationState !== 'active') throw new OrderError('This order has no active delivery schedule.');
-      if (o.paymentMethod !== 'cod' && o.paymentStatus !== 'paid') throw new OrderError('Unverified payments do not advance.');
+      if (o.paymentMethod !== 'cod' && o.paymentStatus !== 'paid' && !o.paymentPlan?.applied) throw new OrderError('Unverified payments do not advance.');
+      if (o.paymentPlan?.applied && advanceBlocksFulfilment(o.paymentPlan)) throw new OrderError('Unverified payments do not advance.');
       if (o.paymentStatus === 'failed') throw new OrderError('Rejected payments do not advance.');
     }
     if (status === 'cancelled' && !extra.reason && !extra.note && actor !== 'customer' && actor !== 'system') {
@@ -313,7 +405,8 @@ export async function changeOrderStatus(orderId: number, status: string, actor: 
       patch.nextStatus = null;
       patch.nextStatusAt = null;
       if (source === 'customer') patch.deliveryResponse = 'yes';
-      if (o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') {
+      const collectRemaining = !!o.paymentPlan?.applied && o.paymentPlan.remainingMethod === 'cod' && o.paymentPlan.advanceStatus === 'verified' && o.paymentStatus !== 'paid';
+      if ((o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') || collectRemaining) {
         patch.paymentStatus = 'paid';
         patch.paidAt = now;
       }
@@ -343,8 +436,8 @@ export async function changeOrderStatus(orderId: number, status: string, actor: 
       actorId: extra.actorId ?? null,
       source,
     });
-    if (status === 'delivered' && o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') {
-      await tx.insert(orderEvents).values({ orderId, type: 'payment', message: 'Cash collected on delivery', actor, actorType, actorId: extra.actorId ?? null, source });
+    if (status === 'delivered' && ((o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') || (o.paymentPlan?.applied && o.paymentPlan.remainingMethod === 'cod' && o.paymentPlan.advanceStatus === 'verified' && o.paymentStatus !== 'paid'))) {
+      await tx.insert(orderEvents).values({ orderId, type: 'payment', message: o.paymentPlan?.applied ? 'Remaining cash collected on delivery' : 'Cash collected on delivery', actor, actorType, actorId: extra.actorId ?? null, source });
     }
     await syncDeliverySideEffects(tx as unknown as typeof db, o, row, { source, actorId: extra.actorId, actor, note: extra.verificationNote || extra.note });
     return row;

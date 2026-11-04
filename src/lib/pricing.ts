@@ -1,11 +1,12 @@
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { discounts, orders, productImages, products, productVariants, type Discount } from '@/db/schema';
+import { discounts, newsletterSubscribers, orders, productImages, products, productVariants, type Discount } from '@/db/schema';
 import { getSettings, enabledShippingMethods } from './settings';
 import { productIdsInCollections } from './catalog';
 import { formatMoney } from './money';
 import { campaignHit, discountPrice, getActiveCampaign } from './campaigns';
 import { activeDeliveryServices, formatDuration } from './delivery';
+import { evaluateHighValue, normalizeRule, normalizeShopping, type HighValueQuote } from './shopping-rules';
 
 export type CartLineInput = { variantId: number; quantity: number };
 
@@ -45,6 +46,8 @@ export type Quote = {
   freeShippingThreshold: number;
   freeShippingRemaining: number;
   issues: string[];
+  highValue: HighValueQuote;
+  checkoutBlock: string | null;
 };
 
 export async function validateDiscount(
@@ -61,6 +64,16 @@ export async function validateDiscount(
   if (d.endsAt && d.endsAt < now) return { error: 'This discount code has expired.' };
   if (d.usageLimit != null && d.usageCount >= d.usageLimit) return { error: 'This discount code has reached its usage limit.' };
   if (ctx.subtotal < d.minOrderAmount) return { error: `Add ${formatMoney(d.minOrderAmount - ctx.subtotal)} more to use ${d.code} (minimum order ${formatMoney(d.minOrderAmount)}).` };
+  if (d.audience === 'subscribers') {
+    const email = ctx.email?.trim().toLowerCase();
+    if (!email) return { error: 'Enter the email you subscribed with before using this subscriber code.' };
+    const [sub] = await db
+      .select({ id: newsletterSubscribers.id })
+      .from(newsletterSubscribers)
+      .where(and(eq(sql`lower(${newsletterSubscribers.email})`, email), eq(newsletterSubscribers.status, 'subscribed')))
+      .limit(1);
+    if (!sub) return { error: 'This code is only for current newsletter subscribers.' };
+  }
 
   let eligible = ctx.subtotal;
   if (d.appliesTo === 'products') {
@@ -69,6 +82,9 @@ export async function validateDiscount(
   } else if (d.appliesTo === 'collections') {
     const ids = await productIdsInCollections(d.collectionIds ?? []);
     eligible = ctx.lines.filter((l) => ids.has(l.productId)).reduce((a, l) => a + l.lineTotal, 0);
+  } else if (d.appliesTo === 'categories') {
+    const ids = new Set(d.categoryIds ?? []);
+    eligible = ctx.lines.filter((l) => l.categoryId != null && ids.has(l.categoryId)).reduce((a, l) => a + l.lineTotal, 0);
   }
   if (eligible <= 0 && d.type !== 'free_shipping') return { error: `${d.code} doesn’t apply to the items in your bag.` };
 
@@ -93,6 +109,10 @@ async function eligibleSubtotal(d: Discount, lines: QuoteLine[]) {
   if (d.appliesTo === 'collections') {
     const ids = await productIdsInCollections(d.collectionIds ?? []);
     return lines.filter((l) => ids.has(l.productId)).reduce((a, l) => a + l.lineTotal, 0);
+  }
+  if (d.appliesTo === 'categories') {
+    const ids = new Set(d.categoryIds ?? []);
+    return lines.filter((l) => l.categoryId != null && ids.has(l.categoryId)).reduce((a, l) => a + l.lineTotal, 0);
   }
   return lines.reduce((a, l) => a + l.lineTotal, 0);
 }
@@ -212,6 +232,7 @@ export async function buildQuote(input: {
   }
 
   const afterDiscount = Math.max(0, subtotal - (discount?.amount ?? 0));
+  const shopping = normalizeShopping(settings.shopping);
   const threshold = settings.shipping.freeThreshold;
   const services = await activeDeliveryServices();
   const source = services.length
@@ -223,9 +244,21 @@ export async function buildQuote(input: {
   });
   const chosen = methods.find((m) => m.id === input.shippingMethod) ?? methods[0];
   const shipping = lines.length && chosen ? chosen.price : 0;
-  const codFee = input.paymentMethod === 'cod' ? settings.payments.cod.fee ?? 0 : 0;
   const tax = settings.tax.enabled && !settings.tax.inclusive ? Math.round((afterDiscount * settings.tax.rate) / 100) : 0;
-  const total = afterDiscount + shipping + codFee + tax;
+  const preFee = afterDiscount + shipping + tax;
+  const rule = normalizeRule(shopping.highValue);
+  const fee = settings.payments.cod.fee ?? 0;
+  let codFee = input.paymentMethod === 'cod' ? fee : 0;
+  let total = preFee + codFee;
+  let highValue = evaluateHighValue({ total, subtotal, rule });
+  if (highValue.applied && rule.allowRemainingCod && codFee === 0 && fee > 0) {
+    codFee = fee;
+    total = preFee + codFee;
+    highValue = evaluateHighValue({ total, subtotal, rule });
+  }
+  const checkoutBlock = shopping.minOrderEnabled && shopping.minOrderAmount > 0 && subtotal < shopping.minOrderAmount
+    ? `The minimum order is ${formatMoney(shopping.minOrderAmount)}.`
+    : highValue.blocked;
 
   return {
     lines,
@@ -245,5 +278,7 @@ export async function buildQuote(input: {
     freeShippingThreshold: threshold,
     freeShippingRemaining: Math.max(0, threshold - afterDiscount),
     issues,
+    highValue,
+    checkoutBlock,
   };
 }

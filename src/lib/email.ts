@@ -26,7 +26,9 @@ export function orderConfirmationEmail(order: Order, items: OrderItem[], link: s
       </tr>`,
     )
     .join('');
-  const pay = order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod === 'bank' ? 'Bank transfer' : order.paymentMethod === 'easypaisa' ? 'EasyPaisa' : order.paymentMethod === 'jazzcash' ? 'JazzCash' : order.paymentMethod;
+  const pay = order.paymentPlan?.applied
+    ? `Advance ${formatMoney(order.paymentPlan.advanceAmount)} by ${order.paymentMethod}, remaining ${formatMoney(order.paymentPlan.remainingAmount)} cash on delivery`
+    : order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod === 'bank' ? 'Bank transfer' : order.paymentMethod === 'easypaisa' ? 'EasyPaisa' : order.paymentMethod === 'jazzcash' ? 'JazzCash' : order.paymentMethod;
   return brandEmailLayout(
     `Thank you, ${esc(order.customerName.split(' ')[0] || 'there')}`,
     `<p>We’ve received order <strong>${esc(order.number)}</strong>. The atelier will prepare it with care.</p>

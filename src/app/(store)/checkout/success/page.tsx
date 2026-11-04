@@ -11,6 +11,7 @@ import { getSettings } from '@/lib/settings';
 import { getCurrentUser } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { Img } from '@/components/ui/img';
+import { PaymentPlanNote } from '@/components/store/payment-plan-note';
 import { ClearCartOnMount } from '@/components/store/clear-cart';
 import { GuestCancel } from '@/components/store/guest-cancel';
 
@@ -53,8 +54,9 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
         </div>
 
         <div className="mt-10 rounded-theme border border-line p-6 md:p-8">
-          {order.paymentMethod === 'cod' && <p className="flex gap-3 text-[0.92rem]"><Banknote size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span>Please keep <strong>{formatMoney(order.total)} PKR</strong> ready in cash. This is the amount to pay. A currency shown elsewhere on the site is only a display estimate.</span></p>}
-          {order.paymentMethod === 'bank' && !paid && (
+          {order.paymentPlan?.applied && <PaymentPlanNote plan={order.paymentPlan} />}
+          {order.paymentMethod === 'cod' && !order.paymentPlan?.applied && <p className="flex gap-3 text-[0.92rem]"><Banknote size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span>Please keep <strong>{formatMoney(order.total)} PKR</strong> ready in cash. This is the amount to pay. A currency shown elsewhere on the site is only a display estimate.</span></p>}
+          {order.paymentMethod === 'bank' && !paid && !order.paymentPlan?.applied && (
             <div className="flex gap-3 text-[0.92rem]"><Landmark size={20} strokeWidth={1.25} className="shrink-0 text-accent" />
               <div>
                 <p>We received your bank-transfer receipt for <strong>{formatMoney(order.total)}</strong> to <strong>{p.bank.accountTitle}</strong>, {p.bank.bankName}.</p>
@@ -62,7 +64,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
               </div>
             </div>
           )}
-          {(order.paymentMethod === 'easypaisa' || order.paymentMethod === 'jazzcash' || order.paymentMethod === 'wallet') && !paid && (
+          {(order.paymentMethod === 'easypaisa' || order.paymentMethod === 'jazzcash' || order.paymentMethod === 'wallet') && !paid && !order.paymentPlan?.applied && (
             <div className="flex gap-3 text-[0.92rem]"><Smartphone size={20} strokeWidth={1.25} className="shrink-0 text-accent" />
               <div>
                 <p>We received your {order.paymentMethod === 'jazzcash' ? 'JazzCash' : order.paymentMethod === 'easypaisa' ? 'EasyPaisa' : 'wallet'} receipt. The order total was <strong>{formatMoney(order.total)}</strong>{order.paymentRef ? `, reference ${order.paymentRef}` : ''}.</p>

@@ -11,6 +11,7 @@ import { Img } from '@/components/ui/img';
 import { STATUS_FLOW } from '@/lib/orders';
 import { formatMoney } from '@/lib/money';
 import { formatDateTime } from '@/lib/utils';
+import { PaymentPlanNote } from '@/components/store/payment-plan-note';
 import { ProofViewer } from '@/components/admin/proof-viewer';
 import { DeliveryConsole } from '@/components/admin/delivery-console';
 
@@ -94,7 +95,7 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
             }}
           />
           <OrderActions
-            order={{ id: o.id, status: o.status, paymentStatus: o.paymentStatus, paymentMethod: o.paymentMethod, paymentRef: o.paymentRef, total: o.total, refundedAmount: o.refundedAmount, trackingCarrier: o.trackingCarrier, trackingNumber: o.trackingNumber, adminNote: o.adminNote }}
+            order={{ id: o.id, status: o.status, paymentStatus: o.paymentStatus, paymentMethod: o.paymentMethod, paymentRef: o.paymentRef, total: o.total, refundedAmount: o.refundedAmount, trackingCarrier: o.trackingCarrier, trackingNumber: o.trackingNumber, adminNote: o.adminNote, paymentPlan: o.paymentPlan ?? null }}
             next={STATUS_FLOW[o.status] ?? []}
           />
           <Card title="Timeline">
@@ -131,6 +132,7 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               {o.paymentIntentId && <div className="flex justify-between gap-3"><dt className="text-muted">Payment intent</dt><dd className="break-all text-right font-mono text-[0.75rem]">{o.paymentIntentId}</dd></div>}
               {o.paidAt && <div className="flex justify-between gap-3"><dt className="text-muted">Paid</dt><dd>{formatDateTime(o.paidAt)}</dd></div>}
             </dl>
+            <PaymentPlanNote plan={o.paymentPlan} />
             {proof ? (
               <div className="mt-3">
                 <p className="text-[0.8rem]">Receipt uploaded {formatDateTime(proof.createdAt)} · staff only</p>

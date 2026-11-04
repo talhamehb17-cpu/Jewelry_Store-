@@ -3,12 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Truck, CheckCircle2, XCircle, RotateCcw, Save, Loader2 } from 'lucide-react';
-import { markPaid, refundOrder, rejectPayment, saveOrderNote, saveTracking, updateOrderStatus } from '@/app/actions/admin/orders';
+import { markPaid, refundOrder, rejectPayment, reviewAdvance, saveOrderNote, saveTracking, updateOrderStatus } from '@/app/actions/admin/orders';
+import type { PaymentPlan } from '@/lib/shopping-rules';
 import { Card, Field } from './ui';
 import { formatMoney } from '@/lib/money';
 import { titleCase } from '@/lib/utils';
 
-type O = { id: number; status: string; paymentStatus: string; paymentMethod: string; paymentRef: string | null; total: number; refundedAmount: number; trackingCarrier: string | null; trackingNumber: string | null; adminNote: string | null };
+type O = { id: number; status: string; paymentStatus: string; paymentMethod: string; paymentRef: string | null; total: number; refundedAmount: number; trackingCarrier: string | null; trackingNumber: string | null; adminNote: string | null; paymentPlan: PaymentPlan | null };
 
 export function OrderActions({ order, next }: { order: O; next: string[] }) {
   const router = useRouter();
@@ -28,7 +29,8 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
       setMsg(r);
       if (r.ok) router.refresh();
     });
-  const canPay = order.paymentStatus !== 'paid' && order.paymentStatus !== 'refunded' && order.status !== 'cancelled' && order.paymentMethod !== 'card';
+  const plan = order.paymentPlan?.applied ? order.paymentPlan : null;
+  const canPay = !plan && order.paymentStatus !== 'paid' && order.paymentStatus !== 'refunded' && order.status !== 'cancelled' && order.paymentMethod !== 'card';
   const canRefund = order.paymentStatus === 'paid' || order.paymentStatus === 'partially_refunded';
 
   return (
@@ -68,6 +70,24 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
             <input value={carrier} onChange={(e) => setCarrier(e.target.value)} className="field" aria-label="Carrier" />
             <input value={tracking} onChange={(e) => setTracking(e.target.value)} className="field" aria-label="Tracking number" />
             <button disabled={pending} onClick={() => run(() => saveTracking(order.id, carrier, tracking))} className="btn btn-secondary">Update tracking</button>
+          </div>
+        )}
+
+        {plan && (
+          <div className="border-t border-line pt-5">
+            <p className="label">Advance payment</p>
+            <p className="mb-3 text-[0.82rem] text-muted">Advance {formatMoney(plan.advanceAmount)} · remaining cash {formatMoney(plan.remainingAmount)}. Status: {plan.advanceStatus}. A receipt upload is not verification.</p>
+            {plan.advanceStatus === 'pending' && (
+              <div className="flex flex-col gap-2">
+                <button disabled={pending} onClick={() => run(() => reviewAdvance(order.id, 'approve'))} className="btn btn-primary"><CheckCircle2 size={14} /> Approve advance</button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Rejection reason (required)" className="field" />
+                  <button disabled={pending || !reason.trim()} onClick={() => run(() => reviewAdvance(order.id, 'reject', reason))} className="btn btn-secondary !text-rose-700"><XCircle size={14} /> Reject advance</button>
+                </div>
+              </div>
+            )}
+            {plan.verifiedByName && <p className="mt-2 text-[0.75rem] text-muted">Verified by {plan.verifiedByName}{plan.verifiedAt ? ` · ${plan.verifiedAt}` : ''}</p>}
+            {plan.rejectedByName && <p className="mt-2 text-[0.75rem] text-muted">Rejected by {plan.rejectedByName}{plan.rejectedReason ? `: ${plan.rejectedReason}` : ''}</p>}
           </div>
         )}
 

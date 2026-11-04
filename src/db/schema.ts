@@ -13,6 +13,7 @@ import {
   uniqueIndex,
   customType,
 } from 'drizzle-orm/pg-core';
+import type { PaymentPlan } from '@/lib/shopping-rules';
 
 /** Postgres bytea column (Buffer on node-postgres, Uint8Array on PGlite). */
 const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
@@ -357,6 +358,7 @@ export const orders = pgTable(
     statusVersion: integer('status_version').notNull().default(0),
     deliveryPlan: jsonb('delivery_plan').$type<DeliveryPlan>(),
     cancelReason: text('cancel_reason'),
+    paymentPlan: jsonb('payment_plan').$type<PaymentPlan>(),
     customerVisibleNote: text('customer_visible_note'),
     displayCurrency: varchar('display_currency', { length: 3 }),
     displayRate: real('display_rate'),
@@ -440,9 +442,11 @@ export const discounts = pgTable(
     type: varchar('type', { length: 20 }).notNull(), // percentage | fixed | free_shipping
     value: integer('value').notNull().default(0), // percent (0-100) or minor units
     minOrderAmount: integer('min_order_amount').notNull().default(0),
-    appliesTo: varchar('applies_to', { length: 20 }).notNull().default('all'), // all | products | collections
+    appliesTo: varchar('applies_to', { length: 20 }).notNull().default('all'), // all | products | collections | categories
     productIds: jsonb('product_ids').$type<number[]>().notNull().default([]),
     collectionIds: jsonb('collection_ids').$type<number[]>().notNull().default([]),
+    categoryIds: jsonb('category_ids').$type<number[]>().notNull().default([]),
+    audience: varchar('audience', { length: 20 }).notNull().default('public'), // public | subscribers
     startsAt: ts('starts_at'),
     endsAt: ts('ends_at'),
     usageLimit: integer('usage_limit'),

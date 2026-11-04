@@ -14,6 +14,7 @@ import { orderConfirmationEmail, sendEmail } from '@/lib/email';
 import { formatMoney } from '@/lib/money';
 import { CURRENCY_COOKIE, getRateBook, isCurrency } from '@/lib/currency';
 import { isManualMethod } from '@/lib/payments';
+import { methodAllowedForQuote } from '@/lib/shopping-rules';
 import { PROVINCES, siteUrl } from '@/lib/utils';
 
 const phone = z
@@ -79,19 +80,24 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   if (d.paymentMethod === 'jazzcash' && !pm.jazzcash?.enabled) return { ok: false, error: 'JazzCash is currently unavailable.' };
   if (d.paymentMethod === 'wallet') return { ok: false, error: 'Choose EasyPaisa or JazzCash.' };
   if (d.paymentMethod === 'card') return { ok: false, error: 'Card payments are not available. Please choose Cash on Delivery, EasyPaisa, JazzCash or bank transfer.' };
-  if (isManualMethod(d.paymentMethod) && !d.proofToken) return { ok: false, error: 'Upload a payment receipt before placing the order.' };
 
   const user = await getCurrentUser();
   const db = await getDb();
-  let proofId: number | null = null;
-  if (isManualMethod(d.paymentMethod)) {
-    const [proof] = await db.select({ id: paymentProofs.id, orderId: paymentProofs.orderId }).from(paymentProofs).where(eq(paymentProofs.token, d.proofToken)).limit(1);
-    if (!proof || proof.orderId) return { ok: false, error: 'Upload a payment receipt before placing the order.' };
-    proofId = proof.id;
-  }
   const quote = await buildQuote({ lines: d.lines, discountCode: d.discountCode || null, shippingMethod: d.shippingMethod, paymentMethod: d.paymentMethod, email: d.email, userId: user?.id });
-  if (d.paymentMethod === 'cod' && pm.cod.maxOrder && quote.total > pm.cod.maxOrder) {
+  if (quote.checkoutBlock) return { ok: false, error: quote.checkoutBlock };
+  if (quote.highValue.applied && !methodAllowedForQuote(d.paymentMethod, quote.highValue)) {
+    return { ok: false, error: 'This order needs an advance by EasyPaisa, JazzCash or bank transfer. Cash on Delivery covers only the remaining balance.' };
+  }
+  if (!quote.highValue.applied && d.paymentMethod === 'cod' && pm.cod.maxOrder && quote.total > pm.cod.maxOrder) {
     return { ok: false, error: `Cash on Delivery is available for orders up to ${formatMoney(pm.cod.maxOrder)}. Please choose EasyPaisa, JazzCash or bank transfer.` };
+  }
+  const slipRequired = quote.highValue.applied ? quote.highValue.requireSlip : isManualMethod(d.paymentMethod);
+  if (slipRequired && !d.proofToken) return { ok: false, error: 'Upload a payment receipt before placing the order. The upload does not confirm the payment.' };
+  let proofId: number | null = null;
+  if (d.proofToken && isManualMethod(d.paymentMethod)) {
+    const [proof] = await db.select({ id: paymentProofs.id, orderId: paymentProofs.orderId }).from(paymentProofs).where(eq(paymentProofs.token, d.proofToken)).limit(1);
+    if (!proof || proof.orderId) return { ok: false, error: 'Upload a payment receipt before placing the order. The upload does not confirm the payment.' };
+    proofId = proof.id;
   }
 
   let order;

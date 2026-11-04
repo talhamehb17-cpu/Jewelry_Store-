@@ -995,4 +995,20 @@ export const DEFAULT_SETTINGS = {
       'Timeless fine jewelry designed in Lahore — 18k gold vermeil, freshwater pearls and lab-grown diamonds. Cash on Delivery, EasyPaisa, JazzCash and bank transfer, with free shipping over Rs 10,000.',
   },
   reviews: { autoPublishVerified: true },
+  shopping: {
+    minOrderEnabled: false,
+    minOrderAmount: 0,
+    highValue: {
+      enabled: true,
+      threshold: 20_000_000,
+      advancePercent: 20,
+      remainingPercent: 80,
+      requireSlip: true,
+      requireVerification: true,
+      allowRemainingCod: true,
+      advanceMethods: ['easypaisa', 'jazzcash', 'bank'] as ('easypaisa' | 'jazzcash' | 'bank')[],
+      basis: 'payable' as 'payable' | 'subtotal',
+    },
+    audit: null as { by: string; at: string } | null,
+  },
 };

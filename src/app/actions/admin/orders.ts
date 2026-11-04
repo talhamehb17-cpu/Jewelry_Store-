@@ -5,9 +5,11 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { orders } from '@/db/schema';
 import { assertAdmin } from '@/lib/auth';
-import { addOrderEvent, changeOrderStatus, markOrderPaid, OrderError, orderAccessToken, restockOrder } from '@/lib/orders';
+import { addOrderEvent, changeOrderStatus, markOrderPaid, OrderError, orderAccessToken, restockOrder, reviewAdvancePayment } from '@/lib/orders';
 import { refundStripePayment } from '@/lib/stripe';
 import { sendEmail, statusEmail } from '@/lib/email';
+import { brandEmailLayout } from '@/lib/mailer';
+import { planSummary } from '@/lib/shopping-rules';
 import { siteUrl } from '@/lib/utils';
 import { formatMoney } from '@/lib/money';
 
@@ -34,6 +36,22 @@ export async function updateOrderStatus(orderId: number, status: string, extra: 
   }
 }
 
+export async function reviewAdvance(orderId: number, decision: 'approve' | 'reject', reason?: string): Promise<R> {
+  const u = await assertAdmin();
+  try {
+    const order = await reviewAdvancePayment(orderId, decision, { actor: actorName(u), actorId: u.id, reason });
+    revalidatePath(`/admin/orders/${orderId}`);
+    if (decision === 'approve' && order) {
+      const link = `${siteUrl()}/checkout/success?order=${order.number}&token=${orderAccessToken(order.number)}`;
+      const mail = await sendEmail(order.email, `Advance verified for ${order.number}`, brandEmailLayout('Advance verified', `<p>The advance on <strong>${order.number}</strong> was verified. ${order.paymentPlan ? planSummary(order.paymentPlan) : 'The remaining balance is cash on delivery.'} The receipt alone was not treated as payment.</p><p><a href="${link}">View order</a></p>`), 'order-advance-verified', { orderId: order.id });
+      if (!mail.sent) return { ok: true, message: `Advance verified. The remaining cash is still due on delivery. Email was not accepted: ${mail.reason || 'not sent'}.` };
+    }
+    return { ok: true, message: decision === 'approve' ? 'Advance verified. The remaining cash is still due on delivery.' : 'Advance rejected. The receipt was not treated as payment.' };
+  } catch (e) {
+    return { ok: false, message: e instanceof OrderError ? e.message : 'Could not review the advance.' };
+  }
+}
+
 export async function markPaid(orderId: number, ref?: string): Promise<R> {
   const u = await assertAdmin();
   const db = await getDb();
@@ -41,6 +59,7 @@ export async function markPaid(orderId: number, ref?: string): Promise<R> {
   if (!o) return { ok: false, message: 'Order not found.' };
   if (o.status === 'cancelled') return { ok: false, message: 'Cancelled orders cannot be marked as paid.' };
   if (o.paymentMethod === 'card') return { ok: false, message: 'Card payments are confirmed automatically by Stripe.' };
+  if (o.paymentPlan?.applied) return { ok: false, message: 'Use Approve advance for this order. Marking the whole order paid would hide the remaining cash on delivery.' };
   const paid = await markOrderPaid(orderId, { actor: actorName(u), actorId: u.id, ref: ref || o.paymentRef, message: `Payment verified${ref ? ` (ref ${ref})` : ''}` });
   if (paid) {
     const link = `${siteUrl()}/checkout/success?order=${paid.number}&token=${orderAccessToken(paid.number)}`;

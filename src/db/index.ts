@@ -35,6 +35,8 @@ async function createEnv(): Promise<DbState> {
       connectionTimeoutMillis: 15_000,
     });
     const db = drizzlePg(pool, { schema });
+    const { ensureCommerceColumns } = await import('./ensure-commerce');
+    await ensureCommerceColumns(db);
     return { db, kind: 'postgres', pool };
   }
   // Local development / no-database fallback: embedded Postgres (PGlite).
@@ -46,8 +48,10 @@ async function createEnv(): Promise<DbState> {
   await client.waitReady;
   const db = drizzle(client, { schema }) as unknown as DB;
   const { migrateAndSeed } = await import('./setup');
-  await migrateAndSeed(db, 'pglite');
-  return { db, kind: 'pglite' };
+    await migrateAndSeed(db, 'pglite');
+    const { ensureCommerceColumns } = await import('./ensure-commerce');
+    await ensureCommerceColumns(db);
+    return { db, kind: 'pglite' };
 }
 
 async function create(): Promise<DbState> {
@@ -59,7 +63,10 @@ async function create(): Promise<DbState> {
     if (!url || url === databaseUrl()) return env;
     const pool = new Pool({ ...pgConfig(url), max: 5, idleTimeoutMillis: 15_000, connectionTimeoutMillis: 8_000 });
     await pool.query('select 1');
-    return { db: drizzlePg(pool, { schema }), kind: 'postgres', pool };
+    const db = drizzlePg(pool, { schema });
+    const { ensureCommerceColumns } = await import('./ensure-commerce');
+    await ensureCommerceColumns(db);
+    return { db, kind: 'postgres', pool };
   } catch {
     // A failed override must never replace the working database.
     return env;

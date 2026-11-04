@@ -15,6 +15,7 @@ import { ReviewForm } from '@/components/store/product-extras';
 import { eligiblePurchases } from '@/lib/reviews';
 import { getSettings } from '@/lib/settings';
 import { Img } from '@/components/ui/img';
+import { PaymentPlanNote } from '@/components/store/payment-plan-note';
 
 export const metadata: Metadata = { title: 'Order details', robots: { index: false } };
 
@@ -97,7 +98,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
         </div>
         <div className="space-y-6 text-[0.9rem]">
           <div><p className="label">Shipping address</p><p>{a.firstName} {a.lastName}<br />{a.line1}{a.line2 ? `, ${a.line2}` : ''}<br />{a.city}, {a.province} {a.postalCode}<br />{a.phone}</p></div>
-          <div><p className="label">Payment</p><p>{PM[o.paymentMethod] ?? o.paymentMethod}</p>{o.paidAt && <p className="text-muted">Paid {formatDate(o.paidAt)}</p>}</div>
+          <div><p className="label">Payment</p><p>{PM[o.paymentMethod] ?? o.paymentMethod}</p>{o.paidAt && <p className="text-muted">Paid {formatDate(o.paidAt)}</p>}<PaymentPlanNote plan={o.paymentPlan} /></div>
           <div>
             <p className="label">Timeline</p>
             <ol className="space-y-3 border-l border-line pl-4">

@@ -6,6 +6,7 @@ import { ShoppingBag, Tag, X, Lock } from 'lucide-react';
 import { useStore } from './providers';
 import { CartLines, FreeShippingBar, Recommendations, useQuote } from './cart-drawer';
 import { formatMoney } from '@/lib/money';
+import { discountFieldChange } from '@/lib/shopping-rules';
 import { cn } from '@/lib/utils';
 
 export function CartPageView() {
@@ -53,8 +54,8 @@ export function CartPageView() {
               ) : (
                 <>
                   <div className="flex gap-2">
-                    <input value={codeInput} onChange={(e) => setCodeInput(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === 'Enter' && codeInput.trim() && setCode(codeInput.trim())} placeholder="e.g. WELCOME10" className="field" aria-label="Discount code" />
-                    <button onClick={() => codeInput.trim() && setCode(codeInput.trim())} className="btn btn-secondary shrink-0">Apply</button>
+                    <input value={codeInput} onChange={(e) => { const next = e.target.value.toUpperCase(); setCodeInput(next); setCode((applied) => discountFieldChange(next, applied)); }} onKeyDown={(e) => { if (e.key === 'Enter' && codeInput.trim()) { const next = codeInput.trim().toUpperCase(); setCodeInput(next); setCode(next); } }} placeholder="e.g. WELCOME10" className="field" aria-label="Discount code" />
+                    <button onClick={() => { const next = codeInput.trim().toUpperCase(); if (!next) { setCode(null); setCodeInput(''); return; } setCodeInput(next); setCode(next); }} className="btn btn-secondary shrink-0">Apply</button>
                   </div>
                   {code && quote?.discountError && <p className="mt-2 text-[0.8rem] text-sale">{quote.discountError}</p>}
                 </>
