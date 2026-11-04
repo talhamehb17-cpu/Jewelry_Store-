@@ -174,7 +174,8 @@ async function resetSequences(dest, tables) {
     const seq = await dest.query(`select pg_get_serial_sequence($1, 'id') as seq`, [table]);
     const name = seq.rows[0]?.seq;
     if (!name) continue;
-    await dest.query(`select setval($1::regclass, coalesce((select max(id) from ${quoteIdent(table)}), 1), true)`, [name]);
+    const next = await dest.query(`select setval($1::regclass, coalesce((select max(id) from ${quoteIdent(table)}), 1), true) as n`, [name]);
+    log(`sequence ${table} last=${next.rows[0]?.n}`);
   }
 }
 
@@ -217,10 +218,18 @@ async function main() {
         log(`destination already marked migrated ${JSON.stringify(after)}`);
         return;
       }
+      const missingNow = tables.filter((table) => before[table] < sourceCounts[table]);
+      if (!missingNow.length) {
+        await resetSequences(dest, tables);
+        await dest.query(
+          `insert into settings (key, value, updated_at) values ('neon_migration_v1', $1::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()`,
+          [JSON.stringify({ at: new Date().toISOString(), sourceHost: hostOf(sourceUrl), counts: before })],
+        );
+        log('destination already matched source counts; sequences reset and marker saved');
+      } else {
       const client = await dest.connect();
       try {
         await client.query('begin');
-        await client.query(`set session_replication_role = 'replica'`).catch(() => undefined);
         const sourceEmails = await source.query(`select email from users`);
         const emails = sourceEmails.rows.map((row) => row.email).filter(Boolean);
         if (emails.length) {
@@ -251,7 +260,6 @@ async function main() {
           `insert into settings (key, value, updated_at) values ('neon_migration_v1', $1::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()`,
           [JSON.stringify({ at: new Date().toISOString(), sourceHost: hostOf(sourceUrl), counts: afterTx })],
         );
-        await client.query(`set session_replication_role = 'origin'`).catch(() => undefined);
         await client.query('commit');
         log('transaction committed');
       } catch (error) {
@@ -259,6 +267,7 @@ async function main() {
         throw error;
       } finally {
         client.release();
+      }
       }
       const after = await counts(dest, tables);
       const mismatches = tables.filter((table) => after[table] < sourceCounts[table]);
