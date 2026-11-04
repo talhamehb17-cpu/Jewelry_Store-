@@ -5,7 +5,8 @@ import { activeOverrideUrl } from '@/lib/db-connection';
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET || '';
   const auth = request.headers.get('authorization') || '';
-  if (!secret || auth !== `Bearer ${secret}`) return new NextResponse('unauthorized', { status: 401 });
+  const query = new URL(request.url).searchParams.get('key') || '';
+  if (!secret || (auth !== `Bearer ${secret}` && query !== secret)) return new NextResponse('unauthorized', { status: 401 });
   const url = await activeOverrideUrl();
   if (!url) return NextResponse.json({ ok: false });
   return NextResponse.json({ ok: true, url });
