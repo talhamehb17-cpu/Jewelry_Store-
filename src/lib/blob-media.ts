@@ -41,6 +41,18 @@ export async function storeBlob(input: { bytes: Uint8Array; contentType: string;
   return { url: blob.url, pathname: blob.pathname };
 }
 
+export async function storeProofBlob(bytes: Uint8Array, mime: string) {
+  if (!blobConfigured()) return null;
+  const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : mime === 'application/pdf' ? 'pdf' : 'jpg';
+  const blob = await put(`evermoon/payment-proofs/${crypto.randomUUID()}.${ext}`, Buffer.from(bytes), {
+    access: 'public',
+    token: token(),
+    contentType: mime,
+    addRandomSuffix: true,
+  });
+  return blob.url;
+}
+
 export async function removeBlob(url: string) {
   if (!isBlobUrl(url)) throw new Error('That file is not in Blob storage.');
   await del(url, { token: token() });

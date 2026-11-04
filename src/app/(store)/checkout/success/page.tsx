@@ -16,7 +16,7 @@ import { GuestCancel } from '@/components/store/guest-cancel';
 
 export const metadata: Metadata = { title: 'Order confirmed', robots: { index: false } };
 
-type SP = Promise<{ order?: string; token?: string; session_id?: string }>;
+type SP = Promise<{ order?: string; token?: string; session_id?: string; email?: string; note?: string }>;
 
 export default async function SuccessPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
@@ -48,7 +48,8 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
           <CheckCircle2 size={48} strokeWidth={1} className="mx-auto text-accent" />
           <p className="eyebrow mt-6">Order {order.number}</p>
           <h1 className="t-1 mt-3">Thank you, {order.customerName.split(' ')[0]}</h1>
-          <p className="mx-auto mt-4 max-w-lg text-muted">Your order has been received{paid ? ' and paid' : ''}. A confirmation is sent to <span className="text-ink">{order.email}</span> only if the mailbox accepts it. The order is saved either way.</p>
+          <p className="mx-auto mt-4 max-w-lg text-muted">Your order has been received{paid ? ' and paid' : ''}. {sp.email === 'sent' ? `The confirmation was accepted for ${order.email}.` : `The confirmation to ${order.email} is still pending. The order number is saved.`}</p>
+          {sp.note && <p className="mx-auto mt-2 max-w-lg text-[0.85rem] text-muted">{sp.note}</p>}
         </div>
 
         <div className="mt-10 rounded-theme border border-line p-6 md:p-8">

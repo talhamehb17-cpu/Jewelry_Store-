@@ -6,6 +6,7 @@ import { decryptSecret, encryptSecret } from './crypto-box';
 import { absoluteUrl, siteUrl } from './utils';
 
 const KEY = 'email_smtp';
+export const OFFICIAL_SENDER = 'mehboobtalha34@gmail.com';
 
 export type EmailSecurity = 'none' | 'starttls' | 'ssl';
 
@@ -36,6 +37,7 @@ export type EmailPublic = {
   passwordShape: 'gmail-app' | 'other' | 'empty' | 'unreadable';
   usernameIsEmail: boolean;
   usernameMatchesAddress: boolean;
+  passwordSource: 'env' | 'database' | 'missing';
 };
 
 type Stored = Omit<EmailConfig, 'password'> & {
@@ -82,6 +84,7 @@ const emptyPublic = (): EmailPublic => ({
   passwordShape: 'empty',
   usernameIsEmail: false,
   usernameMatchesAddress: false,
+  passwordSource: 'missing',
 });
 
 function asStored(value: unknown): Stored | null {
@@ -114,7 +117,49 @@ export async function getEmailSettingsPublic(): Promise<EmailPublic> {
   const db = await getDb();
   const [row] = await db.select().from(settings).where(eq(settings.key, KEY)).limit(1);
   const stored = asStored(row?.value);
+  const envPassword = envAppPassword();
+  if (!stored && !envPassword) return emptyPublic();
+  if (!stored && envPassword) {
+    return {
+      ...emptyPublic(),
+      address: OFFICIAL_SENDER,
+      senderName: 'EVERMOON',
+      host: 'smtp.gmail.com',
+      port: 587,
+      username: OFFICIAL_SENDER,
+      security: 'starttls',
+      hasPassword: true,
+      configured: /^[a-z]{16}$/i.test(envPassword),
+      enabled: true,
+      passwordLength: envPassword.length,
+      passwordShape: passwordShape(envPassword),
+      usernameIsEmail: true,
+      usernameMatchesAddress: true,
+      passwordSource: 'env',
+    };
+  }
   if (!stored) return emptyPublic();
+  if (envPassword) {
+    return {
+      address: OFFICIAL_SENDER,
+      senderName: 'EVERMOON',
+      host: 'smtp.gmail.com',
+      port: 587,
+      username: OFFICIAL_SENDER,
+      security: 'starttls',
+      hasPassword: true,
+      configured: /^[a-z]{16}$/i.test(envPassword),
+      enabled: true,
+      lastSuccessAt: stored.lastSuccessAt ?? null,
+      lastError: stored.lastError ?? null,
+      lastErrorAt: stored.lastErrorAt ?? null,
+      passwordLength: envPassword.length,
+      passwordShape: passwordShape(envPassword),
+      usernameIsEmail: true,
+      usernameMatchesAddress: true,
+      passwordSource: 'env',
+    };
+  }
   const configured = !!(stored.host && stored.username && stored.passwordEnc && stored.address);
   let passwordLength: number | null = null;
   let shape: EmailPublic['passwordShape'] = stored.passwordEnc ? 'unreadable' : 'empty';
@@ -144,13 +189,40 @@ export async function getEmailSettingsPublic(): Promise<EmailPublic> {
     passwordShape: shape,
     usernameIsEmail: stored.username.includes('@'),
     usernameMatchesAddress: stored.username.trim().toLowerCase() === stored.address.trim().toLowerCase(),
+    passwordSource: envAppPassword() ? 'env' : stored.passwordEnc ? 'database' : 'missing',
+  };
+}
+
+export function envAppPassword() {
+  return normalizeSecret(process.env.GMAIL_APP_PASSWORD || '');
+}
+
+function officialMailbox(password: string): EmailConfig {
+  return {
+    address: OFFICIAL_SENDER,
+    senderName: 'EVERMOON',
+    host: 'smtp.gmail.com',
+    port: 587,
+    username: OFFICIAL_SENDER,
+    password,
+    security: 'starttls',
   };
 }
 
 export async function resolveMailbox(): Promise<{ config: EmailConfig | null; error?: string; enabled: boolean }> {
+  const fromEnv = envAppPassword();
+  if (fromEnv) {
+    if (!/^[a-z]{16}$/i.test(fromEnv)) {
+      return { config: null, error: 'GMAIL_APP_PASSWORD is set on the server but is not a 16-letter Gmail app password. It was not sent.', enabled: true };
+    }
+    return { config: officialMailbox(fromEnv), enabled: true };
+  }
   const db = await getDb();
   const [row] = await db.select().from(settings).where(eq(settings.key, KEY)).limit(1);
   const stored = asStored(row?.value);
+  if (!stored?.passwordEnc) {
+    return { config: null, error: 'GMAIL_APP_PASSWORD is not set on the server, and no app password is saved in admin.', enabled: stored?.enabled !== false };
+  }
   if (!stored?.passwordEnc || !stored.host || !stored.username) {
     return { config: null, error: 'Email is not configured. Add SMTP details in Admin → Settings.', enabled: stored?.enabled !== false };
   }

@@ -23,7 +23,7 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
   const db = await getDb();
   const [o] = await db.select().from(orders).where(eq(orders.id, oid)).limit(1);
   if (!o) notFound();
-  const [proof] = await db.select({ token: paymentProofs.token, filename: paymentProofs.filename, mime: paymentProofs.mime }).from(paymentProofs).where(eq(paymentProofs.orderId, o.id)).limit(1);
+  const [proof] = await db.select({ token: paymentProofs.token, filename: paymentProofs.filename, mime: paymentProofs.mime, createdAt: paymentProofs.createdAt }).from(paymentProofs).where(eq(paymentProofs.orderId, o.id)).limit(1);
   const [items, events, [hist]] = await Promise.all([
     db.select().from(orderItems).where(eq(orderItems.orderId, oid)),
     db.select().from(orderEvents).where(eq(orderEvents.orderId, oid)).orderBy(desc(orderEvents.createdAt)),
@@ -103,7 +103,18 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               {o.paymentIntentId && <div className="flex justify-between gap-3"><dt className="text-muted">Payment intent</dt><dd className="break-all text-right font-mono text-[0.75rem]">{o.paymentIntentId}</dd></div>}
               {o.paidAt && <div className="flex justify-between gap-3"><dt className="text-muted">Paid</dt><dd>{formatDateTime(o.paidAt)}</dd></div>}
             </dl>
-            {proof && <a href={`/api/payment-proof/${proof.token}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-[0.8rem] underline">View payment receipt ({proof.filename})</a>}
+            {proof ? (
+              <div className="mt-3">
+                <p className="text-[0.8rem]">Receipt uploaded {formatDateTime(proof.createdAt)} · staff only</p>
+                {proof.mime.startsWith('image/') ? (
+                  <a href={`/api/payment-proof/${proof.token}`} target="_blank" rel="noreferrer">
+                    <img src={`/api/payment-proof/${proof.token}`} alt={`Payment receipt for ${o.number}`} className="mt-2 max-h-72 rounded-theme border border-line object-contain" />
+                  </a>
+                ) : (
+                  <a href={`/api/payment-proof/${proof.token}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-[0.8rem] underline">View payment receipt ({proof.filename})</a>
+                )}
+              </div>
+            ) : <p className="mt-3 text-[0.8rem] text-muted">No receipt was uploaded with this order.</p>}
             {(o.paymentMethod === 'bank' || o.paymentMethod === 'easypaisa' || o.paymentMethod === 'jazzcash') && <p className="mt-3 rounded-md bg-secondary px-3 py-2 text-[0.75rem] text-muted">The receipt is private. Verify the funds before marking the payment verified.</p>}
           </Card>
           {o.customerNote && <Card title="Customer note"><p className="whitespace-pre-line text-[0.85rem]">{o.customerNote}</p></Card>}

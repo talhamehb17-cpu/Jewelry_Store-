@@ -103,7 +103,7 @@ export const PROVINCES = [
   'Azad Jammu & Kashmir',
 ] as const;
 
-export const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
+export const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'awaiting_confirm', 'delivered', 'cancelled'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const PAYMENT_STATUSES = ['unpaid', 'awaiting', 'paid', 'failed', 'refunded', 'partially_refunded'] as const;

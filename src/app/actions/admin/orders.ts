@@ -18,15 +18,19 @@ export async function updateOrderStatus(orderId: number, status: string, extra: 
   const u = await assertAdmin();
   try {
     const o = await changeOrderStatus(orderId, status, actorName(u), extra);
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath('/admin/orders');
     if (extra.notify && o) {
       const link = `${siteUrl()}/checkout/success?order=${o.number}&token=${orderAccessToken(o.number)}`;
-      const mail = await sendEmail(o.email, `Your EVERMOON order ${o.number} is ${status.replaceAll('_', ' ')}`, statusEmail(o, status, link), `order-${status}`, { orderId: o.id });
+      const mail = await Promise.race([
+        sendEmail(o.email, `Your EVERMOON order ${o.number} is ${status.replaceAll('_', ' ')}`, statusEmail(o, status, link), `order-${status}`, { orderId: o.id }),
+        new Promise<{ sent: false; reason: string }>((resolve) => setTimeout(() => resolve({ sent: false, reason: 'Email timed out after the status was saved.' }), 15_000)),
+      ]);
       if (!mail.sent) return { ok: true, message: `Order marked as ${status.replaceAll('_', ' ')}. Email was not accepted: ${mail.reason || 'not sent'}.` };
     }
-    revalidatePath(`/admin/orders/${orderId}`);
     return { ok: true, message: `Order marked as ${status}.` };
   } catch (e) {
-    return { ok: false, message: e instanceof OrderError ? e.message : 'Could not update the order.' };
+    return { ok: false, message: e instanceof Error ? e.message : 'Could not update the order.' };
   }
 }
 
@@ -54,7 +58,9 @@ export async function rejectPayment(orderId: number, note?: string): Promise<R> 
   if (!o) return { ok: false, message: 'Order not found.' };
   if (o.paymentMethod === 'card') return { ok: false, message: 'Card payments are confirmed by Stripe.' };
   if (o.paymentStatus === 'paid') return { ok: false, message: 'Verified payments must be refunded, not rejected.' };
-  await db.update(orders).set({ paymentStatus: 'failed', updatedAt: new Date(), adminNote: note || o.adminNote }).where(eq(orders.id, orderId));
+  const reason = note?.trim();
+  if (!reason) return { ok: false, message: 'Enter a rejection reason. The payment was not changed.' };
+  await db.update(orders).set({ paymentStatus: 'failed', updatedAt: new Date(), adminNote: reason }).where(eq(orders.id, orderId));
   await addOrderEvent(orderId, 'payment', `Payment rejected${note ? ` — ${note}` : ''}`, actorName(u));
   const link = `${siteUrl()}/checkout/success?order=${o.number}&token=${orderAccessToken(o.number)}`;
   await sendEmail(o.email, `Payment update for ${o.number}`, statusEmail(o, 'failed', link), 'order-payment-failed', { orderId: o.id });

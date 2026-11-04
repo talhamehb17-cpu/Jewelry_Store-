@@ -24,10 +24,10 @@ export function EmailSettingsForm({ initial, logs = [] }: { initial: EmailPublic
 
   return (
     <Card title="Email settings" actions={pending ? <Loader2 size={14} className="animate-spin" /> : null}>
-      <p className="mb-4 text-[0.8rem] text-muted">For Gmail, generate an App Password at https://myaccount.google.com/apppasswords after 2-Step Verification is on. Do not enter your normal Gmail password — Gmail rejects that with 535-5.7.8. Spaces are removed. The username must be the full Gmail address. Host smtp.gmail.com, port 587 with STARTTLS, or 465 with SSL. The password is encrypted and is never sent back to this page. Environment variables do not override this mailbox.</p>
+      <p className="mb-4 text-[0.8rem] text-muted">For Gmail, the server reads GMAIL_APP_PASSWORD when it is set. That value is never shown. A password saved here is only used if the server variable is missing. Do not enter a normal Gmail password.</p>
       <p className="mb-4 text-[0.8rem]">Status: {initial.configured && initial.enabled ? 'Saved and enabled' : initial.configured ? 'Saved but turned off' : 'Not configured'}{initial.lastSuccessAt ? ` · last acceptance ${new Date(initial.lastSuccessAt).toLocaleString('en-GB', { timeZone: 'Asia/Karachi' })} PKT` : ''}{initial.lastError ? ` · last error: ${initial.lastError}` : ''}</p>
       <ul className="mb-4 space-y-1 text-[0.78rem] text-muted">
-        <li>Saved host {initial.host || '—'} · port {initial.port} · security {initial.security}. Environment variables do not replace this mailbox.</li>
+        <li>Host {initial.host || '—'} · port {initial.port} · security {initial.security}. Password source: {initial.passwordSource}.</li>
         <li>Username is {initial.usernameIsEmail ? 'a full email address' : 'not an email address'}{initial.usernameMatchesAddress ? ' and matches the sender.' : ' and does not match the sender. Gmail login uses the username.'}</li>
         <li>Saved secret: {initial.passwordShape === 'unreadable' ? 'could not be decrypted' : initial.passwordShape === 'empty' ? 'not stored' : `${initial.passwordLength} characters, ${initial.passwordShape === 'gmail-app' ? '16 letters' : 'not a 16-letter app password'}`}. The secret is not shown.</li>
       </ul>

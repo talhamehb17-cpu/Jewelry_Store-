@@ -39,6 +39,7 @@ function Field({ label, error, children, className }: { label: string; error?: s
 
 function ProofUpload({ token, onToken }: { token: string | null; onToken: (token: string | null) => void }) {
   const [name, setName] = useState('');
+  const [preview, setPreview] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   return (
@@ -69,9 +70,12 @@ function ProofUpload({ token, onToken }: { token: string | null; onToken: (token
             return;
           }
           setName(file.name);
+          if (preview) URL.revokeObjectURL(preview);
+          setPreview(file.type.startsWith('image/') ? URL.createObjectURL(file) : null);
           onToken(data.token);
         }}
       />
+      {preview && <img src={preview} alt="Receipt preview" className="mt-2 max-h-40 rounded-theme border border-line object-contain" />}
       <p className="mt-1 text-[0.75rem] text-muted">{busy ? 'Uploading…' : token ? `Receipt attached${name ? `: ${name}` : ''}. It is visible only to you and the store team.` : 'Required. JPG, PNG, WEBP or PDF, up to 4 MB.'}</p>
       {err && <p className="mt-1 text-[0.78rem] text-sale" role="alert">{err}</p>}
     </div>
@@ -332,7 +336,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         </section>
 
         <button type="submit" disabled={pending || !quote || loading || ((paymentMethod === 'bank' || paymentMethod === 'easypaisa' || paymentMethod === 'jazzcash') && !proofToken)} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
-          {pending ? 'Placing your order…' : `Place order · ${quote ? formatMoney(quote.total) : ''}`}
+          {pending ? 'Placing your order and sending the confirmation…' : `Place order · ${quote ? formatMoney(quote.total) : ''}`}
         </button>
         <p className="flex items-center justify-center gap-2 text-[0.75rem] text-muted"><ShieldCheck size={14} /> By placing your order you agree to our <Link href="/policies/terms-of-service" className="underline">Terms</Link> and <Link href="/policies/privacy-policy" className="underline">Privacy Policy</Link>.</p>
       </div>

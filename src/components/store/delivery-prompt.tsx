@@ -26,7 +26,7 @@ export function DeliveryPrompt({ order }: { order: Prompt }) {
     <div className="fixed inset-0 z-[80] grid place-items-end bg-black/40 p-4 sm:place-items-center" role="dialog" aria-modal="true" aria-labelledby="delivery-ask">
       <div className="w-full max-w-md rounded-theme border border-line bg-bg p-6 text-ink shadow-2xl">
         <p className="eyebrow">Delivery</p>
-        <h2 id="delivery-ask" className="mt-2 font-heading text-3xl">Has your order been delivered?</h2>
+        <h2 id="delivery-ask" className="mt-2 font-heading text-3xl">Has your EVERMOON order been delivered?</h2>
         <p className="mt-3 text-[0.92rem] leading-relaxed">{order.number} · {order.summary}</p>
         <p className="mt-1 text-[0.85rem] text-muted">{order.shippingMethodName} · expected {new Date(order.expectedAt).toLocaleString('en-GB', { timeZone: 'Asia/Karachi' })} PKT · {formatMoney(order.total)} PKR</p>
         {msg && <p className="mt-3 text-[0.85rem]" role="status">{msg}</p>}

@@ -13,6 +13,7 @@ export function StatusBadge({ status, kind = 'order' }: { status: string; kind?:
     processing: 'bg-indigo-50 text-indigo-800 border-indigo-200',
     shipped: 'bg-violet-50 text-violet-800 border-violet-200',
     out_for_delivery: 'bg-violet-50 text-violet-900 border-violet-200',
+    awaiting_confirm: 'bg-amber-50 text-amber-900 border-amber-200',
     delivered: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     paid: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     cancelled: 'bg-rose-50 text-rose-800 border-rose-200',
@@ -20,7 +21,7 @@ export function StatusBadge({ status, kind = 'order' }: { status: string; kind?:
     refunded: 'bg-stone-100 text-stone-700 border-stone-200',
     partially_refunded: 'bg-stone-100 text-stone-700 border-stone-200',
   };
-  const label = kind === 'payment' ? paymentStatusLabel(status) : titleCase(status);
+  const label = kind === 'payment' ? paymentStatusLabel(status) : status === 'awaiting_confirm' ? 'Awaiting confirmation' : titleCase(status);
   return <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-medium', tone[status] ?? 'bg-stone-100 text-stone-700 border-stone-200')}>{label}</span>;
 }
 

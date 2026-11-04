@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { DB } from './index';
 import { deliveryServices, pages, settings, themeConfigs } from './schema';
 import { BRAND } from '@/lib/brand';
@@ -180,6 +180,8 @@ export async function applyOperations(db: DB, log: (m: string) => void = () => {
     ]);
     log('delivery services created as editable estimates');
   }
+  await db.update(deliveryServices).set({ shipMinutes: 24 * 60, outMinutes: 60 * 60 }).where(and(eq(deliveryServices.code, 'express'), sql`${deliveryServices.shipMinutes} is null`));
+  await db.update(deliveryServices).set({ shipMinutes: 48 * 60, outMinutes: 96 * 60 }).where(and(eq(deliveryServices.code, 'standard'), sql`${deliveryServices.shipMinutes} is null`));
 
   const [dark] = await db.select().from(themeConfigs).where(eq(themeConfigs.themeId, 'dark-luxury')).limit(1);
   if (dark?.published && typeof dark.published === 'object') {

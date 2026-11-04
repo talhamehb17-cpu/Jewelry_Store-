@@ -77,7 +77,8 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
             <div className="flex flex-wrap gap-2">
               <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction / receipt reference" className="field max-w-xs" />
               <button disabled={pending} onClick={() => run(() => markPaid(order.id, ref))} className="btn btn-primary"><CheckCircle2 size={14} /> Verify payment</button>
-              <button disabled={pending} onClick={() => run(() => rejectPayment(order.id, ref))} className="btn btn-secondary">Reject payment</button>
+              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Rejection reason (required)" className="field max-w-xs" />
+              <button disabled={pending || !reason.trim()} onClick={() => run(() => rejectPayment(order.id, reason))} className="btn btn-secondary">Reject payment</button>
             </div>
             <p className="mt-2 text-[0.75rem] text-muted">Verify only after the funds and the receipt match. Rejecting does not delete the order.</p>
           </div>
@@ -99,7 +100,7 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
           <p className="label">Admin override</p>
           <p className="mb-2 text-[0.75rem] text-muted">This records the previous status, the new status, the time and your name. It does not pretend a refund has been paid out.</p>
           <div className="flex flex-wrap gap-2">
-            {['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'].filter((s) => s !== order.status).map((s) => (
+            {['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'awaiting_confirm', 'delivered', 'cancelled'].filter((s) => s !== order.status).map((s) => (
               <button key={s} type="button" disabled={pending || (s === 'cancelled' && !reason.trim())} className="btn btn-secondary btn-sm" onClick={() => run(() => updateOrderStatus(order.id, s, { notify, reason, force: true, carrier, tracking }))}>Set {s.replaceAll('_', ' ')}</button>
             ))}
           </div>

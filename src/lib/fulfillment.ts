@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lte, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, lte, ne, or } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { deliveryIssues, orders, type DeliveryPlan, type Order } from '@/db/schema';
 import { changeOrderStatus } from './orders';
@@ -36,41 +36,69 @@ export function scheduleProgress() {
   void progressOrders().catch(() => undefined);
 }
 
+async function mailStatus(order: Order, status: string) {
+  const link = absoluteUrl(`/account/orders/${order.number}`);
+  await Promise.race([
+    sendEmail(order.email, `Your EVERMOON order ${order.number} is ${status.replaceAll('_', ' ')}`, statusEmail(order, status, link), `order-${status}`, { orderId: order.id }),
+    new Promise((resolve) => setTimeout(resolve, 12_000)),
+  ]);
+}
+
 /** Advances only stages the saved plan marked automatic. Never marks an order delivered. */
-export async function progressOrders(now = new Date()) {
+export async function progressOrders(now = new Date(), onlyOrderId?: number) {
   const db = await getDb();
-  const rows = await db
-    .select()
-    .from(orders)
-    .where(and(inArray(orders.status, ['pending', 'confirmed', 'processing', 'shipped']), ne(orders.status, 'cancelled')));
   let advanced = 0;
   const notes: string[] = [];
-  for (const order of rows) {
-    const plan = planOf(order);
-    const start = deliveryClockStart(order);
-    if (!plan || !start) continue;
-    const key = AUTO[order.status];
-    const next = NEXT[order.status];
-    if (!key || !next) continue;
-    const threshold = plan[key];
-    if (threshold == null || threshold < 0) continue;
-    const elapsed = now.getTime() - start.getTime();
-    if (elapsed < threshold * 60_000) continue;
+  let checked = 0;
+  for (let pass = 0; pass < 4; pass++) {
+    const rows = await db
+      .select()
+      .from(orders)
+      .where(and(inArray(orders.status, ['pending', 'confirmed', 'processing', 'shipped']), ne(orders.status, 'cancelled'), onlyOrderId ? eq(orders.id, onlyOrderId) : undefined));
+    checked = rows.length;
+    let moved = 0;
+    for (const order of rows) {
+      const plan = planOf(order);
+      const start = deliveryClockStart(order);
+      if (!plan || !start) continue;
+      const key = AUTO[order.status];
+      const next = NEXT[order.status];
+      if (!key || !next) continue;
+      if ((next === 'shipped' || next === 'out_for_delivery') && plan[key] == null) continue;
+      const threshold = plan[key];
+      if (threshold == null || threshold < 0) continue;
+      if (now.getTime() - start.getTime() < threshold * 60_000) continue;
+      try {
+        const updated = await changeOrderStatus(order.id, next, 'automation', {
+          note: `Automatic move after ${threshold} minutes on the plan saved with this order. Not marked delivered.`,
+        });
+        advanced += 1;
+        moved += 1;
+        notes.push(`${updated.number}: ${order.status} → ${next}`);
+        await mailStatus(updated, next);
+      } catch (err) {
+        notes.push(`${order.number}: skipped (${err instanceof Error ? err.message : 'error'})`);
+      }
+    }
+    if (!moved) break;
+  }
+  const due = await db
+    .select()
+    .from(orders)
+    .where(and(inArray(orders.status, ['shipped', 'out_for_delivery']), isNull(orders.deliveryResponse), isNotNull(orders.expectedAt), lte(orders.expectedAt, now), onlyOrderId ? eq(orders.id, onlyOrderId) : undefined));
+  for (const order of due) {
     try {
-      const updated = await changeOrderStatus(order.id, next, 'automation', {
-        note: `Automatic move after ${threshold} minutes on the saved delivery plan. Delivery is not marked received by the timer.`,
+      const updated = await changeOrderStatus(order.id, 'awaiting_confirm', 'automation', {
+        note: 'Expected delivery time passed. Waiting for the customer to confirm receipt. Not marked delivered.',
+        force: true,
       });
       advanced += 1;
-      notes.push(`${updated.number}: ${order.status} → ${next}`);
-      const link = absoluteUrl(`/account/orders/${updated.number}`);
-      await sendEmail(updated.email, `Your EVERMOON order ${updated.number} is ${next.replaceAll('_', ' ')}`, statusEmail(updated, next, link), `order-${next}`, {
-        orderId: updated.id,
-      });
+      notes.push(`${updated.number}: ${order.status} → awaiting confirmation`);
     } catch (err) {
-      notes.push(`${order.number}: skipped (${err instanceof Error ? err.message : 'error'})`);
+      notes.push(`${order.number}: confirmation skipped (${err instanceof Error ? err.message : 'error'})`);
     }
   }
-  return { checked: rows.length, advanced, notes };
+  return { checked, advanced, notes };
 }
 
 export async function ordersAwaitingDeliveryConfirmation(userId: number, now = new Date()) {
@@ -82,8 +110,8 @@ export async function ordersAwaitingDeliveryConfirmation(userId: number, now = n
       and(
         eq(orders.userId, userId),
         isNull(orders.deliveryResponse),
-        lte(orders.expectedAt, now),
-        inArray(orders.status, ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery']),
+        isNotNull(orders.expectedAt),
+        or(eq(orders.status, 'awaiting_confirm'), and(lte(orders.expectedAt, now), inArray(orders.status, ['shipped', 'out_for_delivery']))),
       ),
     );
 }

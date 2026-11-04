@@ -185,14 +185,15 @@ export async function markOrderPaid(orderId: number, opts: { actor: string; ref?
   return updated;
 }
 
-export const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'] as const;
+export const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'awaiting_confirm', 'delivered', 'cancelled'] as const;
 
 export const STATUS_FLOW: Record<string, string[]> = {
   pending: ['confirmed', 'processing', 'cancelled'],
-  confirmed: ['processing', 'shipped', 'out_for_delivery', 'cancelled'],
-  processing: ['shipped', 'out_for_delivery', 'cancelled'],
-  shipped: ['out_for_delivery', 'delivered', 'cancelled'],
-  out_for_delivery: ['delivered', 'cancelled'],
+  confirmed: ['processing', 'shipped', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['out_for_delivery', 'awaiting_confirm', 'cancelled'],
+  out_for_delivery: ['awaiting_confirm', 'delivered', 'cancelled'],
+  awaiting_confirm: ['delivered', 'out_for_delivery', 'cancelled'],
   delivered: ['cancelled'],
   cancelled: [],
 };

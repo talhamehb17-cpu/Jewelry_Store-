@@ -1,7 +1,6 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { after } from 'next/server';
 import { z } from 'zod';
 import { and, eq, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -125,9 +124,19 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   const token = orderAccessToken(order.number);
   const link = `${base}/checkout/success?order=${encodeURIComponent(order.number)}&token=${token}`;
 
-  after(async () => {
+  let emailSent = false;
+  let emailNote = 'Confirmation email is still pending. The order is saved.';
+  try {
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
-    await sendEmail(order.email, `Your EVERMOON order ${order.number}`, orderConfirmationEmail(order, items, link), 'order-confirmation', { orderId: order.id });
-  });
-  return { ok: true, redirect: `/checkout/success?order=${encodeURIComponent(order.number)}&token=${token}` };
+    const mail = await Promise.race([
+      sendEmail(order.email, `Your EVERMOON order ${order.number}`, orderConfirmationEmail(order, items, link), 'order-confirmation', { orderId: order.id }),
+      new Promise<{ sent: false; reason: string }>((resolve) => setTimeout(() => resolve({ sent: false, reason: 'The mail server did not answer within 20 seconds.' }), 20_000)),
+    ]);
+    emailSent = mail.sent;
+    emailNote = mail.sent ? 'The mail server accepted the confirmation.' : `Confirmation email was not accepted: ${mail.reason || 'not sent'}. The order is saved.`;
+  } catch (error) {
+    emailNote = `Confirmation email failed: ${error instanceof Error ? error.message : 'unknown error'}. The order is saved.`;
+  }
+  const flag = emailSent ? 'sent' : 'pending';
+  return { ok: true, redirect: `/checkout/success?order=${encodeURIComponent(order.number)}&token=${token}&email=${flag}&note=${encodeURIComponent(emailNote)}` };
 }

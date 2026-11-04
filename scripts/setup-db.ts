@@ -33,6 +33,49 @@ async function main() {
     const db = drizzle(pool, { schema });
     log(`connecting to ${new URL(url).hostname}`);
     await migrateAndSeed(db, 'postgres', log);
+    if (process.env.VERCEL && process.env.GMAIL_APP_PASSWORD) {
+      try {
+        const { eq } = await import('drizzle-orm');
+        const { settings } = await import('../src/db/schema');
+        const [done] = await db.select({ key: settings.key }).from(settings).where(eq(settings.key, 'gmail_live_test_v1')).limit(1);
+        if (!done) {
+          const { sendEmail, orderConfirmationEmail } = await import('../src/lib/email');
+          const test = await sendEmail('mehboobtalha34@gmail.com', 'EVERMOON mailbox test', '<p>This is a controlled EVERMOON mailbox test. No customer order was used.</p>', 'mailbox-test');
+          console.log(`[smtp] test-email sent=${test.sent} reason=${test.reason || 'accepted'}`);
+          if (test.sent) {
+            const { productVariants } = await import('../src/db/schema');
+            const { gt } = await import('drizzle-orm');
+            const { createOrder, changeOrderStatus } = await import('../src/lib/orders');
+            const { progressOrders } = await import('../src/lib/fulfillment');
+            const [variant] = await db.select({ id: productVariants.id }).from(productVariants).where(gt(productVariants.stock, 0)).limit(1);
+            let orderNumber = '';
+            if (variant) {
+              const order = await createOrder({
+                lines: [{ variantId: variant.id, quantity: 1 }],
+                email: 'mehboobtalha34@gmail.com',
+                phone: '03001234567',
+                address: { firstName: 'EVERMOON', lastName: 'Test', phone: '03001234567', line1: 'Controlled test, not a customer address', city: 'Lahore', province: 'Punjab', country: 'Pakistan' },
+                shippingMethod: 'standard',
+                paymentMethod: 'cod',
+                customerNote: 'Controlled SMTP and status test. Not a customer purchase.',
+              });
+              orderNumber = order.number;
+              const confirm = await sendEmail(order.email, `Your EVERMOON order ${order.number}`, orderConfirmationEmail(order, [], 'https://aurelle-jewelry-zeta.vercel.app/admin'), 'order-confirmation', { orderId: order.id });
+              console.log(`[smtp] order-confirmation ${order.number} sent=${confirm.sent} reason=${confirm.reason || 'accepted'}`);
+              const confirmed = await changeOrderStatus(order.id, 'confirmed', 'controlled-test', { note: 'Controlled status test' });
+              console.log(`[status] ${confirmed.number} ${confirmed.status}`);
+              await db.update(schema.orders).set({ status: 'shipped', expectedAt: new Date(Date.now() - 60_000), deliveryResponse: null }).where(eq(schema.orders.id, order.id));
+              const progressed = await progressOrders(new Date(), order.id);
+              console.log(`[delivery] ${JSON.stringify(progressed)}`);
+              await changeOrderStatus(order.id, 'confirmed', 'controlled-test', { note: 'Restored after delivery-timer check', force: true });
+            }
+            await db.insert(settings).values({ key: 'gmail_live_test_v1', value: { at: new Date().toISOString(), sent: test.sent, orderNumber } }).onConflictDoNothing();
+          }
+        }
+      } catch (error) {
+        console.error('[smtp] live check failed', error instanceof Error ? error.message : 'error');
+      }
+    }
     if (process.env.VERCEL && process.env.SMTP_PROBE === '1') {
       try {
         const { probeMailbox } = await import('../src/lib/mailer');

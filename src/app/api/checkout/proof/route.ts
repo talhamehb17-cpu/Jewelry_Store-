@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/db';
 import { paymentProofs } from '@/db/schema';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { storeProofBlob } from '@/lib/blob-media';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +45,13 @@ export async function POST(req: NextRequest) {
 
   const token = crypto.randomBytes(24).toString('base64url');
   const filename = file.name.replace(/[^\w.\- ]+/g, '').slice(0, 120) || 'receipt';
+  let url: string | null = null;
+  try {
+    url = await storeProofBlob(data, mime);
+  } catch {
+    url = null;
+  }
   const db = await getDb();
-  await db.insert(paymentProofs).values({ token, filename, mime, size: data.length, data });
+  await db.insert(paymentProofs).values({ token, filename, mime, size: data.length, data, url });
   return NextResponse.json({ token });
 }

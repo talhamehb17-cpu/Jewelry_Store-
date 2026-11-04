@@ -31,7 +31,14 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
   }
   if (!allowed) return new NextResponse('Not found', { status: 404 });
 
-  return new NextResponse(new Uint8Array(proof.data), {
+  let bytes: Uint8Array | null = proof.data ? new Uint8Array(proof.data) : null;
+  if (!bytes && proof.url) {
+    const remote = await fetch(proof.url);
+    if (!remote.ok) return new NextResponse('Not found', { status: 404 });
+    bytes = new Uint8Array(await remote.arrayBuffer());
+  }
+  if (!bytes) return new NextResponse('Not found', { status: 404 });
+  return new NextResponse(Buffer.from(bytes), {
     headers: {
       'Content-Type': proof.mime,
       'Content-Disposition': `${proof.mime === 'application/pdf' ? 'attachment' : 'inline'}; filename="${proof.filename.replace(/"/g, '')}"`,
