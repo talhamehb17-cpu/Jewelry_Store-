@@ -112,7 +112,10 @@ export async function markDelivered(orderId: number, note?: string): Promise<R> 
     revalidatePath('/admin/orders');
     revalidatePath('/admin/express');
     const link = `${siteUrl()}/account/orders/${o.number}`;
-    const mail = await sendEmail(o.email, `Your EVERMOON order ${o.number} is delivered`, statusEmail(o, 'delivered', link), 'order-delivered', { orderId: o.id });
+    const mail = await Promise.race([
+      sendEmail(o.email, `Your EVERMOON order ${o.number} is delivered`, statusEmail(o, 'delivered', link), 'order-delivered', { orderId: o.id }),
+      new Promise<{ sent: false; reason: string }>((resolve) => setTimeout(() => resolve({ sent: false, reason: 'Email timed out after the delivery was saved.' }), 15_000)),
+    ]);
     if (!mail.sent) return { ok: true, message: `Marked delivered. The email was not accepted: ${mail.reason || 'not sent'}. The status is saved.` };
     return { ok: true, message: 'Marked delivered. The customer notification is resolved.' };
   } catch (e) {

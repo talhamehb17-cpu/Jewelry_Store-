@@ -132,11 +132,19 @@ async function main() {
   const [stored] = await db.select().from(storeLocations).where(eq(storeLocations.name, 'Clock test counter'));
   check('opening and closing times remain after a database save', stored?.schedule?.days.mon.open === '11:00' && stored.schedule.days.mon.close === '20:00');
   check('a Sample hours string is not treated as public hours', hours.isPlaceholderHours(stored?.hours));
-  await db.update(reviews).set({ status: 'published' }).where(eq(reviews.productId, product!.id));
-  const { recalcProductRating } = await import('../src/lib/reviews');
+  await db.update(reviews).set({ status: 'published', avatar: '/images/reviews/hira.webp', title: 'Quiet gold' }).where(eq(reviews.productId, product!.id));
+  await db.insert(reviews).values({ productId: product!.id, name: 'Studio Desk', email: 'desk@studio.maisonaurelle.pk', rating: 5, title: 'A studio note', body: 'Studio note kept beside the customer review.', status: 'published', verified: false });
+  await db.insert(reviews).values({ productId: product!.id, userId: buyer!.id, name: 'Hidden Buyer', email: buyer!.email, rating: 1, title: 'Not for the site', body: 'This rejected note must stay off the product page.', status: 'hidden', verified: true });
+  const { publishedReviewSnapshot, recalcProductRating } = await import('../src/lib/reviews');
   await recalcProductRating(product!.id);
   const [rated] = await db.select({ ratingAvg: products.ratingAvg, ratingCount: products.ratingCount }).from(products).where(eq(products.id, product!.id));
-  check('approving a review updates the average and count', rated?.ratingCount === 1 && rated.ratingAvg === 5);
+  check('approving a review updates the average and count', rated?.ratingCount === 2 && rated.ratingAvg === 5);
+  const snap = await publishedReviewSnapshot(product!.id, 0, 12);
+  const approved = snap.reviews.find((row) => row.body.includes('quiet and lovely'));
+  check('approved review is in the same public list as the studio note', !!approved && snap.reviews.some((row) => row.studio && row.body.includes('Studio note kept')));
+  check('approved review keeps the customer name, stars, title and picture', approved?.name === 'Ayesha Khan' && approved.rating === 5 && approved.title === 'Quiet gold' && approved.avatar === '/images/reviews/hira.webp' && approved.verified === true);
+  check('a studio note is not marked verified purchase', snap.reviews.some((row) => row.studio && !row.verified));
+  check('a rejected review stays out of the public list', !snap.reviews.some((row) => row.body.includes('rejected note')) && snap.total === 2);
 
   if (failures.length) {
     console.error(failures.map((item) => `FAIL ${item}`).join('\n'));

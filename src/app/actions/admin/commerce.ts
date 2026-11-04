@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { discounts, inventoryMovements, productVariants, reviews, users, contactMessages, newsletterSubscribers } from '@/db/schema';
+import { discounts, inventoryMovements, productVariants, products, reviews, users, contactMessages, newsletterSubscribers } from '@/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { createResetLink } from '@/app/actions/auth';
 import { recalcProductRating } from '@/lib/reviews';
@@ -164,7 +164,11 @@ export async function moderateReview(id: number, status: 'published' | 'hidden' 
   if (status === 'delete') await db.delete(reviews).where(eq(reviews.id, id));
   else await db.update(reviews).set({ status }).where(eq(reviews.id, id));
   await recalcProductRating(r.productId);
+  const [product] = await db.select({ slug: products.slug }).from(products).where(eq(products.id, r.productId)).limit(1);
   revalidatePath('/admin/reviews');
+  revalidatePath('/account/reviews');
+  if (product?.slug) revalidatePath(`/products/${product.slug}`);
+  revalidatePath('/products/[slug]', 'page');
   revalidatePath('/', 'layout');
 }
 

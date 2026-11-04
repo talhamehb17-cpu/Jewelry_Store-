@@ -6,14 +6,13 @@ import { ProductPurchase } from '@/components/store/product-purchase';
 import { RecentlyViewed, ReviewForm, TrackRecentlyViewed } from '@/components/store/product-extras';
 import { ProductCard } from '@/components/store/product-card';
 import { Rail } from '@/components/sections/slider';
-import { Stars } from '@/components/ui/bits';
 import { getCompleteTheLook, getProductBySlug, getRelatedProducts } from '@/lib/catalog';
 import { campaignHit, getActiveCampaign, presentPrice } from '@/lib/campaigns';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings } from '@/lib/settings';
 import { getCurrentUser } from '@/lib/auth';
 import { eligiblePurchases, presentReview } from '@/lib/reviews';
-import { ReviewList } from '@/components/store/review-list';
+import { ReviewsSection } from '@/components/store/review-list';
 import { absoluteUrl, cn, jsonLd } from '@/lib/utils';
 import { isRemote } from '@/lib/images';
 
@@ -141,34 +140,15 @@ export default async function ProductPage({ params }: P) {
       )}
 
       <section id="reviews" className="section-y-sm border-t border-line">
-        <div className="container-x grid gap-12 md:grid-cols-[1fr_2fr]">
-          <div>
-            <h2 className="t-2">Reviews</h2>
-            {(d.distribution.reduce((sum, row) => sum + row.count, 0) || p.ratingCount) > 0 ? (
-              <>
-                <p className="font-heading mt-6 text-[3.5rem] leading-none">{p.ratingAvg.toFixed(1)}</p>
-                <Stars value={p.ratingAvg} size={16} className="mt-2" />
-                <p className="mt-2 text-[0.85rem] text-muted">Based on {d.distribution.reduce((sum, row) => sum + row.count, 0) || p.ratingCount} reviews</p>
-                <div className="mt-6 space-y-2">
-                  {d.distribution.map((r) => {
-                    const total = d.distribution.reduce((sum, row) => sum + row.count, 0) || p.ratingCount;
-                    return (
-                    <div key={r.star} className="flex items-center gap-3 text-[0.8rem]">
-                      <span className="w-6 text-muted">{r.star}★</span>
-                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className="block h-full rounded-full bg-accent" style={{ width: `${total ? (r.count / total) * 100 : 0}%` }} /></span>
-                      <span className="w-6 text-right text-muted">{r.count}</span>
-                    </div>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <p className="mt-4 text-muted">No reviews yet — be the first to share your thoughts.</p>
-            )}
-            <div className="mt-8"><ReviewForm productId={p.id} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} avatar={user?.avatar} purchases={purchases} signedIn={!!user} returnTo={`/products/${p.slug}#reviews`} /></div>
-          </div>
-          <ReviewList slug={p.slug} initial={d.reviews.map(presentReview)} total={d.distribution.reduce((sum, row) => sum + row.count, 0)} />
-        </div>
+        <ReviewsSection
+          slug={p.slug}
+          initial={d.reviews.map(presentReview)}
+          total={d.distribution.reduce((sum, row) => sum + row.count, 0)}
+          average={p.ratingAvg}
+          distribution={d.distribution}
+        >
+          <ReviewForm productId={p.id} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} avatar={user?.avatar} purchases={purchases} signedIn={!!user} returnTo={`/products/${p.slug}#reviews`} />
+        </ReviewsSection>
       </section>
 
       {related.length > 0 && (

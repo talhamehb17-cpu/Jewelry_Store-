@@ -242,7 +242,7 @@ export const getProductBySlug = cache(async (slug: string, opts: { includeDrafts
       .from(reviews)
       .where(and(eq(reviews.productId, p.id), eq(reviews.status, 'published')))
       .orderBy(desc(reviews.createdAt))
-      .limit(8),
+      .limit(12),
     db
       .select({ rating: reviews.rating, count: sql<number>`count(*)::int` })
       .from(reviews)

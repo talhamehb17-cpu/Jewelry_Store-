@@ -44,7 +44,7 @@ export async function reviewDistribution(productId: number) {
   return [5, 4, 3, 2, 1].map((star) => ({ star, count: counts.get(star) ?? 0 }));
 }
 
-export async function listPublishedReviews(productId: number, offset = 0, limit = 8) {
+export async function listPublishedReviews(productId: number, offset = 0, limit = 12) {
   const db = await getDb();
   const rows = await db
     .select()
@@ -54,6 +54,26 @@ export async function listPublishedReviews(productId: number, offset = 0, limit 
     .limit(limit)
     .offset(Math.max(0, offset));
   return rows.map(presentReview);
+}
+
+/** Published reviews only. Pending and rejected rows never enter this payload. */
+export async function publishedReviewSnapshot(productId: number, offset = 0, limit = 12) {
+  const db = await getDb();
+  const published = and(eq(reviews.productId, productId), eq(reviews.status, 'published'));
+  const [stats] = await db
+    .select({ avg: sql<number>`coalesce(avg(${reviews.rating}), 0)::float`, total: sql<number>`count(*)::int` })
+    .from(reviews)
+    .where(published);
+  const [rows, distribution] = await Promise.all([
+    listPublishedReviews(productId, offset, limit),
+    reviewDistribution(productId),
+  ]);
+  return {
+    reviews: rows,
+    total: Number(stats?.total ?? 0),
+    average: Math.round(Number(stats?.avg ?? 0) * 10) / 10,
+    distribution,
+  };
 }
 
 export type EligiblePurchase = {
