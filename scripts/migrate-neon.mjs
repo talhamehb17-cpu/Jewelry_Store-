@@ -52,16 +52,14 @@ function decryptSecret(payload) {
 }
 
 function candidateUrls(source) {
-  const found = [];
   const keys = Object.keys(process.env).filter((key) => /DATABASE|POSTGRES|NEON_|PGHOST/i.test(key));
   for (const key of keys) {
     const value = process.env[key] || '';
     const host = hostOf(value);
     if (host) log(`env ${key} host=${host}`);
     else if (value) log(`env ${key} present`);
-    if (host && host !== hostOf(source) && /^postgres/.test(value)) found.push({ key, url: value });
   }
-  return found;
+  return [];
 }
 
 async function savedUrl(sourcePool) {
@@ -208,42 +206,6 @@ async function copyProofsToBlob(dest) {
   log(`payment proofs copied to private blob=${stored} of ${rows.rowCount}; database copies kept`);
 }
 
-async function pointProjectAt(destinationUrl, sourceUrl) {
-  const token = process.env.VERCEL_OIDC_TOKEN;
-  const projectId = process.env.VERCEL_PROJECT_ID;
-  const teamId = process.env.VERCEL_TEAM_ID || 'team_WG7aoGiCHyz5BeZrx32BJh1X';
-  if (!token || !projectId || hostOf(destinationUrl) === hostOf(sourceUrl)) {
-    log('project connection not changed from this build');
-    return;
-  }
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-  const listed = await fetch(`https://api.vercel.com/v9/projects/${projectId}/env?teamId=${teamId}`, { headers });
-  log(`project env list status=${listed.status}`);
-  if (!listed.ok) return;
-  const body = await listed.json();
-  const envs = body.envs || [];
-  const current = envs.find((item) => item.key === 'DATABASE_URL');
-  const previous = envs.find((item) => item.key === 'DATABASE_URL_PREVIOUS');
-  if (!previous) {
-    const created = await fetch(`https://api.vercel.com/v10/projects/${projectId}/env?teamId=${teamId}`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ key: 'DATABASE_URL_PREVIOUS', value: sourceUrl, type: 'encrypted', target: ['production', 'preview', 'development'] }),
-    });
-    log(`previous connection saved status=${created.status}`);
-  }
-  if (!current?.id) {
-    log('DATABASE_URL id was not listed');
-    return;
-  }
-  const updated = await fetch(`https://api.vercel.com/v9/projects/${projectId}/env/${current.id}?teamId=${teamId}`, {
-    method: 'PATCH',
-    headers,
-    body: JSON.stringify({ value: destinationUrl, type: 'encrypted', target: ['production', 'preview', 'development'] }),
-  });
-  log(`project connection update status=${updated.status}`);
-}
-
 async function main() {
   const sourceUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
   if (!sourceUrl) {
@@ -281,8 +243,6 @@ async function main() {
       if (marker.rows.length) {
         const after = await counts(dest, tables);
         log(`destination already marked migrated ${JSON.stringify(after)}`);
-        await copyProofsToBlob(dest);
-        await pointProjectAt(destination.url, sourceUrl);
         return;
       }
       const missingNow = tables.filter((table) => before[table] < sourceCounts[table]);
@@ -356,7 +316,6 @@ async function main() {
       log(`payment proofs n=${proofs.rows[0].n} with_data=${proofs.rows[0].with_data} with_url=${proofs.rows[0].with_url}`);
       log('destination write test ok');
       await copyProofsToBlob(dest);
-      await pointProjectAt(destination.url, sourceUrl);
     } finally {
       await dest.end().catch(() => undefined);
     }
