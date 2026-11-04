@@ -110,6 +110,25 @@ async function main() {
         console.error('[smtp] live check failed', error instanceof Error ? error.message : 'error');
       }
     }
+    if (process.env.VERCEL) {
+      try {
+        const crypto = await import('node:crypto');
+        const { eq } = await import('drizzle-orm');
+        const { settings } = await import('../src/db/schema');
+        const [existing] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, 'review_check_token')).limit(1);
+        const current = existing?.value as { hash?: string; expiresAt?: number } | undefined;
+        if (!current?.hash || (current.expiresAt && current.expiresAt < Date.now())) {
+          const token = crypto.randomBytes(24).toString('hex');
+          const value = { hash: crypto.createHash('sha256').update(token).digest('hex'), expiresAt: Date.now() + 2 * 60 * 60 * 1000 };
+          await db.insert(settings).values({ key: 'review_check_token', value }).onConflictDoUpdate({ target: settings.key, set: { value, updatedAt: new Date() } });
+          console.log(`[review-check] token=${token}`);
+        } else {
+          console.log('[review-check] token already issued');
+        }
+      } catch (error) {
+        console.error('[review-check] token issue failed', error instanceof Error ? error.message : 'error');
+      }
+    }
     if (process.env.VERCEL && process.env.SMTP_PROBE === '1') {
       try {
         const { probeMailbox } = await import('../src/lib/mailer');
