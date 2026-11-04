@@ -57,7 +57,7 @@ export function normalizeSecret(value: string) {
 
 export function explainSmtpError(message: string) {
   if (/535|BadCredentials|Username and Password not accepted/i.test(message)) {
-    return 'Gmail refused SMTP login (535-5.7.8) after the saved secret was decrypted and sent. This is not marked as sent. The diagnostics show username shape, password length, host, port and the AUTH method. A 535 means Gmail rejected the login; it does not by itself prove the characters were typed wrong.';
+    return 'Gmail refused SMTP login (535-5.7.8). The message was not accepted. A 535 means Gmail rejected the username and app password after the connection started. It does not mean the order was lost.';
   }
   return message.slice(0, 500);
 }

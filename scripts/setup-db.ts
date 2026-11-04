@@ -37,8 +37,13 @@ async function main() {
       try {
         const { eq } = await import('drizzle-orm');
         const { settings } = await import('../src/db/schema');
-        const [done] = await db.select({ key: settings.key }).from(settings).where(eq(settings.key, 'gmail_live_test_v1')).limit(1);
-        if (!done) {
+        const fingerprint = (await import('node:crypto')).createHash('sha256').update(process.env.GMAIL_APP_PASSWORD).digest('hex').slice(0, 12);
+        const [done] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, 'gmail_live_test_v1')).limit(1);
+        const previous = done?.value as { fingerprint?: string } | undefined;
+        if (previous?.fingerprint !== fingerprint) {
+          const { envAppPassword, passwordShape } = await import('../src/lib/mailer');
+          const secret = envAppPassword();
+          console.log(`[smtp] source=env length=${secret.length} shape=${passwordShape(secret)} host=smtp.gmail.com port=587`);
           const { sendEmail, orderConfirmationEmail } = await import('../src/lib/email');
           const test = await sendEmail('mehboobtalha34@gmail.com', 'EVERMOON mailbox test', '<p>This is a controlled EVERMOON mailbox test. No customer order was used.</p>', 'mailbox-test');
           console.log(`[smtp] test-email sent=${test.sent} reason=${test.reason || 'accepted'}`);
@@ -69,7 +74,9 @@ async function main() {
               console.log(`[delivery] ${JSON.stringify(progressed)}`);
               await changeOrderStatus(order.id, 'confirmed', 'controlled-test', { note: 'Restored after delivery-timer check', force: true });
             }
-            await db.insert(settings).values({ key: 'gmail_live_test_v1', value: { at: new Date().toISOString(), sent: test.sent, orderNumber } }).onConflictDoNothing();
+            await db.insert(settings).values({ key: 'gmail_live_test_v1', value: { at: new Date().toISOString(), sent: true, orderNumber, fingerprint } }).onConflictDoUpdate({ target: settings.key, set: { value: { at: new Date().toISOString(), sent: true, orderNumber, fingerprint }, updatedAt: new Date() } });
+          } else {
+            await db.insert(settings).values({ key: 'gmail_live_test_v1', value: { at: new Date().toISOString(), sent: false, fingerprint } }).onConflictDoUpdate({ target: settings.key, set: { value: { at: new Date().toISOString(), sent: false, fingerprint }, updatedAt: new Date() } });
           }
         }
       } catch (error) {
