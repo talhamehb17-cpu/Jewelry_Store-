@@ -3,7 +3,7 @@ import { and, asc, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { Search } from 'lucide-react';
 import { getDb } from '@/db';
 import { inventoryMovements, products, productVariants, users } from '@/db/schema';
-import { Card, Empty, PageHeader, Pagination, qs } from '@/components/admin/ui';
+import { Card, Empty, PageHeader, Pagination, TableWrap, qs } from '@/components/admin/ui';
 import { StockRow } from '@/components/admin/stock-row';
 import { formatDateTime, titleCase } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -56,13 +56,13 @@ export default async function InventoryAdmin({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader title="Inventory" description={`${summary?.units ?? 0} units on hand · ${summary?.low ?? 0} low · ${summary?.out ?? 0} out of stock · est. value Rs ${Math.round(Number(summary?.value ?? 0) / 100).toLocaleString('en-PK')}`} />
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {[['', 'All variants'], ['low', 'Low stock'], ['out', 'Out of stock']].map(([k, l]) => (
           <Link key={k} href={qs('/admin/inventory', { ...f, filter: k || undefined })} className={cn('rounded-full border px-3 py-1 text-[0.78rem]', (sp.filter ?? '') === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink')}>{l}</Link>
         ))}
       </div>
       <Card pad={false}>
-        <form className="flex gap-2 border-b border-line p-4">
+        <form className="flex flex-col gap-2 border-b border-line p-3 sm:flex-row sm:p-4">
           <input type="hidden" name="filter" value={sp.filter ?? ''} />
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -71,36 +71,36 @@ export default async function InventoryAdmin({ searchParams }: { searchParams: P
           <button className="btn btn-secondary">Search</button>
         </form>
         {rows.length === 0 ? <Empty title="Nothing to show" body="No variants match this view." /> : (
-          <div className="overflow-x-auto">
+          <TableWrap>
             <table className="admin-table w-full text-[0.82rem]">
               <thead><tr><th>Product / variant</th><th>SKU</th><th>Low at</th><th>In stock</th><th>Adjust</th><th /></tr></thead>
               <tbody>
                 {rows.map((r) => <StockRow key={r.v.id} variant={{ id: r.v.id, title: r.v.title, sku: r.v.sku ?? '', stock: r.v.stock, threshold: r.v.lowStockThreshold }} product={{ id: r.productId, name: r.name }} />)}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
         <Pagination page={page} pages={pages} href={(n) => qs('/admin/inventory', { ...f, page: n })} />
       </Card>
       <div className="mt-6">
         <Card title={variantFilter ? 'Variant stock history' : 'Recent stock movements'} actions={variantFilter ? <Link href="/admin/inventory" className="text-[0.75rem] text-muted underline">Show all</Link> : null} pad={false}>
-          <div className="overflow-x-auto">
+          <TableWrap>
             <table className="admin-table w-full text-[0.82rem]">
               <thead><tr><th>Date</th><th>Product</th><th>Reason</th><th className="!text-right">Change</th><th className="!text-right">Stock after</th><th>By / note</th></tr></thead>
               <tbody>
                 {history.map(({ m, name, title, actor }) => (
                   <tr key={m.id}>
-                    <td className="whitespace-nowrap text-muted">{formatDateTime(m.createdAt)}</td>
-                    <td><Link href={qs('/admin/inventory', { variant: m.variantId })} className="hover:underline">{name}</Link><span className="block text-[0.72rem] text-muted">{title}</span></td>
-                    <td>{titleCase(m.reason)}</td>
-                    <td className={cn('text-right font-medium', m.change > 0 ? 'text-emerald-700' : m.change < 0 ? 'text-rose-700' : '')}>{m.change > 0 ? '+' : ''}{m.change}</td>
-                    <td className="text-right">{m.stockAfter}</td>
-                    <td className="text-muted">{actor ?? (m.orderId ? 'Order' : 'System')}{m.note ? ` · ${m.note}` : ''}</td>
+                    <td data-label="Date" className="is-primary text-muted">{formatDateTime(m.createdAt)}</td>
+                    <td data-label="Product"><Link href={qs('/admin/inventory', { variant: m.variantId })} className="hover:underline">{name}</Link><span className="block text-[0.72rem] text-muted">{title}</span></td>
+                    <td data-label="Reason">{titleCase(m.reason)}</td>
+                    <td data-label="Change" className={cn('text-right font-medium', m.change > 0 ? 'text-emerald-700' : m.change < 0 ? 'text-rose-700' : '')}>{m.change > 0 ? '+' : ''}{m.change}</td>
+                    <td data-label="Stock after" className="text-right">{m.stockAfter}</td>
+                    <td data-label="By / note" className="text-muted">{actor ?? (m.orderId ? 'Order' : 'System')}{m.note ? ` · ${m.note}` : ''}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         </Card>
       </div>
     </>

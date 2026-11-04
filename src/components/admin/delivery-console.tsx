@@ -91,7 +91,7 @@ export function DeliveryConsole({ order }: { order: Facts }) {
       </div>
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-end bg-black/40 p-4 sm:place-items-center" role="dialog" aria-modal="true" aria-labelledby="deliver-title">
-          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+          <div className="max-h-[min(90dvh,640px)] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 shadow-xl">
             <h3 id="deliver-title" className="font-heading text-2xl">Mark {order.number} as delivered?</h3>
             <p className="mt-2 text-[0.86rem] text-muted">Only confirm if you have checked that the package arrived. This does not wait for the customer, and it does not happen because the estimate passed.</p>
             <label className="mt-4 block text-[0.78rem] text-muted">Optional verification note

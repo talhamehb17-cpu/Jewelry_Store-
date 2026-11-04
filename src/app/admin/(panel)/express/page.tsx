@@ -3,7 +3,7 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { orders, paymentProofs } from '@/db/schema';
 import { expressOrderSql, listOrders, type OrderFilters } from '@/lib/admin-orders';
-import { Card, Empty, PageHeader, Pagination, qs } from '@/components/admin/ui';
+import { Card, Empty, PageHeader, Pagination, TableWrap, qs } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/store/order-status';
 import { formatMoney } from '@/lib/money';
 import { formatDateTime, titleCase } from '@/lib/utils';
@@ -80,7 +80,7 @@ export default async function ExpressOrders({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader title="Express orders" description="Only orders placed with Express delivery. Payment screenshots are not approved automatically." />
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-5">
         {cards.map(([label, value]) => (
           <div key={label} className="rounded-lg border border-line bg-white px-4 py-3">
             <p className="text-[0.68rem] uppercase tracking-[0.12em] text-muted">{label}</p>
@@ -107,7 +107,7 @@ export default async function ExpressOrders({ searchParams }: { searchParams: Pr
                   <p className="font-medium">{o.number} · {o.customerName}</p>
                   <p className="text-[0.78rem] text-muted">{titleCase(o.paymentMethod)} · {formatMoney(o.total)} · {formatDateTime(o.createdAt)}</p>
                 </div>
-                <Link href={`/admin/orders/${o.id}`} className="btn btn-primary self-center">Open order</Link>
+                <Link href={`/admin/orders/${o.id}`} className="btn btn-primary w-full sm:w-auto sm:self-center">Open order</Link>
               </article>
             ))}
           </div>
@@ -119,7 +119,7 @@ export default async function ExpressOrders({ searchParams }: { searchParams: Pr
         ))}
       </div>
       <Card pad={false}>
-        <form className="flex gap-2 border-b border-line p-4">
+        <form className="flex flex-col gap-2 border-b border-line p-3 sm:flex-row sm:p-4">
           {sp.filter && <input type="hidden" name="filter" value={sp.filter} />}
           <input name="q" defaultValue={sp.q} placeholder="Customer name or order number" className="field" />
           <button className="btn btn-secondary">Search</button>
@@ -127,23 +127,23 @@ export default async function ExpressOrders({ searchParams }: { searchParams: Pr
         {list.rows.length === 0 ? (
           <Empty title="No express orders match" />
         ) : (
-          <div className="overflow-x-auto">
+          <TableWrap>
             <table className="admin-table w-full text-[0.84rem]">
               <thead><tr><th>Order</th><th>Customer</th><th>Payment</th><th>Fulfilment</th><th>Expected</th><th className="!text-right">Total</th></tr></thead>
               <tbody>
                 {list.rows.map((o) => (
                   <tr key={o.id}>
-                    <td><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link><span className="block text-[0.72rem] text-muted">{formatDateTime(o.createdAt)}</span></td>
-                    <td>{o.customerName}<span className="block text-[0.72rem] text-muted">{o.email}</span></td>
-                    <td><StatusBadge status={o.paymentStatus} kind="payment" /></td>
-                    <td><StatusBadge status={o.status} /></td>
-                    <td className="text-muted">{o.expectedAt ? formatDateTime(o.expectedAt) : 'Starts after payment'}</td>
-                    <td className="text-right">{formatMoney(o.total)}</td>
+                    <td className="is-primary" data-label="Order"><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link><span className="block text-[0.72rem] text-muted">{formatDateTime(o.createdAt)}</span></td>
+                    <td data-label="Customer">{o.customerName}<span className="block break-all text-[0.72rem] text-muted">{o.email}</span></td>
+                    <td data-label="Payment"><StatusBadge status={o.paymentStatus} kind="payment" /></td>
+                    <td data-label="Fulfilment"><StatusBadge status={o.status} /></td>
+                    <td data-label="Expected" className="text-muted">{o.expectedAt ? formatDateTime(o.expectedAt) : 'Starts after payment'}</td>
+                    <td data-label="Total" className="text-right">{formatMoney(o.total)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
         <Pagination page={page} pages={list.pages} href={(n) => qs('/admin/express', { filter: sp.filter, q: sp.q, page: n })} />
       </Card>

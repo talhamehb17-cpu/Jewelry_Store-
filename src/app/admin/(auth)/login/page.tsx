@@ -19,7 +19,7 @@ export default async function AdminLogin() {
           <h1 className="mt-5 font-heading text-[2rem]">EVERMOON Admin</h1>
           <p className="mt-1 text-[0.85rem] text-muted">Sign in to manage your store</p>
         </div>
-        <div className="admin-card p-7">
+        <div className="admin-card p-5 sm:p-7">
           <LoginForm area="admin" next="/admin" />
         </div>
         <p className="mt-6 text-center text-[0.8rem] text-muted"><Link href="/" className="hover:text-ink">← Back to store</Link></p>

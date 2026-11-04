@@ -23,11 +23,11 @@ export function CurrencyAdmin({ rates, fetchedAt }: { rates: { code: string; per
         ))}
         {!rates.length && <p className="text-[0.85rem] text-muted">No rates saved yet. PKR remains available.</p>}
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <select className="field max-w-[8rem]" value={code} onChange={(e) => setCode(e.target.value)}>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <select className="field sm:max-w-[8rem]" value={code} onChange={(e) => setCode(e.target.value)}>
           {CURRENCIES.filter((c) => c.code !== 'PKR').map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
         </select>
-        <input className="field max-w-[12rem]" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Units per 1 PKR" />
+        <input className="field sm:max-w-[12rem]" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Units per 1 PKR" />
         <button type="button" className="btn btn-secondary" disabled={pending} onClick={() => start(async () => { setMsg((await saveRateAction(code, Number(value))).message); router.refresh(); })}>Save admin rate</button>
         <button type="button" className="btn btn-secondary" disabled={pending} onClick={() => start(async () => { setMsg((await clearRateAction(code)).message); router.refresh(); })}>Clear</button>
       </div>

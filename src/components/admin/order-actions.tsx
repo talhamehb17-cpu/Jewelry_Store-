@@ -39,7 +39,7 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
           <div>
             <p className="label">Update fulfilment status</p>
             {next.includes('shipped') && (
-              <div className="mb-3 grid gap-2 sm:grid-cols-[160px_1fr]">
+              <div className="mb-3 grid gap-2 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
                 <select value={carrier} onChange={(e) => setCarrier(e.target.value)} className="field"><option>TCS</option><option>Leopards Courier</option><option>M&amp;P</option><option>BlueEX</option><option>Trax</option><option>PostEx</option></select>
                 <input value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="Tracking number (for shipping)" className="field" />
               </div>
@@ -64,7 +64,7 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
         )}
 
         {(order.status === 'shipped' || order.status === 'delivered') && (
-          <div className="grid gap-2 border-t border-line pt-5 sm:grid-cols-[160px_1fr_auto]">
+          <div className="grid gap-2 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto]">
             <input value={carrier} onChange={(e) => setCarrier(e.target.value)} className="field" aria-label="Carrier" />
             <input value={tracking} onChange={(e) => setTracking(e.target.value)} className="field" aria-label="Tracking number" />
             <button disabled={pending} onClick={() => run(() => saveTracking(order.id, carrier, tracking))} className="btn btn-secondary">Update tracking</button>
@@ -75,9 +75,9 @@ export function OrderActions({ order, next }: { order: O; next: string[] }) {
           <div className="border-t border-line pt-5">
             <p className="label">Record payment</p>
             <div className="flex flex-wrap gap-2">
-              <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction / receipt reference" className="field max-w-xs" />
+              <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction / receipt reference" className="field min-w-0 flex-1" />
               <button disabled={pending} onClick={() => run(() => markPaid(order.id, ref))} className="btn btn-primary"><CheckCircle2 size={14} /> Verify payment</button>
-              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Rejection reason (required)" className="field max-w-xs" />
+              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Rejection reason (required)" className="field min-w-0 flex-1" />
               <button disabled={pending || !reason.trim()} onClick={() => run(() => rejectPayment(order.id, reason))} className="btn btn-secondary">Reject payment</button>
             </div>
             <p className="mt-2 text-[0.75rem] text-muted">Verify only after the funds and the receipt match. Rejecting does not delete the order.</p>

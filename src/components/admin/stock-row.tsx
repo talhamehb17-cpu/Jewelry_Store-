@@ -29,11 +29,11 @@ export function StockRow({ variant, product }: { variant: { id: number; title: s
     });
   return (
     <tr className={pending ? 'opacity-60' : ''}>
-      <td><Link href={`/admin/products/${product.id}`} className="font-medium hover:underline">{product.name}</Link><span className="block text-[0.72rem] text-muted">{variant.title}</span></td>
-      <td><input value={sku} onChange={(e) => setSku(e.target.value)} onBlur={() => sku !== variant.sku && start(async () => { await updateVariantMeta(variant.id, sku, threshold); })} className="field !w-36 !py-1 !text-[0.78rem]" aria-label="SKU" /></td>
-      <td><input type="number" min={0} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} onBlur={() => threshold !== variant.threshold && start(async () => { await updateVariantMeta(variant.id, sku, threshold); })} className="field !w-16 !py-1 !text-[0.78rem]" aria-label="Low stock threshold" /></td>
-      <td><span className={cn('rounded-full px-2 py-0.5 text-[0.75rem] font-semibold', out ? 'bg-rose-50 text-rose-700' : low ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700')}>{variant.stock}</span></td>
-      <td>
+      <td className="is-primary" data-label="Product"><Link href={`/admin/products/${product.id}`} className="font-medium hover:underline">{product.name}</Link><span className="block text-[0.72rem] text-muted">{variant.title}</span></td>
+      <td data-label="SKU"><input value={sku} onChange={(e) => setSku(e.target.value)} onBlur={() => sku !== variant.sku && start(async () => { await updateVariantMeta(variant.id, sku, threshold); })} className="field !w-36 !py-1 !text-[0.78rem]" aria-label="SKU" /></td>
+      <td data-label="Low at"><input type="number" min={0} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} onBlur={() => threshold !== variant.threshold && start(async () => { await updateVariantMeta(variant.id, sku, threshold); })} className="field !w-16 !py-1 !text-[0.78rem]" aria-label="Low stock threshold" /></td>
+      <td data-label="In stock"><span className={cn('rounded-full px-2 py-0.5 text-[0.75rem] font-semibold', out ? 'bg-rose-50 text-rose-700' : low ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700')}>{variant.stock}</span></td>
+      <td className="stack" data-label="Adjust">
         <div className="flex items-center gap-1.5">
           <select value={mode} onChange={(e) => setMode(e.target.value as 'add' | 'set')} className="field !w-auto !py-1 !text-[0.75rem]" aria-label="Adjustment mode"><option value="add">Add / remove</option><option value="set">Set to</option></select>
           <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d-]/g, ''))} onKeyDown={(e) => e.key === 'Enter' && apply()} placeholder={mode === 'add' ? '+5 / -2' : '0'} className="field !w-20 !py-1 !text-[0.78rem]" aria-label="Quantity" />
@@ -42,7 +42,7 @@ export function StockRow({ variant, product }: { variant: { id: number; title: s
         </div>
         {msg && <p className="mt-1 text-[0.7rem] text-muted">{msg}</p>}
       </td>
-      <td><Link href={`/admin/inventory?variant=${variant.id}`} className="text-muted hover:text-ink" aria-label="Stock history"><History size={15} /></Link></td>
+      <td data-label="History"><Link href={`/admin/inventory?variant=${variant.id}`} className="inline-flex h-10 w-10 items-center justify-center text-muted hover:text-ink" aria-label="Stock history"><History size={15} /></Link></td>
     </tr>
   );
 }

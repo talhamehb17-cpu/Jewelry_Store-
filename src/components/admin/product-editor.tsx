@@ -30,7 +30,7 @@ function SortableImage({ id, url, alt, onAlt, onRemove, first }: { id: string; u
       <div className="relative aspect-square overflow-hidden rounded-md bg-secondary">
         <Img src={url} alt={alt} sizes="200px" />
         <button type="button" {...attributes} {...listeners} className="absolute left-1.5 top-1.5 cursor-grab rounded bg-white/90 p-1 text-muted active:cursor-grabbing" aria-label="Drag to reorder"><GripVertical size={14} /></button>
-        <button type="button" onClick={onRemove} className="absolute right-1.5 top-1.5 rounded bg-white/90 p-1 text-rose-600 opacity-0 transition group-hover:opacity-100" aria-label="Remove image"><Trash2 size={14} /></button>
+        <button type="button" onClick={onRemove} className="admin-hover-only absolute right-1.5 top-1.5 grid h-8 w-8 place-items-center rounded bg-white/90 text-rose-600" aria-label="Remove image"><Trash2 size={14} /></button>
         {first && <span className="absolute bottom-1.5 left-1.5 rounded bg-ink px-1.5 py-0.5 text-[0.62rem] text-white">Main image</span>}
       </div>
       <input value={alt} onChange={(e) => onAlt(e.target.value)} placeholder="Alt text" className="mt-1.5 w-full rounded border border-transparent bg-transparent px-1 py-0.5 text-[0.72rem] outline-none focus:border-line" />
@@ -126,12 +126,12 @@ export function ProductEditor({ initial, categories, collections, productId }: {
 
   return (
     <div className="pb-24">
-      <div className="sticky top-0 z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-[#f7f5f1]/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
+      <div className="sticky top-14 z-20 -mx-3 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-line bg-[#f7f5f1]/95 px-3 py-3 backdrop-blur sm:-mx-4 sm:px-4 lg:top-0 md:-mx-8 md:px-8">
         <div className="min-w-0">
           <Link href="/admin/products" className="text-[0.78rem] text-muted hover:text-ink">← Products</Link>
-          <h1 className="truncate font-heading text-[1.7rem] leading-tight">{p.name || 'New product'}</h1>
+          <h1 className="truncate font-heading text-[1.45rem] leading-tight sm:text-[1.7rem]">{p.name || 'New product'}</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-2">
           {dirty && <span className="text-[0.75rem] text-amber-700">Unsaved changes</span>}
           {saved && !dirty && <span className="inline-flex items-center gap-1 text-[0.75rem] text-emerald-700"><Check size={14} /> Saved</span>}
           {productId && <a href={`/products/${initial.slug}`} target="_blank" rel="noreferrer" className="btn btn-secondary"><ExternalLink size={14} /> View</a>}
@@ -159,7 +159,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
             {(p.images ?? []).length ? (
               <DndContext id="media-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext items={imgIds} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-3 gap-3 md:grid-cols-5">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                     {(p.images ?? []).map((im, i) => (
                       <SortableImage key={imgIds[i]} id={imgIds[i]!} url={im.url} alt={im.alt ?? ''} first={i === 0} onAlt={(v) => set('images', (p.images ?? []).map((x, k) => (k === i ? { ...x, alt: v } : x)))} onRemove={() => set('images', (p.images ?? []).filter((_, k) => k !== i))} />
                     ))}
@@ -192,19 +192,19 @@ export function ProductEditor({ initial, categories, collections, productId }: {
               <Field label="Metal colours (comma separated)"><input value={colorsText} onChange={(e) => setColorsText(e.target.value)} placeholder="Gold, Silver" className="field" /></Field>
               <button type="button" onClick={generate} className="btn btn-secondary"><Wand2 size={14} /> Generate</button>
             </div>
-            <div className="mt-4 overflow-x-auto">
+            <div className="admin-scroll admin-cards mt-4">
               <table className="admin-table w-full text-[0.8rem]">
                 <thead><tr><th>Variant</th><th>SKU</th><th>Barcode</th><th>Price override</th><th>Stock</th><th>Low at</th><th /></tr></thead>
                 <tbody>
                   {p.variants.map((v, i) => (
                     <tr key={`${v.id ?? 'n'}-${i}`}>
-                      <td className="whitespace-nowrap font-medium">{[v.color, v.size].filter(Boolean).join(' / ') || 'Default'}</td>
-                      <td><input value={v.sku} onChange={(e) => setVariant(i, { sku: e.target.value })} className="field !py-1.5 !text-[0.78rem]" /></td>
-                      <td><input value={v.barcode} onChange={(e) => setVariant(i, { barcode: e.target.value })} className="field !py-1.5 !text-[0.78rem]" /></td>
-                      <td><input value={v.price} onChange={(e) => setVariant(i, { price: e.target.value.replace(/[^\d.]/g, '') })} placeholder={p.price} className="field !w-24 !py-1.5 !text-[0.78rem]" /></td>
-                      <td><input type="number" min={0} value={v.stock} onChange={(e) => setVariant(i, { stock: Math.max(0, Number(e.target.value) || 0) })} className={cn('field !w-20 !py-1.5 !text-[0.78rem]', v.stock <= v.lowStockThreshold && '!border-amber-400')} /></td>
-                      <td><input type="number" min={0} value={v.lowStockThreshold} onChange={(e) => setVariant(i, { lowStockThreshold: Math.max(0, Number(e.target.value) || 0) })} className="field !w-16 !py-1.5 !text-[0.78rem]" /></td>
-                      <td>{p.variants.length > 1 && <button type="button" onClick={() => set('variants', p.variants.filter((_, k) => k !== i))} className="text-muted hover:text-rose-600" aria-label="Remove variant"><Trash2 size={14} /></button>}</td>
+                      <td className="is-primary font-medium" data-label="Variant">{[v.color, v.size].filter(Boolean).join(' / ') || 'Default'}</td>
+                      <td data-label="SKU"><input value={v.sku} onChange={(e) => setVariant(i, { sku: e.target.value })} className="field !py-1.5 !text-[0.78rem]" /></td>
+                      <td data-label="Barcode"><input value={v.barcode} onChange={(e) => setVariant(i, { barcode: e.target.value })} className="field !py-1.5 !text-[0.78rem]" /></td>
+                      <td data-label="Price override"><input value={v.price} onChange={(e) => setVariant(i, { price: e.target.value.replace(/[^\d.]/g, '') })} placeholder={p.price} className="field !w-24 !py-1.5 !text-[0.78rem]" /></td>
+                      <td data-label="Stock"><input type="number" min={0} value={v.stock} onChange={(e) => setVariant(i, { stock: Math.max(0, Number(e.target.value) || 0) })} className={cn('field !w-20 !py-1.5 !text-[0.78rem]', v.stock <= v.lowStockThreshold && '!border-amber-400')} /></td>
+                      <td data-label="Low at"><input type="number" min={0} value={v.lowStockThreshold} onChange={(e) => setVariant(i, { lowStockThreshold: Math.max(0, Number(e.target.value) || 0) })} className="field !w-16 !py-1.5 !text-[0.78rem]" /></td>
+                      <td data-label="">{p.variants.length > 1 && <button type="button" onClick={() => set('variants', p.variants.filter((_, k) => k !== i))} className="inline-flex h-10 w-10 items-center justify-center text-muted hover:text-rose-600" aria-label="Remove variant"><Trash2 size={14} /></button>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -284,7 +284,7 @@ function AddImageUrl({ onAdd }: { onAdd: (url: string) => void }) {
   return (
     <div>
       <p className="label">Add image by URL</p>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input value={v} onChange={(e) => setV(e.target.value)} placeholder="https://images.unsplash.com/…" className="field" />
         <button type="button" onClick={() => { if (/^(https?:\/\/|\/)/.test(v.trim())) { onAdd(v.trim()); setV(''); } }} className="btn btn-secondary">Add</button>
       </div>

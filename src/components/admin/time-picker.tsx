@@ -60,7 +60,7 @@ export function TimePicker({ label, value, onChange }: { label: string; value: s
 
   const dialog = (
     <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/45 p-3 sm:items-center" onMouseDown={() => setOpen(false)}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-[380px] rounded-2xl border border-[#e6e0d6] bg-white p-4 shadow-[0_24px_60px_-28px_rgba(0,0,0,.55)]" onMouseDown={(event) => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="max-h-[min(92dvh,640px)] w-full max-w-[380px] overflow-y-auto rounded-2xl border border-[#e6e0d6] bg-white p-4 shadow-[0_24px_60px_-28px_rgba(0,0,0,.55)]" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
           <div>
             <p id={titleId} className="text-[0.72rem] uppercase tracking-[0.14em] text-[#8a8178]">{label}</p>

@@ -41,7 +41,7 @@ export function ActionButton({
         {pending ? 'Working…' : children}
       </button>
       {showResult && res && (
-        <div className={cn('max-w-md rounded-md px-3 py-2 text-[0.78rem]', res.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800')}>
+        <div className={cn('max-w-full rounded-md px-3 py-2 text-[0.78rem] sm:max-w-md', res.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800')}>
           {res.message}
           {res.data && (
             <div className="mt-2 flex items-center gap-2">

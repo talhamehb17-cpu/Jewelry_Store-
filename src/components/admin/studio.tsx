@@ -14,6 +14,17 @@ export type StudioData = {
 
 const DEVICES = { desktop: { w: '100%', icon: Monitor, label: 'Desktop' }, tablet: { w: '820px', icon: Tablet, label: 'Tablet' }, mobile: { w: '390px', icon: Smartphone, label: 'Mobile' } } as const;
 export type Device = keyof typeof DEVICES;
+export type StudioPane = 'edit' | 'preview';
+
+export function PaneToggle({ pane, setPane }: { pane: StudioPane; setPane: (pane: StudioPane) => void }) {
+  return (
+    <div className="flex rounded-lg border border-line bg-white p-0.5 lg:hidden" role="tablist" aria-label="Editor panes">
+      {(['edit', 'preview'] as const).map((id) => (
+        <button key={id} type="button" role="tab" aria-selected={pane === id} onClick={() => setPane(id)} className={cn('rounded-md px-3 py-2 text-[0.78rem] capitalize', pane === id ? 'bg-ink text-white' : 'text-muted')}>{id}</button>
+      ))}
+    </div>
+  );
+}
 
 export function DeviceToggle({ device, setDevice }: { device: Device; setDevice: (d: Device) => void }) {
   return (
@@ -21,7 +32,7 @@ export function DeviceToggle({ device, setDevice }: { device: Device; setDevice:
       {(Object.keys(DEVICES) as Device[]).map((d) => {
         const I = DEVICES[d].icon;
         return (
-          <button key={d} onClick={() => setDevice(d)} className={cn('rounded-md p-1.5', device === d ? 'bg-ink text-white' : 'text-muted hover:text-ink')} aria-label={`${DEVICES[d].label} preview`} title={DEVICES[d].label}>
+          <button key={d} type="button" onClick={() => setDevice(d)} className={cn('grid h-10 w-10 place-items-center rounded-md', device === d ? 'bg-ink text-white' : 'text-muted hover:text-ink')} aria-label={`${DEVICES[d].label} preview`} title={DEVICES[d].label}>
             <I size={15} />
           </button>
         );
@@ -33,9 +44,9 @@ export function DeviceToggle({ device, setDevice }: { device: Device; setDevice:
 export const PreviewFrame = forwardRef<HTMLIFrameElement, { src: string; device: Device; onReload: () => void; openHref: string; status?: string }>(function PreviewFrame({ src, device, onReload, openHref, status }, ref) {
   return (
     <div className="flex h-full flex-col bg-[#ebe7e0]">
-      <div className="flex items-center justify-between gap-2 border-b border-line bg-white px-4 py-2 text-[0.75rem] text-muted">
-        <span>{status ?? 'Live preview'}</span>
-        <span className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-3 py-2 text-[0.75rem] text-muted sm:px-4">
+        <span className="min-w-0">{status ?? 'Live preview'}</span>
+        <span className="flex flex-wrap items-center gap-3">
           <button onClick={onReload} className="inline-flex items-center gap-1 hover:text-ink"><RotateCw size={13} /> Refresh</button>
           <a href={openHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-ink"><ExternalLink size={13} /> Open in new tab</a>
         </span>

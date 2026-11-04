@@ -39,7 +39,7 @@ export function PageEditor({ initial, system }: { initial: P; system: boolean })
           <Link href="/admin/pages" className="text-[0.78rem] text-muted hover:text-ink">← Pages</Link>
           <h1 className="font-heading text-[1.8rem]">{p.title || 'New page'}</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full flex-wrap items-center gap-2">
           {msg && <span className={`text-[0.78rem] ${msg.ok ? 'text-emerald-700' : 'text-rose-700'}`}>{msg.message}</span>}
           {p.id && !system && <button onClick={() => confirm('Delete this page?') && start(async () => { const r = await deletePage(p.id!); if (r.ok) router.push('/admin/pages'); else setMsg(r); })} className="btn btn-secondary !text-rose-700"><Trash2 size={14} /> Delete</button>}
           <button onClick={save} disabled={pending} className="btn btn-primary">{pending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save</button>
@@ -53,12 +53,12 @@ export function PageEditor({ initial, system }: { initial: P; system: boolean })
               <div className="prose-aurelle max-h-[65vh] overflow-y-auto rounded-lg border border-line bg-[#fdfcfa] p-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }} />
             ) : (
               <>
-                <div className="mb-2 flex gap-1">
+                <div className="mb-2 flex flex-wrap gap-1">
                   <button type="button" onClick={() => insert('\n## ', '')} className="rounded p-1.5 hover:bg-secondary" aria-label="Heading"><Heading2 size={15} /></button>
                   <button type="button" onClick={() => insert('**', '**')} className="rounded p-1.5 hover:bg-secondary" aria-label="Bold"><Bold size={15} /></button>
                   <button type="button" onClick={() => insert('\n- ', '')} className="rounded p-1.5 hover:bg-secondary" aria-label="List"><List size={15} /></button>
                   <button type="button" onClick={() => insert('[', '](/link)')} className="rounded p-1.5 hover:bg-secondary" aria-label="Link"><Link2 size={15} /></button>
-                  <span className="ml-auto self-center text-[0.72rem] text-muted">Markdown: ## heading, **bold**, - list, [text](/link), | tables |</span>
+                  <span className="basis-full self-center text-[0.72rem] text-muted sm:ml-auto sm:basis-auto">Markdown: ## heading, **bold**, - list, [text](/link), | tables |</span>
                 </div>
                 <textarea id="md" value={p.content} onChange={(e) => set('content', e.target.value)} rows={24} className="field font-mono !text-[0.8rem] leading-relaxed" />
                 {p.template === 'faq' && <p className="mt-2 text-[0.75rem] text-muted">FAQ format: use “## Section” for groups and “### Question” followed by the answer.</p>}

@@ -25,7 +25,7 @@ export default async function ReviewsAdmin({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader title="Reviews" description="Customer reviews stay hidden until you publish them. Studio testimonials already on the site stay in the same review list." />
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {[['', 'All'], ['pending', 'Pending'], ['published', 'Published'], ['hidden', 'Hidden']].map(([k, l]) => (
           <Link key={k} href={qs('/admin/reviews', { status: k || undefined })} className={cn('rounded-full border px-3 py-1 text-[0.78rem]', (sp.status ?? '') === k ? 'border-ink bg-ink text-white' : 'border-line bg-white')}>{l}</Link>
         ))}
@@ -34,7 +34,7 @@ export default async function ReviewsAdmin({ searchParams }: { searchParams: Pro
         {rows.length === 0 ? <Empty title="No reviews here" /> : (
           <ul className="divide-y divide-line">
             {rows.map(({ r, product, slug, orderNumber }) => (
-              <li key={r.id} className="flex flex-col gap-3 p-5 md:flex-row md:items-start">
+              <li key={r.id} className="flex flex-col gap-3 p-4 sm:p-5 md:flex-row md:items-start">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Stars value={r.rating} size={13} />
@@ -44,16 +44,16 @@ export default async function ReviewsAdmin({ searchParams }: { searchParams: Pro
                   </div>
                   {r.title && <p className="mt-2 font-medium">{r.title}</p>}
                   <p className="mt-1 text-[0.86rem] text-[#4a443e]">{r.body}</p>
-                  <p className="mt-2 flex items-center gap-2 text-[0.75rem] text-muted">
-                    {r.avatar && <span className="relative h-8 w-8 overflow-hidden rounded-full bg-secondary"><img src={r.avatar} alt="" className="h-full w-full object-cover" /></span>}
+                  <p className="mt-2 flex flex-wrap items-center gap-2 break-all text-[0.75rem] text-muted">
+                    {r.avatar && <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-secondary"><img src={r.avatar} alt="" className="h-full w-full object-cover" /></span>}
                     {r.name}{r.email ? ` · ${r.email}` : ''}
                     {!r.verified && r.email?.endsWith('@studio.maisonaurelle.pk') && ' · studio testimonial'}
                     {orderNumber ? ` · order ${orderNumber}` : ''}
                     {' · on '}<a href={`/products/${slug}#reviews`} target="_blank" rel="noreferrer" className="underline">{product}</a>
                   </p>
-                  {r.photo && <img src={r.photo} alt="" className="mt-3 h-24 w-20 rounded object-cover" />}
+                  {r.photo && <img src={r.photo} alt="" className="mt-3 h-24 max-w-full rounded object-cover" />}
                 </div>
-                <div className="flex shrink-0 gap-2">
+                <div className="flex shrink-0 flex-wrap gap-2">
                   {r.status !== 'published' && <ActionButton action={moderateReview.bind(null, r.id, 'published')} showResult={false}>Approve</ActionButton>}
                   {r.status === 'pending' && <ActionButton action={moderateReview.bind(null, r.id, 'hidden')} showResult={false}>Reject</ActionButton>}
                   {r.status === 'published' && <ActionButton action={moderateReview.bind(null, r.id, 'hidden')} showResult={false}>Hide</ActionButton>}

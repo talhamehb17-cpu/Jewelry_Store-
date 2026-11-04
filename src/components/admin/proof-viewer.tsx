@@ -15,7 +15,7 @@ export function ProofViewer({ src, alt }: { src: string; alt: string }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="mt-2 block text-left">
-        <img src={src} alt={alt} className="max-h-72 rounded-theme border border-line object-contain" />
+        <img src={src} alt={alt} className="max-h-72 max-w-full rounded-theme border border-line object-contain" />
       </button>
       <button type="button" onClick={() => setOpen(true)} className="mt-2 text-[0.8rem] underline">View full image</button>
       {open && (

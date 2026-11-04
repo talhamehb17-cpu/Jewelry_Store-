@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { Palette, Type, LayoutGrid, MousePointerClick, PanelTop, PanelBottom, Megaphone, Smartphone, Sparkles, Loader2, Check, Upload, RotateCcw, Undo2, LayoutTemplate } from 'lucide-react';
 import { discardThemeDraft, publishTheme, resetThemeDefaults, saveThemeDraft, activateTheme } from '@/app/actions/admin/themes';
-import { DeviceToggle, PreviewFrame, type Device } from './studio';
+import { DeviceToggle, PaneToggle, PreviewFrame, type Device, type StudioPane } from './studio';
 import { ImageInput } from './image-input';
 import { FONT_LIST, FONT_KEYS } from '@/themes/font-list';
 import { themeCssVars } from '@/themes/engine';
@@ -43,6 +43,7 @@ export function Customizer({ themeId, name, initial, hasDraft, isActive }: { the
   const [s, setS] = useState<ThemeSettings>(initial);
   const [tab, setTab] = useState<Tab>('colors');
   const [device, setDevice] = useState<Device>('desktop');
+  const [pane, setPane] = useState<StudioPane>('edit');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(hasDraft ? 'saved' : 'idle');
   const [draft, setDraft] = useState(hasDraft);
   const [msg, setMsg] = useState('');
@@ -261,7 +262,7 @@ export function Customizer({ themeId, name, initial, hasDraft, isActive }: { the
   };
 
   return (
-    <div className="flex h-[100dvh] flex-col">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col lg:h-[100dvh]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/admin/themes" className="text-[0.78rem] text-muted hover:text-ink">← Themes</Link>
@@ -270,6 +271,7 @@ export function Customizer({ themeId, name, initial, hasDraft, isActive }: { the
           <span className="text-[0.75rem] text-muted">{status === 'saving' ? <span className="inline-flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Saving draft…</span> : status === 'saved' ? <span className="inline-flex items-center gap-1 text-emerald-700"><Check size={12} /> Draft saved</span> : status === 'error' ? <span className="text-rose-700">{msg}</span> : 'No unpublished changes'}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <PaneToggle pane={pane} setPane={setPane} />
           <DeviceToggle device={device} setDevice={setDevice} />
           <Link href={`/admin/builder?theme=${themeId}`} className="btn btn-secondary btn-sm"><LayoutTemplate size={13} /> Sections</Link>
           <button disabled={pending} onClick={() => confirm('Restore this theme’s original design settings into the draft?') && start(async () => { await resetThemeDefaults(themeId, 'settings'); window.location.reload(); })} className="btn btn-secondary btn-sm"><RotateCcw size={13} /> Defaults</button>
@@ -279,18 +281,18 @@ export function Customizer({ themeId, name, initial, hasDraft, isActive }: { the
         </div>
       </div>
       {msg && status !== 'error' && <p className="border-b border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[0.78rem] text-emerald-800">{msg}</p>}
-      <div className="flex min-h-0 flex-1">
-        <aside className="flex w-[340px] shrink-0 flex-col border-r border-line bg-white">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className={cn('flex min-h-0 w-full flex-col border-line bg-white lg:w-[340px] lg:shrink-0 lg:border-r', pane === 'edit' ? 'flex-1 lg:flex-none' : 'max-lg:hidden')}>
           <nav className="grid grid-cols-3 gap-1 border-b border-line p-2">
             {TABS.map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)} className={cn('flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[0.68rem]', tab === t.id ? 'bg-ink text-white' : 'text-muted hover:bg-secondary hover:text-ink')}>
+              <button key={t.id} onClick={() => setTab(t.id)} className={cn('flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center text-[0.68rem] leading-tight', tab === t.id ? 'bg-ink text-white' : 'text-muted hover:bg-secondary hover:text-ink')}>
                 <t.icon size={15} strokeWidth={1.5} /> {t.label}
               </button>
             ))}
           </nav>
           <div className="flex-1 overflow-y-auto p-4">{panels[tab]}</div>
         </aside>
-        <div className="min-w-0 flex-1">
+        <div className={cn('min-h-0 min-w-0 flex-1', pane === 'edit' && 'max-lg:hidden')}>
           <PreviewFrame ref={frame} src={`/?__preview=${themeId}&__mode=draft`} device={device} onReload={reload} openHref={`/?__preview=${themeId}&__mode=draft`} status="Previewing your draft — visitors still see the published version" />
         </div>
       </div>

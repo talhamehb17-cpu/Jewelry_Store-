@@ -28,9 +28,9 @@ export default async function MessagesAdmin() {
                     <p className="font-medium">{m.subject || 'Enquiry'} {!m.read && <Pill tone="gold">new</Pill>}</p>
                     <span className="text-[0.75rem] text-muted">{formatDateTime(m.createdAt)}</span>
                   </div>
-                  <p className="mt-1 text-[0.78rem] text-muted">{m.name} · <a href={`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject ?? 'Your enquiry')}`} className="underline">{m.email}</a>{m.phone ? ` · ${m.phone}` : ''}</p>
+                  <p className="mt-1 break-words text-[0.78rem] text-muted">{m.name} · <a href={`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject ?? 'Your enquiry')}`} className="underline">{m.email}</a>{m.phone ? ` · ${m.phone}` : ''}</p>
                   <p className="mt-2 whitespace-pre-line text-[0.86rem]">{m.message}</p>
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <ActionButton action={markMessage.bind(null, m.id, !m.read)} showResult={false} className="btn-sm">{m.read ? 'Mark unread' : 'Mark as read'}</ActionButton>
                     <ActionButton action={markMessage.bind(null, m.id, 'delete')} confirmText="Delete this message?" showResult={false} className="btn-sm !text-rose-700">Delete</ActionButton>
                   </div>
@@ -43,8 +43,8 @@ export default async function MessagesAdmin() {
           <ul className="max-h-[70vh] divide-y divide-line overflow-y-auto">
             {subs.map((s) => (
               <li key={s.id} className="flex items-center justify-between gap-2 px-5 py-2.5 text-[0.82rem]">
-                <span className="min-w-0"><span className="block truncate">{s.email}</span><span className="text-[0.7rem] text-muted">{s.source} · {formatDate(s.createdAt)} · {s.status === 'unsubscribed' ? `unsubscribed ${s.unsubscribedAt ? formatDate(s.unsubscribedAt) : ''}` : 'subscribed'}</span></span>
-                <ActionButton action={removeSubscriber.bind(null, s.id)} confirmText={`Remove ${s.email}?`} showResult={false} className="btn-sm">Remove</ActionButton>
+                <span className="min-w-0"><span className="block truncate">{s.email}</span><span className="block text-[0.7rem] text-muted">{s.source} · {formatDate(s.createdAt)} · {s.status === 'unsubscribed' ? `unsubscribed ${s.unsubscribedAt ? formatDate(s.unsubscribedAt) : ''}` : 'subscribed'}</span></span>
+                <ActionButton action={removeSubscriber.bind(null, s.id)} confirmText={`Remove ${s.email}?`} showResult={false} className="btn-sm shrink-0">Remove</ActionButton>
               </li>
             ))}
           </ul>

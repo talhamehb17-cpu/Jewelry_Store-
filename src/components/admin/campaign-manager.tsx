@@ -160,19 +160,19 @@ export function CampaignManager({
       {(['active', 'scheduled', 'other'] as const).map((key) => (
         <Card key={key} title={key === 'other' ? 'Draft, paused and expired' : key === 'active' ? 'Active campaigns' : 'Scheduled campaigns'} pad={false}>
           {groups[key].length === 0 ? <Empty title={key === 'active' ? 'No live event' : 'None'} /> : (
-            <div className="overflow-x-auto">
+            <div className="admin-scroll admin-cards">
               <table className="admin-table w-full text-[0.84rem]">
                 <thead><tr><th>Campaign</th><th>Discount</th><th>Window</th><th>Scope</th><th>Email</th><th>Status</th><th /></tr></thead>
                 <tbody>
                   {groups[key].map((c) => (
                     <tr key={c.id}>
-                      <td className="max-w-[220px]"><span className="font-medium">{c.name}</span>{c.description && <span className="block truncate text-[0.72rem] text-muted">{c.description}</span>}</td>
-                      <td>{c.percent}% off</td>
-                      <td className="whitespace-nowrap text-[0.75rem] text-muted">{formatDateTime(c.startsAt)}<br />→ {formatDateTime(c.endsAt)}</td>
-                      <td className="text-[0.78rem] text-muted">{c.appliesTo === 'all' ? 'All products' : c.appliesTo === 'products' ? `${c.productIds.length} products` : `${c.categoryIds.length} categories`}</td>
-                      <td className="text-[0.75rem] text-muted">{c.emailSentAt ? `Sent to ${c.emailRecipientCount}` : 'Not sent'}</td>
-                      <td><Pill tone={tone(c.status)}>{c.status}</Pill></td>
-                      <td className="whitespace-nowrap text-right">
+                      <td className="is-primary max-w-[220px]" data-label="Campaign"><span className="font-medium">{c.name}</span>{c.description && <span className="block text-[0.72rem] text-muted">{c.description}</span>}</td>
+                      <td data-label="Discount">{c.percent}% off</td>
+                      <td data-label="Window" className="text-[0.75rem] text-muted">{formatDateTime(c.startsAt)}<br />→ {formatDateTime(c.endsAt)}</td>
+                      <td data-label="Scope" className="text-[0.78rem] text-muted">{c.appliesTo === 'all' ? 'All products' : c.appliesTo === 'products' ? `${c.productIds.length} products` : `${c.categoryIds.length} categories`}</td>
+                      <td data-label="Email" className="text-[0.75rem] text-muted">{c.emailSentAt ? `Sent to ${c.emailRecipientCount}` : 'Not sent'}</td>
+                      <td data-label="Status"><Pill tone={tone(c.status)}>{c.status}</Pill></td>
+                      <td data-label="" className="text-right">
                         {c.status !== 'active' && c.status !== 'expired' && <button className="mr-2 text-muted hover:text-ink" aria-label="Activate" onClick={() => run(() => setCampaignStatus(c.id, 'active'))}><Play size={14} /></button>}
                         {c.status === 'active' && <button className="mr-2 text-muted hover:text-ink" aria-label="Pause" onClick={() => run(() => setCampaignStatus(c.id, 'paused'))}><Pause size={14} /></button>}
                         <button className="mr-2 text-muted hover:text-ink" aria-label="Edit" onClick={() => { setForm(fromRow(c)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil size={14} /></button>

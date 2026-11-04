@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Download, Search } from 'lucide-react';
-import { Card, Empty, PageHeader, Pagination, qs } from '@/components/admin/ui';
+import { Card, Empty, PageHeader, Pagination, TableWrap, qs } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/store/order-status';
 import { listOrders } from '@/lib/admin-orders';
 import { formatMoney } from '@/lib/money';
@@ -40,7 +40,7 @@ export default async function OrdersAdmin({ searchParams }: { searchParams: Prom
         ))}
       </div>
       <Card pad={false}>
-        <form className="grid gap-2 border-b border-line p-4 md:grid-cols-[1fr_auto_auto_auto_auto_auto]">
+        <form className="grid gap-2 border-b border-line p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-3 xl:grid-cols-6">
           <input type="hidden" name="status" value={sp.status ?? ''} />
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -55,26 +55,26 @@ export default async function OrdersAdmin({ searchParams }: { searchParams: Prom
         {rows.length === 0 ? (
           <Empty title="No orders match these filters" />
         ) : (
-          <div className="overflow-x-auto">
+          <TableWrap>
             <table className="admin-table w-full text-[0.84rem]">
               <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>City</th><th>Delivery</th><th>Method</th><th>Payment</th><th>Fulfilment</th><th className="!text-right">Total</th></tr></thead>
               <tbody>
                 {rows.map((o) => (
                   <tr key={o.id}>
-                    <td><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link></td>
-                    <td className="whitespace-nowrap text-muted">{formatDateTime(o.createdAt)}</td>
-                    <td><span className="block">{o.customerName}</span><span className="text-[0.72rem] text-muted">{o.email}</span></td>
-                    <td className="text-muted">{o.shippingAddress.city}</td>
-                    <td>{o.shippingMethodName}</td>
-                    <td>{PM[o.paymentMethod] ?? o.paymentMethod}</td>
-                    <td><StatusBadge status={o.paymentStatus} kind="payment" /></td>
-                    <td><StatusBadge status={o.status} /></td>
-                    <td className="text-right font-medium">{formatMoney(o.total)}</td>
+                    <td className="is-primary" data-label="Order"><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link></td>
+                    <td data-label="Date" className="text-muted">{formatDateTime(o.createdAt)}</td>
+                    <td data-label="Customer"><span className="block">{o.customerName}</span><span className="text-[0.72rem] text-muted">{o.email}</span></td>
+                    <td data-label="City" className="text-muted">{o.shippingAddress.city}</td>
+                    <td data-label="Delivery">{o.shippingMethodName}</td>
+                    <td data-label="Method">{PM[o.paymentMethod] ?? o.paymentMethod}</td>
+                    <td data-label="Payment"><StatusBadge status={o.paymentStatus} kind="payment" /></td>
+                    <td data-label="Fulfilment"><StatusBadge status={o.status} /></td>
+                    <td data-label="Total" className="text-right font-medium">{formatMoney(o.total)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
         <Pagination page={page} pages={pages} href={(n) => qs('/admin/orders', { ...f, page: n })} />
       </Card>

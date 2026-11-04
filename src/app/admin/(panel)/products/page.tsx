@@ -3,7 +3,7 @@ import { and, asc, desc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { Plus, Search } from 'lucide-react';
 import { getDb } from '@/db';
 import { categories, productImages, products, productVariants } from '@/db/schema';
-import { Card, Empty, PageHeader, Pagination, Pill, qs } from '@/components/admin/ui';
+import { Card, Empty, PageHeader, Pagination, Pill, TableWrap, qs } from '@/components/admin/ui';
 import { ProductRowActions } from '@/components/admin/product-row-actions';
 import { Img } from '@/components/ui/img';
 import { formatMoney } from '@/lib/money';
@@ -40,21 +40,21 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
     <>
       <PageHeader title="Products" description={`${count} products in your catalogue`} actions={<Link href="/admin/products/new" className="btn btn-primary"><Plus size={15} /> Add product</Link>} />
       <Card pad={false}>
-        <form className="flex flex-wrap items-center gap-2 border-b border-line p-4">
-          <div className="relative min-w-[220px] flex-1">
+        <form className="grid gap-2 border-b border-line p-3 sm:grid-cols-2 sm:p-4 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))_auto]">
+          <div className="relative min-w-0 sm:col-span-2 lg:col-span-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input name="q" defaultValue={sp.q} placeholder="Search name, SKU or tag" className="field !pl-9" />
           </div>
-          <select name="status" defaultValue={sp.status ?? ''} className="field !w-auto"><option value="">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option></select>
-          <select name="category" defaultValue={sp.category ?? ''} className="field !w-auto"><option value="">All categories</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-          <select name="sort" defaultValue={sp.sort ?? ''} className="field !w-auto"><option value="">Recently updated</option><option value="sales">Best selling</option><option value="price">Price</option><option value="name">Name</option></select>
+          <select name="status" defaultValue={sp.status ?? ''} className="field"><option value="">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option></select>
+          <select name="category" defaultValue={sp.category ?? ''} className="field"><option value="">All categories</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+          <select name="sort" defaultValue={sp.sort ?? ''} className="field"><option value="">Recently updated</option><option value="sales">Best selling</option><option value="price">Price</option><option value="name">Name</option></select>
           <button className="btn btn-secondary">Filter</button>
           {(sp.q || sp.status || sp.category) && <Link href="/admin/products" className="text-[0.8rem] text-muted underline">Clear</Link>}
         </form>
         {rows.length === 0 ? (
           <Empty title="No products found" body="Try a different search or add your first product." action={<Link href="/admin/products/new" className="btn btn-primary">Add product</Link>} />
         ) : (
-          <div className="overflow-x-auto">
+          <TableWrap>
             <table className="admin-table w-full text-[0.84rem]">
               <thead><tr><th>Product</th><th>Status</th><th>Inventory</th><th>Category</th><th className="!text-right">Price</th><th className="!text-right">Sold</th><th /></tr></thead>
               <tbody>
@@ -64,24 +64,24 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
                   const total = Number(st?.stock ?? 0);
                   return (
                     <tr key={p.id}>
-                      <td>
+                      <td className="is-primary" data-label="Product">
                         <Link href={`/admin/products/${p.id}`} className="flex items-center gap-3">
                           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-secondary"><Img src={img?.url} alt="" sizes="44px" /></span>
-                          <span><span className="block font-medium hover:underline">{p.name}</span><span className="text-[0.72rem] text-muted">{p.sku}</span></span>
+                          <span className="min-w-0"><span className="block font-medium hover:underline">{p.name}</span><span className="text-[0.72rem] text-muted">{p.sku}</span></span>
                         </Link>
                       </td>
-                      <td><Pill tone={p.status === 'active' ? 'green' : p.status === 'draft' ? 'amber' : 'stone'}>{p.status}</Pill>{p.featured && <span className="ml-1"><Pill tone="gold">featured</Pill></span>}</td>
-                      <td className={cn(total <= 0 ? 'text-rose-600' : total <= 5 ? 'text-amber-700' : '')}>{total <= 0 ? 'Out of stock' : `${total} in stock`}<span className="block text-[0.72rem] text-muted">{st?.variants ?? 0} variants</span></td>
-                      <td className="text-muted">{cats.find((c) => c.id === p.categoryId)?.name ?? '—'}</td>
-                      <td className="text-right">{formatMoney(p.price)}{p.compareAtPrice && <s className="block text-[0.72rem] text-muted">{formatMoney(p.compareAtPrice)}</s>}</td>
-                      <td className="text-right">{p.salesCount}</td>
-                      <td className="text-right"><ProductRowActions id={p.id} slug={p.slug} status={p.status} /></td>
+                      <td data-label="Status"><Pill tone={p.status === 'active' ? 'green' : p.status === 'draft' ? 'amber' : 'stone'}>{p.status}</Pill>{p.featured && <span className="ml-1"><Pill tone="gold">featured</Pill></span>}</td>
+                      <td data-label="Inventory" className={cn(total <= 0 ? 'text-rose-600' : total <= 5 ? 'text-amber-700' : '')}>{total <= 0 ? 'Out of stock' : `${total} in stock`}<span className="block text-[0.72rem] text-muted">{st?.variants ?? 0} variants</span></td>
+                      <td data-label="Category" className="text-muted">{cats.find((c) => c.id === p.categoryId)?.name ?? '—'}</td>
+                      <td data-label="Price" className="text-right">{formatMoney(p.price)}{p.compareAtPrice && <s className="block text-[0.72rem] text-muted">{formatMoney(p.compareAtPrice)}</s>}</td>
+                      <td data-label="Sold" className="text-right">{p.salesCount}</td>
+                      <td data-label="" className="text-right"><ProductRowActions id={p.id} slug={p.slug} status={p.status} /></td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
         <Pagination page={page} pages={pages} href={(n) => qs('/admin/products', { ...base, page: n })} />
       </Card>

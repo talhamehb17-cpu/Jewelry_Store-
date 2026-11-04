@@ -857,6 +857,128 @@ input[type='radio'].checkbox:checked::after {
   background: #fbfaf8;
 }
 
+/* Grid and flex children default to min-width:auto, so a wide table or chart
+   expands the page instead of scrolling inside its card. */
+.admin-main,
+.admin-card,
+.admin-root .grid,
+.admin-root .grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.admin-root input,
+.admin-root select,
+.admin-root textarea,
+.admin-root label {
+  max-width: 100%;
+}
+.admin-root nav {
+  overscroll-behavior: contain;
+}
+.admin-root input[type='date'],
+.admin-root input[type='datetime-local'],
+.admin-root input[type='time'] {
+  min-width: 0;
+}
+.admin-drawer {
+  width: min(18.75rem, calc(100vw - 2.75rem));
+  transition: transform 280ms ease;
+}
+.admin-drawer-backdrop {
+  transition: opacity 280ms ease;
+}
+
+@media (max-width: 639px) {
+  .admin-root form .field {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-root .btn {
+    min-height: 2.75rem;
+  }
+  .admin-root .btn-sm {
+    min-height: 2.5rem;
+    padding-inline: 0.85rem;
+  }
+  .admin-cards {
+    overflow-x: visible;
+  }
+  .admin-cards .admin-table,
+  .admin-cards .admin-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .admin-cards .admin-table thead {
+    display: none;
+  }
+  .admin-cards .admin-table tr {
+    display: block;
+    padding: 0.85rem 0.9rem 1rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .admin-cards .admin-table td {
+    display: grid;
+    grid-template-columns: minmax(6.25rem, 38%) minmax(0, 1fr);
+    gap: 0.35rem 0.75rem;
+    align-items: start;
+    width: auto !important;
+    padding: 0.32rem 0;
+    border: 0;
+    text-align: left !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .admin-cards .admin-table td::before {
+    content: attr(data-label);
+    color: var(--c-muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .admin-cards .admin-table td.is-primary,
+  .admin-cards .admin-table td.stack,
+  .admin-cards .admin-table td[data-label=''] {
+    display: block;
+  }
+  .admin-cards .admin-table td.is-primary::before,
+  .admin-cards .admin-table td[data-label='']::before {
+    content: none;
+  }
+  .admin-cards .admin-table td.stack::before {
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .admin-cards .admin-table td .flex,
+  .admin-cards .admin-table td .inline-flex {
+    flex-wrap: wrap;
+  }
+  .admin-cards .admin-table td .field {
+    width: 100% !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-hover-only {
+    opacity: 0;
+  }
+  .group:hover .admin-hover-only,
+  .admin-hover-only:focus-visible {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -101,16 +101,17 @@ export function CollectionsManager({ collections, categories, products }: { coll
       ) : null}
 
       <Card title={`Collections (${collections.length})`} actions={!edit && <button onClick={() => setEdit({ rule: 'manual', status: 'active', productIds: [] })} className="btn btn-primary btn-sm"><Plus size={13} /> New collection</button>} pad={false}>
+        <div className="admin-scroll admin-cards">
         <table className="admin-table w-full text-[0.84rem]">
           <thead><tr><th>Collection</th><th>Type</th><th>Products</th><th>Status</th><th /></tr></thead>
           <tbody>
             {collections.map((c) => (
               <tr key={c.id}>
-                <td><span className="flex items-center gap-3"><span className="relative h-10 w-10 overflow-hidden rounded-md bg-secondary"><Img src={c.image} alt="" sizes="40px" /></span><span><span className="block font-medium">{c.name}</span><span className="font-mono text-[0.7rem] text-muted">/collections/{c.slug}</span></span></span></td>
-                <td className="text-muted">{RULES[c.rule]}{c.rule === 'category' && c.ruleValue ? ` (${c.ruleValue})` : ''}</td>
-                <td>{c.rule === 'manual' ? c.productIds.length : 'Auto'}</td>
-                <td><Pill tone={c.status === 'active' ? 'green' : 'stone'}>{c.status}</Pill>{c.featured && <span className="ml-1"><Pill tone="gold">featured</Pill></span>}</td>
-                <td className="whitespace-nowrap text-right">
+                <td className="is-primary" data-label="Collection"><span className="flex items-center gap-3"><span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary"><Img src={c.image} alt="" sizes="40px" /></span><span className="min-w-0"><span className="block font-medium">{c.name}</span><span className="font-mono text-[0.7rem] text-muted">/collections/{c.slug}</span></span></span></td>
+                <td data-label="Type" className="text-muted">{RULES[c.rule]}{c.rule === 'category' && c.ruleValue ? ` (${c.ruleValue})` : ''}</td>
+                <td data-label="Products">{c.rule === 'manual' ? c.productIds.length : 'Auto'}</td>
+                <td data-label="Status"><Pill tone={c.status === 'active' ? 'green' : 'stone'}>{c.status}</Pill>{c.featured && <span className="ml-1"><Pill tone="gold">featured</Pill></span>}</td>
+                <td data-label="" className="text-right">
                   <a href={`/collections/${c.slug}`} target="_blank" rel="noreferrer" className="mr-3 inline-block text-muted hover:text-ink" aria-label="View"><ExternalLink size={14} /></a>
                   <button onClick={() => { setEdit(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="mr-3 text-muted hover:text-ink" aria-label="Edit"><Pencil size={14} /></button>
                   <button onClick={() => confirm(`Delete “${c.name}”?`) && start(async () => done(await deleteCollection(c.id), () => {}))} className="text-muted hover:text-rose-600" aria-label="Delete"><Trash2 size={14} /></button>
@@ -119,6 +120,7 @@ export function CollectionsManager({ collections, categories, products }: { coll
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
 
       <Card title={`Categories (${categories.length})`} actions={<button onClick={() => setCat({ position: categories.length })} className="btn btn-secondary btn-sm"><Plus size={13} /> New category</button>}>

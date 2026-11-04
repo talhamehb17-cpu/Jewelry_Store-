@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { addresses, orders, users, wishlistItems, products } from '@/db/schema';
-import { Card, PageHeader, Pill, Stat } from '@/components/admin/ui';
+import { Card, PageHeader, Pill, Stat, TableWrap } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/store/order-status';
 import { ActionButton } from '@/components/admin/action-button';
 import { CustomerNote, RoleSelect } from '@/components/admin/customer-controls';
@@ -31,8 +31,8 @@ export default async function CustomerAdmin({ params }: { params: Promise<{ id: 
   const spent = valid.reduce((a, o) => a + o.total, 0);
   return (
     <>
-      <PageHeader back={{ href: '/admin/customers', label: 'Customers' }} title={`${u.firstName} ${u.lastName}`} description={<span className="flex items-center gap-2">{u.email} <Pill tone={u.status === 'active' ? 'green' : 'rose'}>{u.status}</Pill> <Pill>{u.role}</Pill></span>} />
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <PageHeader back={{ href: '/admin/customers', label: 'Customers' }} title={`${u.firstName} ${u.lastName}`} description={<span className="flex flex-wrap items-center gap-2 break-all">{u.email} <Pill tone={u.status === 'active' ? 'green' : 'rose'}>{u.status}</Pill> <Pill>{u.role}</Pill></span>} />
+      <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <Stat label="Total spent" value={formatMoney(spent)} />
         <Stat label="Orders" value={list.length} hint={`${list.length - valid.length} cancelled`} />
         <Stat label="Average order" value={formatMoney(valid.length ? Math.round(spent / valid.length) : 0)} />
@@ -41,16 +41,18 @@ export default async function CustomerAdmin({ params }: { params: Promise<{ id: 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_360px]">
         <Card title="Orders" pad={false}>
           {list.length ? (
+            <TableWrap>
             <table className="admin-table w-full text-[0.84rem]">
               <thead><tr><th>Order</th><th>Date</th><th>Payment</th><th>Status</th><th className="!text-right">Total</th></tr></thead>
-              <tbody>{list.map((o) => <tr key={o.id}><td><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link></td><td className="text-muted">{formatDateTime(o.createdAt)}</td><td><StatusBadge status={o.paymentStatus} kind="payment" /></td><td><StatusBadge status={o.status} /></td><td className="text-right">{formatMoney(o.total)}</td></tr>)}</tbody>
+              <tbody>{list.map((o) => <tr key={o.id}><td className="is-primary" data-label="Order"><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link></td><td data-label="Date" className="text-muted">{formatDateTime(o.createdAt)}</td><td data-label="Payment"><StatusBadge status={o.paymentStatus} kind="payment" /></td><td data-label="Status"><StatusBadge status={o.status} /></td><td data-label="Total" className="text-right">{formatMoney(o.total)}</td></tr>)}</tbody>
             </table>
+            </TableWrap>
           ) : <p className="p-5 text-[0.85rem] text-muted">No orders yet.</p>}
         </Card>
         <div className="space-y-6">
           <Card title="Account">
             <dl className="space-y-2 text-[0.84rem]">
-              <div className="flex justify-between"><dt className="text-muted">Phone</dt><dd>{u.phone ?? '—'}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted">Phone</dt><dd className="break-all text-right">{u.phone ?? '—'}</dd></div>
               <div className="flex justify-between"><dt className="text-muted">Marketing</dt><dd>{u.acceptsMarketing ? 'Subscribed' : 'Not subscribed'}</dd></div>
               <div className="flex justify-between"><dt className="text-muted">Failed logins</dt><dd>{u.failedLogins}{u.lockedUntil && u.lockedUntil > new Date() ? ' (locked)' : ''}</dd></div>
             </dl>

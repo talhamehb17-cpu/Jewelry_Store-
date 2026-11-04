@@ -10,7 +10,7 @@ import { GripVertical, Eye, EyeOff, Copy, Trash2, Pencil, Plus, Monitor, Smartph
 import { discardThemeDraft, publishTheme, resetThemeDefaults, saveThemeDraft } from '@/app/actions/admin/themes';
 import { SECTION_REGISTRY } from '@/themes/registry';
 import { SECTION_TYPES, type SectionInstance, type SectionType, type ThemeConfig } from '@/themes/types';
-import { DeviceToggle, FieldControl, PreviewFrame, type Device, type StudioData } from './studio';
+import { DeviceToggle, FieldControl, PaneToggle, PreviewFrame, type Device, type StudioData, type StudioPane } from './studio';
 import { cn } from '@/lib/utils';
 
 function Row({ s, onEdit, onToggle, onDuplicate, onDelete, onVisibility }: { s: SectionInstance; onEdit: () => void; onToggle: () => void; onDuplicate: () => void; onDelete: () => void; onVisibility: () => void }) {
@@ -20,18 +20,18 @@ function Row({ s, onEdit, onToggle, onDuplicate, onDelete, onVisibility }: { s: 
   const title = (s.settings.heading as string) || (Array.isArray(s.settings.slides) && s.settings.slides[0]?.heading) || '';
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={cn('group flex items-center gap-2 rounded-lg border bg-white px-2 py-2', isDragging ? 'z-10 border-[#a8844a] shadow-xl' : 'border-line', !s.enabled && 'opacity-55')}>
-      <button {...attributes} {...listeners} className="cursor-grab p-1 text-muted active:cursor-grabbing" aria-label="Drag to reorder"><GripVertical size={15} /></button>
+      <button {...attributes} {...listeners} className="grid h-9 w-9 shrink-0 cursor-grab place-items-center rounded text-muted active:cursor-grabbing" aria-label="Drag to reorder"><GripVertical size={15} /></button>
       <button onClick={onEdit} className="min-w-0 flex-1 text-left">
         <span className="block truncate text-[0.82rem] font-medium">{def.label}</span>
         <span className="block truncate text-[0.7rem] text-muted">{variant}{title ? ` · ${title}` : ''}</span>
       </button>
-      <button onClick={onVisibility} className="rounded p-1 text-muted hover:bg-secondary hover:text-ink" title={`Visible on: ${s.visibility}`} aria-label="Change device visibility">
+      <button onClick={onVisibility} className="grid h-9 w-9 shrink-0 place-items-center rounded text-muted hover:bg-secondary hover:text-ink" title={`Visible on: ${s.visibility}`} aria-label="Change device visibility">
         {s.visibility === 'desktop' ? <Monitor size={14} /> : s.visibility === 'mobile' ? <Smartphone size={14} /> : <Layers size={14} />}
       </button>
-      <button onClick={onToggle} className="rounded p-1 text-muted hover:bg-secondary hover:text-ink" aria-label={s.enabled ? 'Hide section' : 'Show section'}>{s.enabled ? <Eye size={14} /> : <EyeOff size={14} />}</button>
-      <button onClick={onEdit} className="rounded p-1 text-muted hover:bg-secondary hover:text-ink" aria-label="Edit section"><Pencil size={14} /></button>
-      <button onClick={onDuplicate} className="rounded p-1 text-muted opacity-0 hover:bg-secondary hover:text-ink group-hover:opacity-100" aria-label="Duplicate section"><Copy size={14} /></button>
-      <button onClick={onDelete} className="rounded p-1 text-muted opacity-0 hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100" aria-label="Delete section"><Trash2 size={14} /></button>
+      <button onClick={onToggle} className="grid h-9 w-9 shrink-0 place-items-center rounded text-muted hover:bg-secondary hover:text-ink" aria-label={s.enabled ? 'Hide section' : 'Show section'}>{s.enabled ? <Eye size={14} /> : <EyeOff size={14} />}</button>
+      <button onClick={onEdit} className="grid h-9 w-9 shrink-0 place-items-center rounded text-muted hover:bg-secondary hover:text-ink" aria-label="Edit section"><Pencil size={14} /></button>
+      <button onClick={onDuplicate} className="admin-hover-only grid h-9 w-9 shrink-0 place-items-center rounded text-muted hover:bg-secondary hover:text-ink" aria-label="Duplicate section"><Copy size={14} /></button>
+      <button onClick={onDelete} className="admin-hover-only grid h-9 w-9 shrink-0 place-items-center rounded text-muted hover:bg-rose-50 hover:text-rose-600" aria-label="Delete section"><Trash2 size={14} /></button>
     </li>
   );
 }
@@ -43,6 +43,7 @@ export function Builder({ themeId, themes, activeTheme, initial, hasDraft, data 
   const [editing, setEditing] = useState<string | 'announcement' | 'footer' | null>(null);
   const [adding, setAdding] = useState(false);
   const [device, setDevice] = useState<Device>('desktop');
+  const [pane, setPane] = useState<StudioPane>('edit');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(hasDraft ? 'saved' : 'idle');
   const [draft, setDraft] = useState(hasDraft);
   const [msg, setMsg] = useState('');
@@ -105,7 +106,7 @@ export function Builder({ themeId, themes, activeTheme, initial, hasDraft, data 
   const def = current ? SECTION_REGISTRY[current.type] : null;
 
   return (
-    <div className="flex h-[100dvh] flex-col">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col lg:h-[100dvh]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/admin/themes" className="text-[0.78rem] text-muted hover:text-ink">← Themes</Link>
@@ -115,6 +116,7 @@ export function Builder({ themeId, themes, activeTheme, initial, hasDraft, data 
           <span className="text-[0.75rem] text-muted">{status === 'saving' ? <span className="inline-flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Saving…</span> : status === 'saved' ? <span className="inline-flex items-center gap-1 text-emerald-700"><Check size={12} /> Draft saved</span> : status === 'error' ? <span className="text-rose-700">{msg}</span> : 'Up to date'}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <PaneToggle pane={pane} setPane={setPane} />
           <DeviceToggle device={device} setDevice={setDevice} />
           <Link href={`/admin/themes/${themeId}`} className="btn btn-secondary btn-sm"><Paintbrush size={13} /> Design</Link>
           <button disabled={pending} onClick={() => confirm('Restore this theme’s original homepage sections into the draft?') && start(async () => { await resetThemeDefaults(themeId, 'sections'); window.location.reload(); })} className="btn btn-secondary btn-sm"><RotateCcw size={13} /> Defaults</button>
@@ -123,8 +125,8 @@ export function Builder({ themeId, themes, activeTheme, initial, hasDraft, data 
         </div>
       </div>
       {msg && status !== 'error' && <p className="border-b border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[0.78rem] text-emerald-800">{msg}{themeId !== activeTheme && ' (This theme isn’t live — activate it from Themes.)'}</p>}
-      <div className="flex min-h-0 flex-1">
-        <aside className="flex w-[360px] shrink-0 flex-col border-r border-line bg-[#fbfaf8]">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside className={cn('flex min-h-0 w-full flex-col border-line bg-[#fbfaf8] lg:w-[360px] lg:shrink-0 lg:border-r', pane === 'edit' ? 'flex-1 lg:flex-none' : 'max-lg:hidden')}>
           {editing === null ? (
             <>
               <div className="border-b border-line px-4 py-3">
@@ -203,14 +205,14 @@ export function Builder({ themeId, themes, activeTheme, initial, hasDraft, data 
             </>
           )}
         </aside>
-        <div className="min-w-0 flex-1">
+        <div className={cn('min-h-0 min-w-0 flex-1', pane === 'edit' && 'max-lg:hidden')}>
           <PreviewFrame ref={frame} src={`/?__preview=${themeId}&__mode=draft`} device={device} onReload={reload} openHref={`/?__preview=${themeId}&__mode=draft`} status="Draft preview — publish to make changes live" />
         </div>
       </div>
 
       {adding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setAdding(false)}>
-          <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4" onClick={() => setAdding(false)}>
+          <div className="max-h-[min(85dvh,720px)] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-4 shadow-2xl sm:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-heading text-[1.6rem]">Add a section</h2>
               <button onClick={() => setAdding(false)} aria-label="Close"><X size={18} /></button>

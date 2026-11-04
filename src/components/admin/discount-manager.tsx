@@ -106,7 +106,7 @@ export function DiscountManager({ discounts, products, collections }: { discount
       )}
       <Card pad={false}>
         {discounts.length === 0 ? <Empty title="No discounts yet" /> : (
-          <div className="overflow-x-auto">
+          <div className="admin-scroll admin-cards">
             <table className="admin-table w-full text-[0.84rem]">
               <thead><tr><th>Code</th><th>Offer</th><th>Conditions</th><th>Usage</th><th>Schedule</th><th>Status</th><th /></tr></thead>
               <tbody>
@@ -114,13 +114,13 @@ export function DiscountManager({ discounts, products, collections }: { discount
                   const s = status(d);
                   return (
                     <tr key={d.id}>
-                      <td><span className="font-mono font-semibold">{d.code}</span>{d.description && <span className="block text-[0.72rem] text-muted">{d.description}</span>}</td>
-                      <td>{d.type === 'percentage' ? `${d.value}% off` : d.type === 'fixed' ? `${formatMoney(d.value)} off` : 'Free shipping'}</td>
-                      <td className="text-[0.78rem] text-muted">{d.minOrderAmount ? `Min ${formatMoney(d.minOrderAmount)}` : 'No minimum'}<br />{d.appliesTo === 'all' ? 'Entire order' : d.appliesTo === 'products' ? `${d.productIds.length} products` : `${d.collectionIds.length} collections`}{d.oncePerCustomer ? ' · once per customer' : ''}</td>
-                      <td>{d.usageCount}{d.usageLimit != null ? ` / ${d.usageLimit}` : ''}</td>
-                      <td className="text-[0.78rem] text-muted">{d.startsAt ? formatDateTime(d.startsAt) : 'Now'} → {d.endsAt ? formatDateTime(d.endsAt) : 'No end'}{d.stackable ? ' · stacks' : ''}</td>
-                      <td><Pill tone={s.tone}>{s.label}</Pill></td>
-                      <td className="whitespace-nowrap text-right">
+                      <td className="is-primary" data-label="Code"><span className="font-mono font-semibold">{d.code}</span>{d.description && <span className="block text-[0.72rem] text-muted">{d.description}</span>}</td>
+                      <td data-label="Offer">{d.type === 'percentage' ? `${d.value}% off` : d.type === 'fixed' ? `${formatMoney(d.value)} off` : 'Free shipping'}</td>
+                      <td data-label="Conditions" className="text-[0.78rem] text-muted">{d.minOrderAmount ? `Min ${formatMoney(d.minOrderAmount)}` : 'No minimum'}<br />{d.appliesTo === 'all' ? 'Entire order' : d.appliesTo === 'products' ? `${d.productIds.length} products` : `${d.collectionIds.length} collections`}{d.oncePerCustomer ? ' · once per customer' : ''}</td>
+                      <td data-label="Usage">{d.usageCount}{d.usageLimit != null ? ` / ${d.usageLimit}` : ''}</td>
+                      <td data-label="Schedule" className="text-[0.78rem] text-muted">{d.startsAt ? formatDateTime(d.startsAt) : 'Now'} → {d.endsAt ? formatDateTime(d.endsAt) : 'No end'}{d.stackable ? ' · stacks' : ''}</td>
+                      <td data-label="Status"><Pill tone={s.tone}>{s.label}</Pill></td>
+                      <td data-label="" className="text-right">
                         <button onClick={() => start(async () => { await toggleDiscount(d.id, !d.active); router.refresh(); })} className="mr-3 text-[0.75rem] text-muted underline hover:text-ink">{d.active ? 'Deactivate' : 'Activate'}</button>
                         <button onClick={() => { setForm(toInput(d)); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="mr-2 text-muted hover:text-ink" aria-label="Edit"><Pencil size={14} /></button>
                         <button onClick={() => confirm(`Delete ${d.code}?`) && start(async () => { await deleteDiscount(d.id); router.refresh(); })} className="text-muted hover:text-rose-600" aria-label="Delete"><Trash2 size={14} /></button>

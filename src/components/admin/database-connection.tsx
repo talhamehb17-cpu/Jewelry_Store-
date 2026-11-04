@@ -57,7 +57,7 @@ export function DatabaseConnection({ status }: { status: ConnectionPublic }) {
         {status.active && <button type="button" disabled={pending} onClick={() => run(deactivateDatabaseAction)} className="btn btn-secondary btn-sm">Use original database</button>}
         {status.saved && <button type="button" disabled={pending} onClick={() => confirm('Remove the saved credentials? The current database is not changed.') && run(forgetDatabaseAction)} className="btn btn-secondary btn-sm">Forget saved credentials</button>}
       </div>
-      <div className="mt-6 grid gap-3 border-t border-line pt-5 sm:grid-cols-[1fr_1fr_auto]">
+      <div className="mt-6 grid gap-3 border-t border-line pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
         <label><span className="label">New administrator email</span><input value={email} onChange={(e) => setEmail(e.target.value)} className="field" autoComplete="off" /></label>
         <label><span className="label">New administrator password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="field" autoComplete="new-password" /></label>
         <button type="button" disabled={pending} onClick={() => run(() => createDatabaseAdminAction(url, email, password))} className="btn btn-secondary btn-sm self-end">Create admin on new database</button>

@@ -90,7 +90,7 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
         <Field label="Free standard shipping over (Rs) — 0 to disable"><input value={shipping.threshold} onChange={(e) => setShipping({ ...shipping, threshold: e.target.value.replace(/\D/g, '') })} className="field" /></Field>
         <div className="mt-4 space-y-3">
           {shipping.methods.map((m, i) => (
-            <div key={m.id} className="grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-[1fr_1.4fr_110px_auto] sm:items-end">
+            <div key={m.id} className="grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_7rem_auto] lg:items-end">
               <Field label="Name"><input value={m.name} onChange={(e) => setShipping({ ...shipping, methods: shipping.methods.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)) })} className="field" /></Field>
               <Field label="Description"><input value={m.description} onChange={(e) => setShipping({ ...shipping, methods: shipping.methods.map((x, k) => (k === i ? { ...x, description: e.target.value } : x)) })} className="field" /></Field>
               <Field label="Price (Rs)"><input value={rupees(m.price)} onChange={(e) => setShipping({ ...shipping, methods: shipping.methods.map((x, k) => (k === i ? { ...x, price: minor(e.target.value) } : x)) })} className="field" /></Field>
@@ -188,7 +188,7 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
         <Card title="System & database">
           <div className="grid gap-4 text-[0.85rem] md:grid-cols-4">
             <div><p className="label">Database</p><p className="font-medium">{system.db === 'postgres' ? 'Neon Postgres (serverless)' : 'Embedded PGlite (local / fallback)'}</p><p className="text-[0.75rem] text-muted">{system.dbHost || '—'}</p></div>
-            <div><p className="label">Environment</p><p className="font-medium capitalize">{system.env}</p><p className="text-[0.75rem] text-muted">{system.siteUrl}</p></div>
+            <div className="min-w-0"><p className="label">Environment</p><p className="font-medium capitalize">{system.env}</p><p className="break-all text-[0.75rem] text-muted">{system.siteUrl}</p></div>
             <div><p className="label">Card payments</p><p className="font-medium">{system.stripe ? 'Stripe connected' : 'Not configured'}</p></div>
             <div><p className="label">Transactional email</p><p className="font-medium">{system.email ? 'Configured' : 'Not configured'}</p><p className="text-[0.75rem] text-muted">Use Email settings above. A Gmail app password stays on the server.</p></div>
           </div>

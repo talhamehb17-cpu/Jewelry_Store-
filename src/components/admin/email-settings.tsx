@@ -84,7 +84,7 @@ export function EmailSettingsForm({ initial, logs = [] }: { initial: EmailPublic
             {logs.map((l) => (
               <li key={l.id} className="border-t border-line pt-2">
                 <span className="font-medium">{l.status}</span> · {l.kind} · {l.toEmail} · {new Date(l.createdAt).toLocaleString('en-GB', { timeZone: 'Asia/Karachi' })}
-                {l.error ? <span className="block text-rose-800">{l.error}</span> : null}
+                {l.error ? <span className="block break-words text-rose-800">{l.error}</span> : null}
               </li>
             ))}
           </ul>

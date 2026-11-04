@@ -98,8 +98,8 @@ export function DeliveryManager({ services, issues }: { services: Service[]; iss
         {services.map((s) => (
           <article key={s.id} className="rounded-lg border border-line p-4 text-[0.85rem]">
             <p className="font-medium">{s.name} · {s.code} · {s.active ? 'Active' : 'Hidden'}</p>
-            <p className="text-muted">Rs {s.price / 100} · {minutesToDays(s.durationMinutes)} days · confirm {hours(s.confirmMinutes) || 'manual'}h · processing {hours(s.processingMinutes) || 'manual'}h · ship {hours(s.shipMinutes) || 'manual'}h · out {hours(s.outMinutes) || 'manual'}h</p>
-            <div className="mt-2 flex gap-2">
+            <p className="break-words text-muted">Rs {s.price / 100} · {minutesToDays(s.durationMinutes)} days · confirm {hours(s.confirmMinutes) || 'manual'}h · processing {hours(s.processingMinutes) || 'manual'}h · ship {hours(s.shipMinutes) || 'manual'}h · out {hours(s.outMinutes) || 'manual'}h</p>
+            <div className="mt-2 flex flex-wrap gap-2">
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setForm({ id: s.id, code: s.code, name: s.name, description: s.description, priceRupees: String(s.price / 100), durationDays: String(minutesToDays(s.durationMinutes)), active: s.active, confirmHours: hours(s.confirmMinutes), processingHours: hours(s.processingMinutes), shipHours: hours(s.shipMinutes), outHours: hours(s.outMinutes), cutoffNote: s.cutoffNote ?? '', position: s.position })}>Edit</button>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => confirm('Delete this service? Past orders stay as placed.') && start(async () => { setMsg((await deleteDeliveryService(s.id)).message); router.refresh(); })}>Delete</button>
             </div>

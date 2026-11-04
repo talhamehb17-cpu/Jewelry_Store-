@@ -68,9 +68,9 @@ export function ThemeGallery({ themes, active, visitorSwitcher }: { themes: T[];
       <section className="admin-card overflow-hidden">
         <div className="grid md:grid-cols-[1.1fr_1fr]">
           <div className="border-b border-line md:border-b-0 md:border-r"><ThemeMock s={current.settings} /></div>
-          <div className="flex flex-col justify-center p-7">
+          <div className="flex flex-col justify-center p-5 sm:p-7">
             <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[0.7rem] font-medium text-emerald-700"><Zap size={12} /> Live theme</p>
-            <h2 className="mt-3 font-heading text-[2rem] leading-tight">{current.name}</h2>
+            <h2 className="mt-3 font-heading text-[1.7rem] leading-tight sm:text-[2rem]">{current.name}</h2>
             <p className="mt-1 text-[0.85rem] text-muted">{current.description}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link href={`/admin/themes/${current.id}`} className="btn btn-primary"><Paintbrush size={14} /> Customize</Link>

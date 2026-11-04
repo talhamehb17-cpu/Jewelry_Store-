@@ -34,7 +34,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     <>
       {denied && <p className="mb-4 rounded-lg bg-rose-50 px-4 py-2 text-[0.85rem] text-rose-800">That area requires an administrator account.</p>}
       <PageHeader title={`${greet}, ${user?.firstName ?? 'there'}`} description="Here’s how EVERMOON is performing over the last 30 days." actions={<><Link href="/admin/analytics" className="btn btn-secondary">Full analytics</Link><Link href="/admin/products/new" className="btn btn-primary">Add product</Link></>} />
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <Stat label="Revenue" value={formatMoney(k.revenue)} change={k.revenueChange} hint="vs prev. 30d" icon={<Wallet size={16} />} />
         <Stat label="Orders" value={k.orders} change={k.ordersChange} hint="vs prev. 30d" icon={<ShoppingBag size={16} />} />
         <Stat label="Avg. order" value={formatMoney(k.aov)} change={k.aovChange} icon={<Receipt size={16} />} />
@@ -55,7 +55,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <span className="w-4 text-[0.75rem] text-muted">{i + 1}</span>
                 <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-secondary"><Img src={t.image} alt="" sizes="40px" /></span>
                 <span className="min-w-0 flex-1"><span className="block truncate text-[0.84rem]">{t.name}</span><span className="text-[0.72rem] text-muted">{t.units} sold</span></span>
-                <span className="text-[0.84rem] font-medium">{formatMoney(Number(t.revenue))}</span>
+                <span className="shrink-0 text-[0.84rem] font-medium">{formatMoney(Number(t.revenue))}</span>
               </li>
             ))}
           </ul>
@@ -63,18 +63,18 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
         <Card title="Recent orders" className="xl:col-span-2" actions={<Link href="/admin/orders" className="text-[0.75rem] text-muted hover:text-ink">All orders</Link>} pad={false}>
-          <div className="overflow-x-auto">
+          <div className="admin-scroll admin-cards">
             <table className="admin-table w-full text-[0.84rem]">
               <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Payment</th><th>Status</th><th className="!text-right">Total</th></tr></thead>
               <tbody>
                 {recent.map((o) => (
                   <tr key={o.id}>
-                    <td><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link></td>
-                    <td className="text-muted">{formatDate(o.createdAt)}</td>
-                    <td>{o.customerName}</td>
-                    <td><StatusBadge status={o.paymentStatus} kind="payment" /></td>
-                    <td><StatusBadge status={o.status} /></td>
-                    <td className="text-right">{formatMoney(o.total)}</td>
+                    <td className="is-primary" data-label="Order"><Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link></td>
+                    <td data-label="Date" className="text-muted">{formatDate(o.createdAt)}</td>
+                    <td data-label="Customer">{o.customerName}</td>
+                    <td data-label="Payment"><StatusBadge status={o.paymentStatus} kind="payment" /></td>
+                    <td data-label="Status"><StatusBadge status={o.status} /></td>
+                    <td data-label="Total" className="text-right">{formatMoney(o.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -85,9 +85,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           {low.length ? (
             <ul className="divide-y divide-line">
               {low.map((v) => (
-                <li key={v.id} className="flex items-center justify-between gap-3 px-5 py-3 text-[0.84rem]">
-                  <span className="min-w-0"><Link href={`/admin/products/${v.productId}`} className="block truncate hover:underline">{v.name}</Link><span className="text-[0.72rem] text-muted">{v.title}</span></span>
-                  <span className={`rounded-full px-2 py-0.5 text-[0.72rem] font-medium ${v.stock <= 0 ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}`}>{v.stock <= 0 ? 'Out of stock' : `${v.stock} left`}</span>
+                <li key={v.id} className="flex items-center justify-between gap-3 px-4 py-3 text-[0.84rem] sm:px-5">
+                  <span className="min-w-0"><Link href={`/admin/products/${v.productId}`} className="block hover:underline" title={v.name}><span className="line-clamp-2">{v.name}</span></Link><span className="text-[0.72rem] text-muted">{v.title}</span></span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.72rem] font-medium ${v.stock <= 0 ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}`}>{v.stock <= 0 ? 'Out of stock' : `${v.stock} left`}</span>
                 </li>
               ))}
             </ul>
