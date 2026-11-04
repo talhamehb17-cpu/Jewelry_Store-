@@ -127,26 +127,41 @@ async function counts(pool, tables) {
   return out;
 }
 
+function bind(value, udt) {
+  if (value == null) return null;
+  if (udt === 'json' || udt === 'jsonb') return typeof value === 'string' ? value : JSON.stringify(value);
+  return value;
+}
+
 async function copyTable(source, dest, table) {
   const cols = await source.query(
-    `select column_name from information_schema.columns where table_schema = 'public' and table_name = $1 order by ordinal_position`,
+    `select column_name, udt_name from information_schema.columns where table_schema = 'public' and table_name = $1 order by ordinal_position`,
     [table],
   );
   const names = cols.rows.map((r) => r.column_name);
-  if (!names.length) return { copied: 0, skipped: 0 };
+  const types = new Map(cols.rows.map((r) => [r.column_name, r.udt_name]));
+  if (!names.length) return { inserted: 0, updated: 0 };
   const pk = await primaryKey(source, table);
   const rows = await source.query(`select ${names.map(quoteIdent).join(', ')} from ${quoteIdent(table)}`);
-  let copied = 0;
-  let skipped = 0;
-  const conflict = pk.length ? ` on conflict (${pk.map(quoteIdent).join(', ')}) do nothing` : '';
-  const sql = `insert into ${quoteIdent(table)} (${names.map(quoteIdent).join(', ')}) values (${names.map((_, i) => `$${i + 1}`).join(', ')})${conflict}`;
+  const placeholders = names.map((name, i) => {
+    const udt = types.get(name);
+    if (udt === 'jsonb' || udt === 'json') return `$${i + 1}::${udt}`;
+    return `$${i + 1}`;
+  });
+  const updates = names.filter((name) => !pk.includes(name)).map((name) => `${quoteIdent(name)} = excluded.${quoteIdent(name)}`);
+  const conflict = pk.length
+    ? ` on conflict (${pk.map(quoteIdent).join(', ')}) do ${updates.length ? `update set ${updates.join(', ')}` : 'nothing'}`
+    : '';
+  const sql = `insert into ${quoteIdent(table)} (${names.map(quoteIdent).join(', ')}) values (${placeholders.join(', ')})${conflict} returning (xmax = 0) as inserted`;
+  let inserted = 0;
+  let updated = 0;
   for (const row of rows.rows) {
-    const values = names.map((name) => row[name]);
+    const values = names.map((name) => bind(row[name], types.get(name)));
     const result = await dest.query(sql, values);
-    if (result.rowCount) copied += 1;
-    else skipped += 1;
+    if (result.rows[0]?.inserted) inserted += 1;
+    else updated += 1;
   }
-  return { copied, skipped };
+  return { inserted, updated };
 }
 
 async function resetSequences(dest, tables) {
@@ -200,14 +215,35 @@ async function main() {
       await dest.query('begin');
       try {
         await dest.query(`set session_replication_role = 'replica'`).catch(() => undefined);
+        const sourceEmails = await source.query(`select email from users`);
+        const emails = sourceEmails.rows.map((row) => row.email).filter(Boolean);
+        if (emails.length) {
+          const removed = await dest.query(
+            `delete from users u
+             where u.email = any($1::text[])
+               and not exists (select 1 from orders o where o.user_id = u.id)
+               and not exists (select 1 from addresses a where a.user_id = u.id)
+               and not exists (select 1 from wishlist_items w where w.user_id = u.id)
+               and not exists (select 1 from reviews r where r.user_id = u.id)
+             returning id`,
+            [emails],
+          );
+          log(`reconciled destination users with no orders or addresses removed=${removed.rowCount}`);
+        }
         for (const table of tables) {
           const result = await copyTable(source, dest, table);
-          log(`${table} copied=${result.copied} already_present=${result.skipped}`);
+          log(`${table} inserted=${result.inserted} updated=${result.updated}`);
         }
         await resetSequences(dest, tables);
+        const afterTx = await counts(dest, tables);
+        const missing = tables.filter((table) => afterTx[table] < sourceCounts[table]);
+        if (missing.length) throw new Error(`missing rows in ${missing.join(', ')}`);
+        const srcOrders = await source.query(`select number from orders order by number`);
+        const dstOrders = await dest.query(`select number from orders order by number`);
+        log(`order numbers match=${srcOrders.rows.map((row) => row.number).join(',') === dstOrders.rows.map((row) => row.number).join(',')} count=${dstOrders.rowCount}`);
         await dest.query(
           `insert into settings (key, value, updated_at) values ('neon_migration_v1', $1::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()`,
-          [JSON.stringify({ at: new Date().toISOString(), sourceHost: hostOf(sourceUrl) })],
+          [JSON.stringify({ at: new Date().toISOString(), sourceHost: hostOf(sourceUrl), counts: afterTx })],
         );
         await dest.query('commit');
       } catch (error) {
