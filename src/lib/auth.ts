@@ -76,6 +76,9 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 });
 
 export const isStaff = (u: Pick<User, 'role'> | null | undefined) => !!u && (u.role === 'admin' || u.role === 'staff');
+export function logoutDestination(role: string | null | undefined) {
+  return role === 'admin' || role === 'staff' ? '/admin/login' : '/account/login';
+}
 
 export async function requireUser(next = '/account') {
   const u = await getCurrentUser();

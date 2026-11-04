@@ -233,7 +233,7 @@ export const getProductBySlug = cache(async (slug: string, opts: { includeDrafts
   const db = await getDb();
   const [p] = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
   if (!p || (p.status !== 'active' && !opts.includeDrafts)) return null;
-  const [images, variants, cat, revs] = await Promise.all([
+  const [images, variants, cat, revs, distRows] = await Promise.all([
     db.select().from(productImages).where(eq(productImages.productId, p.id)).orderBy(asc(productImages.position)),
     db.select().from(productVariants).where(eq(productVariants.productId, p.id)).orderBy(asc(productVariants.position)),
     p.categoryId ? db.select().from(categories).where(eq(categories.id, p.categoryId)).limit(1) : Promise.resolve([]),
@@ -242,9 +242,15 @@ export const getProductBySlug = cache(async (slug: string, opts: { includeDrafts
       .from(reviews)
       .where(and(eq(reviews.productId, p.id), eq(reviews.status, 'published')))
       .orderBy(desc(reviews.createdAt))
-      .limit(50),
+      .limit(8),
+    db
+      .select({ rating: reviews.rating, count: sql<number>`count(*)::int` })
+      .from(reviews)
+      .where(and(eq(reviews.productId, p.id), eq(reviews.status, 'published')))
+      .groupBy(reviews.rating),
   ]);
-  const distribution = [5, 4, 3, 2, 1].map((star) => ({ star, count: revs.filter((r) => r.rating === star).length }));
+  const counts = new Map(distRows.map((row) => [row.rating, Number(row.count)]));
+  const distribution = [5, 4, 3, 2, 1].map((star) => ({ star, count: counts.get(star) ?? 0 }));
   return { product: p, images, variants, category: cat[0] ?? null, reviews: revs, distribution };
 });
 

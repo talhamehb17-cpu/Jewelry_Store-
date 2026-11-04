@@ -5,6 +5,8 @@ import { getSettings } from '@/lib/settings';
 import { renderMarkdown } from '@/lib/markdown';
 import { ContactForm } from '@/components/store/contact-form';
 import { publicContact } from '@/lib/locations';
+import { isLiveSchedule, isPlaceholderHours } from '@/lib/store-hours';
+import { StoreHours } from '@/components/store/store-hours';
 
 export async function generateMetadata(): Promise<Metadata> {
   const p = await getPage('contact');
@@ -29,7 +31,7 @@ export default async function ContactPage() {
               {s.phone && <li className="flex gap-4"><Phone size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span><span className="label !mb-1">Phone</span><a href={`tel:${s.phone.replace(/\s/g, '')}`} className="link-u">{s.phone}</a></span></li>}
               {s.whatsapp && <li className="flex gap-4"><MessageCircle size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span><span className="label !mb-1">WhatsApp</span><a href={`https://wa.me/${s.whatsapp}`} target="_blank" rel="noopener noreferrer" className="link-u">Chat with a stylist</a></span></li>}
               {s.email && <li className="flex gap-4"><Mail size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span><span className="label !mb-1">Email</span><a href={`mailto:${s.email}`} className="link-u">{s.email}</a></span></li>}
-              {s.hours && <li className="flex gap-4"><Clock size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span><span className="label !mb-1">Hours</span>{s.hours}</span></li>}
+              {isLiveSchedule(settings.store.hoursSchedule) ? <li className="flex gap-4"><Clock size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span><span className="label !mb-1">Hours</span><StoreHours schedule={settings.store.hoursSchedule} /></span></li> : s.hours && !isPlaceholderHours(s.hours) ? <li className="flex gap-4"><Clock size={20} strokeWidth={1.25} className="shrink-0 text-accent" /><span><span className="label !mb-1">Hours</span>{s.hours}</span></li> : null}
             </ul>
           </div>
           <p className="text-[0.85rem] text-muted">A street address, phone number and opening hours appear here only after they are saved in admin. Nothing on this page is a guessed location.</p>

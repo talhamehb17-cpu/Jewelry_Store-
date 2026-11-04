@@ -4,13 +4,15 @@ import { notFound } from 'next/navigation';
 import { and, asc, eq } from 'drizzle-orm';
 import { ArrowLeft, Truck } from 'lucide-react';
 import { getDb } from '@/db';
-import { orderEvents, orderItems, orders } from '@/db/schema';
+import { orderEvents, orderItems, orders, products } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
 import { formatMoney } from '@/lib/money';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { OrderTracker, StatusBadge } from '@/components/store/order-status';
 import { CancelOrder } from '@/components/store/cancel-order';
 import { DeliveryAnswer } from '@/components/store/delivery-answer';
+import { ReviewForm } from '@/components/store/product-extras';
+import { eligiblePurchases } from '@/lib/reviews';
 import { getSettings } from '@/lib/settings';
 import { Img } from '@/components/ui/img';
 
@@ -25,9 +27,10 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
   const db = await getDb();
   const [o] = await db.select().from(orders).where(and(eq(orders.number, number), eq(orders.userId, user.id))).limit(1);
   if (!o) notFound();
-  const [items, events] = await Promise.all([
-    db.select().from(orderItems).where(eq(orderItems.orderId, o.id)),
+  const [items, events, purchases] = await Promise.all([
+    db.select({ item: orderItems, slug: products.slug }).from(orderItems).leftJoin(products, eq(products.id, orderItems.productId)).where(eq(orderItems.orderId, o.id)),
     db.select().from(orderEvents).where(eq(orderEvents.orderId, o.id)).orderBy(asc(orderEvents.createdAt)),
+    o.status === 'delivered' ? eligiblePurchases(user.id, user.email) : Promise.resolve([]),
   ]);
   const a = o.shippingAddress;
   return (
@@ -69,13 +72,15 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
       <div className="grid gap-8 md:grid-cols-[1.5fr_1fr]">
         <div className="rounded-theme border border-line p-6">
           <ul className="divide-y divide-line">
-            {items.map((i) => (
+            {items.map(({ item: i, slug }) => (
               <li key={i.id} className="flex items-center gap-4 py-4 first:pt-0">
                 <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-theme-sm bg-surface"><Img src={i.image} alt={i.name} sizes="64px" /></span>
                 <div className="flex-1">
                   <p className="text-[0.95rem]">{i.name}</p>
                   {i.variantTitle && <p className="text-[0.8rem] text-muted">{i.variantTitle}</p>}
                   <p className="text-[0.8rem] text-muted">{formatMoney(i.unitPrice)} × {i.quantity}</p>
+                  {o.status === 'delivered' && slug && purchases.some((purchase) => purchase.itemId === i.id) && <div className="mt-3"><ReviewForm productId={i.productId!} defaultName={`${user.firstName} ${user.lastName}`.trim()} avatar={user.avatar} purchases={purchases.filter((purchase) => purchase.productId === i.productId)} signedIn returnTo={`/account/orders/${o.number}`} /></div>}
+                  {o.status === 'delivered' && slug && !purchases.some((purchase) => purchase.itemId === i.id) && <p className="mt-2 text-[0.78rem] text-muted">Reviewed, or no longer open for this purchase.</p>}
                 </div>
                 <p>{formatMoney(i.lineTotal)}</p>
               </li>

@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import type { ThemeFooter, ThemeHeader } from '@/themes/types';
 import type { StoreSettings } from '@/lib/settings';
 import { publicContact } from '@/lib/locations';
+import { isLiveSchedule, isPlaceholderHours } from '@/lib/store-hours';
+import { StoreHours } from './store-hours';
 
 type Props = { footer: ThemeFooter; header: ThemeHeader; settings: StoreSettings };
 
@@ -83,7 +85,7 @@ function Contact({ settings, className }: { settings: StoreSettings; className?:
       {s.address && <li className="flex gap-3"><MapPin size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.address}</li>}
       {s.phone && <li className="flex gap-3"><Phone size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><a href={`tel:${s.phone.replace(/\s/g, '')}`}>{s.phone}</a></li>}
       {s.email && <li className="flex gap-3"><Mail size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><a href={`mailto:${s.email}`}>{s.email}</a></li>}
-      {s.hours && <li className="flex gap-3"><Clock size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.hours}</li>}
+      {isLiveSchedule(settings.store.hoursSchedule) ? <li className="flex gap-3"><Clock size={16} strokeWidth={1.25} className="mt-1 shrink-0" /><StoreHours schedule={settings.store.hoursSchedule} compact /></li> : s.hours && !isPlaceholderHours(s.hours) ? <li className="flex gap-3"><Clock size={16} strokeWidth={1.25} className="mt-1 shrink-0" />{s.hours}</li> : null}
     </ul>
   );
 }

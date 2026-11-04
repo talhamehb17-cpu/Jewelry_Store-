@@ -5,13 +5,15 @@ import { cookies } from 'next/headers';
 import { refresh } from 'next/cache';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
-import { contactMessages, newsletterSubscribers, orderItems, orders, reviews, users } from '@/db/schema';
+import { contactMessages, newsletterSubscribers, products, reviews, users } from '@/db/schema';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { isThemeId } from '@/themes/engine';
 import { VISITOR_THEME_COOKIE } from '@/lib/theme-server';
 import { getCurrentUser } from '@/lib/auth';
-import { getSettings } from '@/lib/settings';
+import { savePublicImage } from '@/lib/image-upload';
+import { eligiblePurchases } from '@/lib/reviews';
 
 export type ActionResult = { ok: boolean; message: string; fieldErrors?: Record<string, string> };
 
@@ -86,52 +88,76 @@ export async function submitContact(_: ActionResult | null, form: FormData): Pro
 
 const reviewSchema = z.object({
   productId: z.coerce.number().int().positive(),
+  orderId: z.coerce.number().int().positive().optional(),
   rating: z.coerce.number().int().min(1, 'Please choose a rating.').max(5),
   title: z.string().trim().max(200).optional().or(z.literal('')),
   body: z.string().trim().min(10, 'Please share a few more words (10+ characters).').max(3000),
   name: z.string().trim().min(2, 'Please enter your name.').max(80),
-  email: email.optional().or(z.literal('')),
 });
 
+function clean(value: string) {
+  return value.replace(/<[^>]*>/g, '').trim();
+}
+
 export async function submitReview(_: ActionResult | null, form: FormData): Promise<ActionResult> {
-  const parsed = reviewSchema.safeParse(Object.fromEntries(form));
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, message: 'Sign in to review a piece from an order that has been delivered to you.' };
+  const parsed = reviewSchema.safeParse({
+    productId: form.get('productId'),
+    orderId: form.get('orderId') || undefined,
+    rating: form.get('rating'),
+    title: form.get('title'),
+    body: form.get('body'),
+    name: form.get('name'),
+  });
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
-    for (const i of parsed.error.issues) fieldErrors[String(i.path[0])] ??= i.message;
+    for (const issue of parsed.error.issues) fieldErrors[String(issue.path[0])] ??= issue.message;
     return { ok: false, message: 'Please check the highlighted fields.', fieldErrors };
   }
-  if (!rateLimit(`review:${await clientIp()}`, 5, 10 * 60_000)) return { ok: false, message: 'Too many reviews submitted. Please try again later.' };
-  const user = await getCurrentUser();
+  if (!rateLimit(`review:${user.id}`, 5, 10 * 60_000)) return { ok: false, message: 'Too many reviews submitted. Please try again later.' };
+  const purchases = await eligiblePurchases(user.id, user.email, parsed.data.productId);
+  const purchase = parsed.data.orderId ? purchases.find((item) => item.orderId === parsed.data.orderId) : purchases[0];
+  if (!purchase) {
+    return { ok: false, message: parsed.data.orderId ? 'That order cannot be reviewed from this account.' : 'Reviews open only after this piece is in an order marked delivered, and only once for that purchase.' };
+  }
+  const avatar = await savePublicImage(form.get('avatar'), 'avatars');
+  if ('error' in avatar) return { ok: false, message: avatar.error || 'Could not save the profile picture.' };
+  const photo = await savePublicImage(form.get('photo'), 'reviews');
+  if ('error' in photo) return { ok: false, message: photo.error || 'Could not save the review photo.' };
   const db = await getDb();
-  let verified = false;
-  if (user) {
-    const bought = await db
-      .select({ id: orders.id })
-      .from(orders)
-      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
-      .where(and(eq(orders.userId, user.id), eq(orderItems.productId, parsed.data.productId), eq(orders.status, 'delivered')))
-      .limit(1);
-    verified = bought.length > 0;
+  if (avatar.url && form.get('saveAvatar') === 'on') {
+    await db.update(users).set({ avatar: avatar.url }).where(eq(users.id, user.id));
   }
-  const settings = await getSettings();
-  const publish = verified && settings.reviews.autoPublishVerified;
-  await db.insert(reviews).values({
-    productId: parsed.data.productId,
-    userId: user?.id ?? null,
-    name: parsed.data.name,
-    email: user?.email ?? (parsed.data.email || null),
-    rating: parsed.data.rating,
-    title: parsed.data.title || null,
-    body: parsed.data.body,
-    status: publish ? 'published' : 'pending',
-    verified,
-  });
-  if (publish) {
-    const { recalcProductRating } = await import('@/lib/reviews');
-    await recalcProductRating(parsed.data.productId);
-    refresh();
+  try {
+    await db.insert(reviews).values({
+      productId: parsed.data.productId,
+      userId: user.id,
+      orderId: purchase.orderId,
+      orderItemId: purchase.itemId,
+      name: clean(parsed.data.name),
+      email: user.email,
+      rating: parsed.data.rating,
+      title: clean(parsed.data.title || '') || null,
+      body: clean(parsed.data.body),
+      avatar: avatar.url || user.avatar || null,
+      photo: photo.url,
+      status: 'pending',
+      verified: true,
+    });
+  } catch (error) {
+    const code = typeof error === 'object' && error && 'code' in error ? String((error as { code?: string }).code) : '';
+    if (code === '23505' || (error instanceof Error && /unique|duplicate/i.test(error.message))) {
+      return { ok: false, message: 'You have already reviewed this purchase.' };
+    }
+    throw error;
   }
-  return { ok: true, message: publish ? 'Thank you! Your review is now live.' : 'Thank you! Your review will appear once our team has approved it.' };
+  const [product] = await db.select({ slug: products.slug }).from(products).where(eq(products.id, parsed.data.productId)).limit(1);
+  revalidatePath('/admin/reviews');
+  revalidatePath('/account/reviews');
+  if (product) revalidatePath(`/products/${product.slug}`);
+  refresh();
+  return { ok: true, message: 'Thank you. Your review is saved and will appear beside the other reviews after the atelier approves it.' };
 }
 
 export async function notifyBackInStock(_: ActionResult | null, form: FormData): Promise<ActionResult> {

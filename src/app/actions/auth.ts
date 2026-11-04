@@ -8,9 +8,10 @@ import { z } from 'zod';
 import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { addresses, orders, passwordResetTokens, users } from '@/db/schema';
-import { createSession, destroySession, getCurrentUser, hashPassword, isStaff, passwordProblems, verifyPassword } from '@/lib/auth';
+import { createSession, destroySession, getCurrentUser, hashPassword, isStaff, logoutDestination, passwordProblems, verifyPassword } from '@/lib/auth';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { resetEmail, sendEmail } from '@/lib/email';
+import { savePublicImage } from '@/lib/image-upload';
 import { PROVINCES, siteUrl } from '@/lib/utils';
 import { isThemeId } from '@/themes/engine';
 import { VISITOR_THEME_COOKIE } from '@/lib/theme-server';
@@ -95,9 +96,20 @@ export async function registerAction(_: FormState, form: FormData): Promise<Form
   redirect(safeNext(form.get('next'), '/account'));
 }
 
-export async function logoutAction() {
-  await destroySession();
-  redirect('/');
+export async function logoutAction(form?: FormData): Promise<{ ok: false; message: string } | void> {
+  const user = await getCurrentUser().catch(() => null);
+  const area = form instanceof FormData ? String(form.get('area') || '') : '';
+  const destination = user ? logoutDestination(user.role) : area === 'admin' ? '/admin/login' : '/account/login';
+  try {
+    if (user) {
+      const db = await getDb();
+      await db.update(users).set({ tokenVersion: user.tokenVersion + 1 }).where(eq(users.id, user.id));
+    }
+    await destroySession();
+  } catch {
+    return { ok: false, message: 'Could not sign out. Your session is still active. Please try again.' };
+  }
+  redirect(destination);
 }
 
 export async function requestResetAction(_: FormState, form: FormData): Promise<FormState> {
@@ -139,6 +151,18 @@ export async function resetPasswordAction(_: FormState, form: FormData): Promise
     .returning();
   await createSession(u!);
   redirect('/account?reset=1');
+}
+
+export async function updateAvatarAction(_: FormState, form: FormData): Promise<FormState> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/account/login');
+  const saved = await savePublicImage(form.get('avatar'), 'avatars');
+  if ('error' in saved) return { message: saved.error };
+  if (!saved.url) return { message: 'Choose a picture first.' };
+  const db = await getDb();
+  await db.update(users).set({ avatar: saved.url }).where(eq(users.id, user.id));
+  refresh();
+  return { ok: true, message: 'Profile picture saved.' };
 }
 
 export async function updateProfileAction(_: FormState, form: FormData): Promise<FormState> {

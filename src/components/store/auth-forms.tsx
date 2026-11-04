@@ -16,14 +16,15 @@ export function FormMessage({ state }: { state: FormState }) {
   );
 }
 
-export function Input({ label, name, error, type = 'text', ...rest }: { label: string; name: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ label, name, error, type = 'text', idPrefix = '', ...rest }: { label: string; name: string; error?: string; idPrefix?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   const [show, setShow] = useState(false);
   const isPw = type === 'password';
+  const id = `${idPrefix}f-${name}`;
   return (
     <div>
-      <label htmlFor={`f-${name}`} className="label">{label}</label>
+      <label htmlFor={id} className="label">{label}</label>
       <div className="relative">
-        <input id={`f-${name}`} name={name} type={isPw && show ? 'text' : type} className={cn('field', isPw && 'pr-11', error && '!border-sale')} aria-invalid={!!error} {...rest} />
+        <input id={id} name={name} type={isPw && show ? 'text' : type} className={cn('field', isPw && 'pr-11', error && '!border-sale')} aria-invalid={!!error} {...rest} />
         {isPw && (
           <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink" aria-label={show ? 'Hide password' : 'Show password'}>
             {show ? <EyeOff size={16} strokeWidth={1.25} /> : <Eye size={16} strokeWidth={1.25} />}
@@ -35,7 +36,7 @@ export function Input({ label, name, error, type = 'text', ...rest }: { label: s
   );
 }
 
-export function LoginForm({ next, area = 'store' }: { next?: string; area?: 'store' | 'admin' }) {
+export function LoginForm({ next, area = 'store', idPrefix = '' }: { next?: string; area?: 'store' | 'admin'; idPrefix?: string }) {
   const [state, action, pending] = useActionState(loginAction, null);
   const fe = state?.fieldErrors ?? {};
   return (
@@ -43,8 +44,8 @@ export function LoginForm({ next, area = 'store' }: { next?: string; area?: 'sto
       <input type="hidden" name="next" value={next ?? ''} />
       <input type="hidden" name="area" value={area} />
       <FormMessage state={state} />
-      <Input label="Email" name="email" type="email" autoComplete="email" required error={fe.email} />
-      <Input label="Password" name="password" type="password" autoComplete="current-password" required error={fe.password} />
+      <Input idPrefix={idPrefix} label="Email" name="email" type="email" autoComplete="email" required error={fe.email} />
+      <Input idPrefix={idPrefix} label="Password" name="password" type="password" autoComplete="current-password" required error={fe.password} />
       {area === 'store' && (
         <div className="flex justify-end text-[0.82rem]"><Link href="/account/forgot-password" className="text-muted underline underline-offset-4 hover:text-ink">Forgot your password?</Link></div>
       )}
@@ -53,7 +54,7 @@ export function LoginForm({ next, area = 'store' }: { next?: string; area?: 'sto
   );
 }
 
-export function RegisterForm({ next }: { next?: string }) {
+export function RegisterForm({ next, idPrefix = '' }: { next?: string; idPrefix?: string }) {
   const [state, action, pending] = useActionState(registerAction, null);
   const fe = state?.fieldErrors ?? {};
   return (
@@ -61,11 +62,11 @@ export function RegisterForm({ next }: { next?: string }) {
       <input type="hidden" name="next" value={next ?? ''} />
       <FormMessage state={state} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="First name" name="firstName" autoComplete="given-name" required error={fe.firstName} />
-        <Input label="Last name" name="lastName" autoComplete="family-name" required error={fe.lastName} />
+        <Input idPrefix={idPrefix} label="First name" name="firstName" autoComplete="given-name" required error={fe.firstName} />
+        <Input idPrefix={idPrefix} label="Last name" name="lastName" autoComplete="family-name" required error={fe.lastName} />
       </div>
-      <Input label="Email" name="email" type="email" autoComplete="email" required error={fe.email} />
-      <Input label="Password" name="password" type="password" autoComplete="new-password" required minLength={8} error={fe.password} />
+      <Input idPrefix={idPrefix} label="Email" name="email" type="email" autoComplete="email" required error={fe.email} />
+      <Input idPrefix={idPrefix} label="Password" name="password" type="password" autoComplete="new-password" required minLength={8} error={fe.password} />
       <p className="-mt-3 text-[0.75rem] text-muted">At least 8 characters, including a letter and a number.</p>
       <label className="flex items-start gap-3 text-[0.85rem]"><input type="checkbox" name="marketing" className="checkbox mt-0.5" defaultChecked /> Email me about new collections and private sales.</label>
       <button disabled={pending} className="btn btn-primary btn-block">{pending ? 'Creating account…' : 'Create account'}</button>

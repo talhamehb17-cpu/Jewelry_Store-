@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react';
 import { Save, Loader2, CheckCircle2, XCircle, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { saveSettingsSection } from '@/app/actions/admin/content';
+import { defaultSchedule, scheduleError, scheduleSummary, type HoursSchedule } from '@/lib/store-hours';
+import { HoursEditor } from './hours-editor';
 import { Card, Field } from './ui';
 import type { StoreSettings } from '@/lib/settings';
 import { cn } from '@/lib/utils';
@@ -36,6 +38,9 @@ const linksToLines = (links: { label: string; href: string }[]) => links.map((l)
 
 export function SettingsForms({ settings, system }: { settings: StoreSettings; system: System }) {
   const [store, setStore] = useState(settings.store);
+  const [publishHours, setPublishHours] = useState(settings.store.hoursSchedule?.published === true);
+  const [schedule, setSchedule] = useState<HoursSchedule>(settings.store.hoursSchedule ?? defaultSchedule());
+  const [hoursError, setHoursError] = useState<string | null>(null);
   const [shipping, setShipping] = useState({ ...settings.shipping, threshold: rupees(settings.shipping.freeThreshold) });
   const [payments, setPayments] = useState(settings.payments);
   const [tax, setTax] = useState(settings.tax);
@@ -56,14 +61,26 @@ export function SettingsForms({ settings, system }: { settings: StoreSettings; s
 
   return (
     <div className="grid gap-6 xl:grid-cols-2">
-      <Card title="Store details" actions={<div className="flex items-center gap-3">{s1.bar}<SaveBtn pending={s1.pending} onClick={() => s1.save('store', store)} /></div>}>
+      <Card title="Store details" actions={<div className="flex items-center gap-3">{s1.bar}<SaveBtn pending={s1.pending} onClick={() => {
+        const nextSchedule = { ...schedule, published: publishHours };
+        const error = scheduleError(nextSchedule);
+        if (error) { setHoursError(error); return; }
+        setHoursError(null);
+        const hours = publishHours ? scheduleSummary(nextSchedule) : '';
+        s1.save('store', { ...store, hours, hoursSchedule: nextSchedule });
+      }} /></div>}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Store name"><input value={store.name} onChange={(e) => setStore({ ...store, name: e.target.value })} className="field" /></Field>
           <Field label="Tagline"><input value={store.tagline} onChange={(e) => setStore({ ...store, tagline: e.target.value })} className="field" /></Field>
           <Field label="Support email"><input value={store.email} onChange={(e) => setStore({ ...store, email: e.target.value })} className="field" /></Field>
           <Field label="Phone"><input value={store.phone} onChange={(e) => setStore({ ...store, phone: e.target.value })} className="field" /></Field>
           <Field label="WhatsApp (digits, with country code)"><input value={store.whatsapp} onChange={(e) => setStore({ ...store, whatsapp: e.target.value.replace(/\D/g, '') })} className="field" /></Field>
-          <Field label="Opening hours"><input value={store.hours} onChange={(e) => setStore({ ...store, hours: e.target.value })} className="field" /></Field>
+          <div className="sm:col-span-2">
+            <p className="text-[0.75rem] text-muted">Click Opening time or Closing time and choose the hour and minute on the clock. Apply keeps that time in the field. Save stores it. The storefront uses this timezone, not the visitor’s clock.</p>
+            <label className="mt-3 flex items-center gap-2 text-[0.82rem]"><input type="checkbox" checked={publishHours} onChange={(e) => setPublishHours(e.target.checked)} /> Show these hours on the storefront</label>
+            {hoursError && <p className="mt-2 text-[0.78rem] text-rose-700">{hoursError}</p>}
+            <div className="mt-4"><HoursEditor value={schedule} onChange={setSchedule} /></div>
+          </div>
           <Field label="Address" className="sm:col-span-2"><input value={store.address} onChange={(e) => setStore({ ...store, address: e.target.value })} className="field" /></Field>
         </div>
         <p className="mt-4 text-[0.75rem] text-muted">Currency: Pakistani Rupee (PKR, shown as “Rs”). Timezone: Asia/Karachi.</p>

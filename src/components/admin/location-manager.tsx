@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { deleteLocation, saveLocation } from '@/app/actions/admin/operations';
+import { defaultSchedule, type HoursSchedule } from '@/lib/store-hours';
+import { HoursEditor } from './hours-editor';
 import { ImageInput } from './image-input';
 import { Card, Field } from './ui';
 
@@ -15,6 +17,8 @@ type Row = {
   address: string;
   phone: string | null;
   hours: string | null;
+  timezone: string;
+  schedule: HoursSchedule | null;
   image: string | null;
   mapUrl: string | null;
   latitude: number | null;
@@ -28,6 +32,8 @@ const blank = { name: '', city: '', country: 'Pakistan', address: '', phone: '',
 
 export function LocationManager({ rows }: { rows: Row[] }) {
   const [form, setForm] = useState(blank);
+  const [schedule, setSchedule] = useState<HoursSchedule>(defaultSchedule());
+  const [publishHours, setPublishHours] = useState(false);
   const [editId, setEditId] = useState<number | undefined>();
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -41,10 +47,14 @@ export function LocationManager({ rows }: { rows: Row[] }) {
         latitude: form.latitude,
         longitude: form.longitude,
         position: Number(form.position) || 0,
+        schedule: { ...schedule, published: publishHours },
+        timezone: schedule.timezone,
       });
       setMsg(res.message);
       if (res.ok) {
         setForm(blank);
+        setSchedule(defaultSchedule());
+        setPublishHours(false);
         setEditId(undefined);
         router.refresh();
       }
@@ -60,7 +70,11 @@ export function LocationManager({ rows }: { rows: Row[] }) {
           <Field label="Country"><input className="field" value={form.country} onChange={(e) => set('country', e.target.value)} /></Field>
           <Field label="Phone"><input className="field" value={form.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
           <Field label="Address"><textarea className="field sm:col-span-2" rows={2} value={form.address} onChange={(e) => set('address', e.target.value)} /></Field>
-          <Field label="Opening hours"><input className="field" value={form.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
+          <div className="sm:col-span-2 rounded-lg border border-line p-3">
+            <p className="text-[0.75rem] text-muted">Click Opening time or Closing time and pick the hour and minute on the clock, then Apply. Saving keeps the times even if they are not shown yet. Showing hours does not make a lookbook card a verified branch.</p>
+            <label className="mt-3 flex items-center gap-2 text-[0.82rem]"><input type="checkbox" checked={publishHours} onChange={(e) => setPublishHours(e.target.checked)} /> Show these hours on the storefront</label>
+            <div className="mt-4"><HoursEditor value={schedule} onChange={setSchedule} /></div>
+          </div>
           <Field label="Map URL (optional)"><input className="field" value={form.mapUrl} onChange={(e) => set('mapUrl', e.target.value)} placeholder="https://" /></Field>
           <Field label="Latitude"><input className="field" value={form.latitude} onChange={(e) => set('latitude', e.target.value)} inputMode="decimal" /></Field>
           <Field label="Longitude"><input className="field" value={form.longitude} onChange={(e) => set('longitude', e.target.value)} inputMode="decimal" /></Field>
@@ -80,7 +94,7 @@ export function LocationManager({ rows }: { rows: Row[] }) {
               <p className="text-[0.75rem] text-muted">{r.active ? 'Active' : 'Hidden'} · {r.showOnHome ? 'On homepage' : 'Not on homepage'} · {r.latitude == null ? 'No pin' : `${r.latitude}, ${r.longitude}`}</p>
             </div>
             <div className="flex gap-2">
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setEditId(r.id); setForm({ name: r.name, city: r.city, country: r.country, address: r.address, phone: r.phone ?? '', hours: r.hours ?? '', image: r.image ?? '', mapUrl: r.mapUrl ?? '', latitude: r.latitude == null ? '' : String(r.latitude), longitude: r.longitude == null ? '' : String(r.longitude), active: r.active, showOnHome: r.showOnHome, position: r.position }); }}>Edit</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setEditId(r.id); setPublishHours(r.schedule?.published === true); setSchedule(r.schedule ?? defaultSchedule(r.timezone || 'Asia/Karachi')); setForm({ name: r.name, city: r.city, country: r.country, address: r.address, phone: r.phone ?? '', hours: r.hours ?? '', image: r.image ?? '', mapUrl: r.mapUrl ?? '', latitude: r.latitude == null ? '' : String(r.latitude), longitude: r.longitude == null ? '' : String(r.longitude), active: r.active, showOnHome: r.showOnHome, position: r.position }); }}>Edit</button>
               <button type="button" className="btn btn-secondary btn-sm" disabled={pending} onClick={() => confirm('Delete this location?') && start(async () => { setMsg((await deleteLocation(r.id)).message); router.refresh(); })}>Delete</button>
             </div>
           </article>

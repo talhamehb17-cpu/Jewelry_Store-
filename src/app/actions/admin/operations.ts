@@ -13,6 +13,7 @@ import { progressOrders } from '@/lib/fulfillment';
 import { sendEmail, statusEmail } from '@/lib/email';
 import { absoluteUrl } from '@/lib/utils';
 import { clearRate, isCurrency, refreshExchangeRates, saveManualRate, type CurrencyCode } from '@/lib/currency';
+import { normalizeSchedule, scheduleError, scheduleSummary, type HoursSchedule } from '@/lib/store-hours';
 
 function fail(e: unknown) {
   return { ok: false as const, message: e instanceof Error ? e.message : 'Could not save that.' };
@@ -25,7 +26,9 @@ const locationSchema = z.object({
   country: z.string().trim().min(2).max(80),
   address: z.string().trim().min(6).max(500),
   phone: z.string().trim().max(40).optional().default(''),
-  hours: z.string().trim().max(200).optional().default(''),
+  hours: z.string().trim().max(1000).optional().default(''),
+  timezone: z.string().trim().max(64).optional().default('Asia/Karachi'),
+  schedule: z.any().nullable().optional(),
   image: z.string().trim().max(500).optional().default(''),
   mapUrl: z.string().trim().max(500).optional().default(''),
   latitude: z.string().trim().optional().default(''),
@@ -53,13 +56,23 @@ export async function saveLocation(input: z.input<typeof locationSchema>) {
   if (latitude != null && (Math.abs(latitude) > 90 || Math.abs(longitude!) > 180)) return { ok: false, message: 'Those coordinates are outside the valid range.' };
   if (d.mapUrl && !/^https?:\/\//i.test(d.mapUrl)) return { ok: false, message: 'The map link must start with https://' };
   const db = await getDb();
+  let schedule: HoursSchedule | null = null;
+  let hours = d.hours || null;
+  if (d.schedule) {
+    const error = scheduleError(d.schedule);
+    if (error) return { ok: false, message: error };
+    schedule = normalizeSchedule(d.schedule, d.timezone);
+    hours = schedule?.published ? scheduleSummary(schedule) : null;
+  }
   const values = {
     name: d.name,
     city: d.city,
     country: d.country,
     address: d.address,
     phone: d.phone || null,
-    hours: d.hours || null,
+    hours,
+    timezone: schedule?.timezone || d.timezone || 'Asia/Karachi',
+    schedule,
     image: d.image || null,
     mapUrl: d.mapUrl || null,
     latitude,

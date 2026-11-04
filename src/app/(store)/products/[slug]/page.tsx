@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BadgeCheck } from 'lucide-react';
-import { Img } from '@/components/ui/img';
 import { ProductGallery, type Media } from '@/components/store/product-gallery';
 import { ProductPurchase } from '@/components/store/product-purchase';
 import { RecentlyViewed, ReviewForm, TrackRecentlyViewed } from '@/components/store/product-extras';
@@ -14,7 +12,9 @@ import { campaignHit, getActiveCampaign, presentPrice } from '@/lib/campaigns';
 import { getThemeContext } from '@/lib/theme-server';
 import { getSettings } from '@/lib/settings';
 import { getCurrentUser } from '@/lib/auth';
-import { absoluteUrl, cn, formatDate, jsonLd } from '@/lib/utils';
+import { eligiblePurchases, presentReview } from '@/lib/reviews';
+import { ReviewList } from '@/components/store/review-list';
+import { absoluteUrl, cn, jsonLd } from '@/lib/utils';
 import { isRemote } from '@/lib/images';
 
 type P = { params: Promise<{ slug: string }> };
@@ -54,6 +54,7 @@ export default async function ProductPage({ params }: P) {
   if (p.videoUrl) media.push({ type: 'video', url: p.videoUrl, alt: `${p.name} video`, poster: d.images[0]?.url });
   const isNew = Date.now() - +p.createdAt < 45 * 86_400_000;
   const totalStock = d.variants.reduce((a, v) => a + Math.max(0, v.stock), 0);
+  const purchases = user ? await eligiblePurchases(user.id, user.email, p.id) : [];
   const std = settings.shipping.methods.find((m) => m.id === 'standard')?.price ?? 25000;
   const exp = settings.shipping.methods.find((m) => m.id === 'express')?.price ?? 50000;
 
@@ -143,63 +144,30 @@ export default async function ProductPage({ params }: P) {
         <div className="container-x grid gap-12 md:grid-cols-[1fr_2fr]">
           <div>
             <h2 className="t-2">Reviews</h2>
-            {p.ratingCount > 0 ? (
+            {(d.distribution.reduce((sum, row) => sum + row.count, 0) || p.ratingCount) > 0 ? (
               <>
                 <p className="font-heading mt-6 text-[3.5rem] leading-none">{p.ratingAvg.toFixed(1)}</p>
                 <Stars value={p.ratingAvg} size={16} className="mt-2" />
-                <p className="mt-2 text-[0.85rem] text-muted">Based on {p.ratingCount} reviews</p>
+                <p className="mt-2 text-[0.85rem] text-muted">Based on {d.distribution.reduce((sum, row) => sum + row.count, 0) || p.ratingCount} reviews</p>
                 <div className="mt-6 space-y-2">
-                  {d.distribution.map((r) => (
+                  {d.distribution.map((r) => {
+                    const total = d.distribution.reduce((sum, row) => sum + row.count, 0) || p.ratingCount;
+                    return (
                     <div key={r.star} className="flex items-center gap-3 text-[0.8rem]">
                       <span className="w-6 text-muted">{r.star}★</span>
-                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className="block h-full rounded-full bg-accent" style={{ width: `${p.ratingCount ? (r.count / p.ratingCount) * 100 : 0}%` }} /></span>
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className="block h-full rounded-full bg-accent" style={{ width: `${total ? (r.count / total) * 100 : 0}%` }} /></span>
                       <span className="w-6 text-right text-muted">{r.count}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             ) : (
               <p className="mt-4 text-muted">No reviews yet — be the first to share your thoughts.</p>
             )}
-            <div className="mt-8"><ReviewForm productId={p.id} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} /></div>
+            <div className="mt-8"><ReviewForm productId={p.id} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} avatar={user?.avatar} purchases={purchases} signedIn={!!user} returnTo={`/products/${p.slug}#reviews`} /></div>
           </div>
-          <div className="divide-y divide-line">
-            {d.reviews.slice(0, 8).map((r) => {
-              const studio = !r.verified && !!r.email?.endsWith('@studio.maisonaurelle.pk');
-              return (
-              <article key={r.id} className="grid gap-5 py-7 first:pt-0 sm:grid-cols-[auto_1fr]">
-                <div className="flex items-start gap-4">
-                  <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-surface">
-                    {r.avatar ? <Img src={r.avatar} alt="" sizes="56px" /> : <span className="grid h-full place-items-center text-[0.8rem]">{r.name.slice(0, 1)}</span>}
-                  </span>
-                  {r.photo && (
-                    <span className="relative hidden h-24 w-20 overflow-hidden rounded-theme-sm bg-surface sm:block">
-                      <Img src={r.photo} alt={`${r.name} wearing the piece`} sizes="80px" />
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Stars value={r.rating} size={13} />
-                    <span className="text-[0.75rem] text-muted">{formatDate(r.createdAt)}</span>
-                  </div>
-                  {r.title && <h3 className="mt-3 text-[1rem] font-medium">{r.title}</h3>}
-                  <p className="mt-2 text-[0.92rem] leading-relaxed text-muted">{r.body}</p>
-                  <p className="mt-3 flex flex-wrap items-center gap-2 text-[0.8rem]">
-                    {r.name}
-                    {r.verified && <span className="inline-flex items-center gap-1 text-[0.72rem] text-accent"><BadgeCheck size={14} strokeWidth={1.5} /> Verified buyer</span>}
-                    {studio && <span className="text-[0.68rem] uppercase tracking-[0.14em] text-muted">Studio testimonial · not a verified purchase</span>}
-                  </p>
-                  {r.photo && (
-                    <span className="relative mt-4 block aspect-[4/5] max-w-[180px] overflow-hidden rounded-theme-sm bg-surface sm:hidden">
-                      <Img src={r.photo} alt="" sizes="180px" />
-                    </span>
-                  )}
-                </div>
-              </article>
-              );
-            })}
-          </div>
+          <ReviewList slug={p.slug} initial={d.reviews.map(presentReview)} total={d.distribution.reduce((sum, row) => sum + row.count, 0)} />
         </div>
       </section>
 

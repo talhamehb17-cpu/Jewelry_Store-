@@ -12,7 +12,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
         <h1 className="t-2 mt-2">Hello, {user.firstName || 'there'}</h1>
       </div>
       <div className="grid gap-10 lg:grid-cols-[230px_1fr]">
-        <AccountNav />
+        <AccountNav alerts={alerts} />
         <div className="min-w-0">{children}</div>
       </div>
     </div>

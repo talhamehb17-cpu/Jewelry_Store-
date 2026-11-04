@@ -57,6 +57,13 @@
       "when": 1793782000000,
       "tag": "0007_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793785000000,
+      "tag": "0008_hours_reviews",
+      "breakpoints": true
     }
   ]
 }

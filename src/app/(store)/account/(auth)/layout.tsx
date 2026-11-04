@@ -1,4 +1,5 @@
 import { Img } from '@/components/ui/img';
+import { AuthStage } from '@/components/store/auth-switch';
 import { IMG } from '@/lib/images';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -10,7 +11,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <p className="font-heading absolute bottom-10 left-10 max-w-sm text-[2rem] italic leading-snug text-white">“Jewelry should feel like a memory you can wear.”</p>
       </div>
       <div className="flex items-center justify-center px-[var(--pad-x)] py-16">
-        <div className="w-full max-w-md">{children}</div>
+        <div className="w-full max-w-md"><AuthStage>{children}</AuthStage></div>
       </div>
     </div>
   );

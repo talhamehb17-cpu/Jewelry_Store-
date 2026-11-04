@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, LayoutGrid, Package, MapPin, UserRound, Heart, LogOut, Palette } from 'lucide-react';
-import { logoutAction } from '@/app/actions/auth';
+import { Bell, LayoutGrid, Package, MapPin, UserRound, Heart, Palette, Star } from 'lucide-react';
+import { LogoutButton } from './logout-button';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
   { href: '/account', label: 'Overview', icon: LayoutGrid },
   { href: '/account/orders', label: 'Orders', icon: Package },
+  { href: '/account/reviews', label: 'Reviews', icon: Star },
   { href: '/account/addresses', label: 'Addresses', icon: MapPin },
   { href: '/account/profile', label: 'Profile & security', icon: UserRound },
   { href: '/account/appearance', label: 'Appearance', icon: Palette },
@@ -28,11 +29,7 @@ export function AccountNav({ alerts = 0 }: { alerts?: number }) {
           </Link>
         );
       })}
-      <form action={logoutAction} className="shrink-0">
-        <button className="flex w-full items-center gap-3 rounded-theme-sm px-4 py-3 text-[0.9rem] text-muted transition hover:bg-surface/60 hover:text-sale">
-          <LogOut size={17} strokeWidth={1.25} /> Sign out
-        </button>
-      </form>
+      <LogoutButton area="store" className="flex w-full items-center gap-3 rounded-theme-sm px-4 py-3 text-[0.9rem] text-muted transition hover:bg-surface/60 hover:text-sale" />
     </nav>
   );
 }

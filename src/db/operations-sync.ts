@@ -183,14 +183,14 @@ export async function applyOperations(db: DB, log: (m: string) => void = () => {
   const existingLocations = await db.select({ id: storeLocations.id }).from(storeLocations).limit(1);
   if (!existingLocations.length) {
     await db.insert(storeLocations).values([
-      { name: 'A Mayfair jewelry evening', city: 'London', country: 'United Kingdom', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/london.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Mayfair+London', position: 0 },
-      { name: 'A quiet salon by the Seine', city: 'Paris', country: 'France', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/paris.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Paris+France', position: 1 },
-      { name: 'Gold light above the marina', city: 'Dubai', country: 'United Arab Emirates', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/dubai.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Dubai', position: 2 },
-      { name: 'A townhouse jewelry counter', city: 'New York', country: 'United States', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/new-york.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=New+York', position: 3 },
-      { name: 'Lantern light on gold', city: 'Istanbul', country: 'Turkey', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/istanbul.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Istanbul', position: 4 },
-      { name: 'A precise pearl atelier', city: 'Tokyo', country: 'Japan', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/tokyo.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Tokyo', position: 5 },
-      { name: 'Afternoon light on emerald', city: 'Milan', country: 'Italy', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/milan.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Milan', position: 6 },
-      { name: 'Courtyard gold at dusk', city: 'Lahore', country: 'Pakistan', address: 'Showcase destination — not an EVERMOON boutique.', hours: 'Sample card', image: '/images/locations/lahore.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Lahore', position: 7 },
+      { name: 'A Mayfair jewelry evening', city: 'London', country: 'United Kingdom', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/london.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Mayfair+London', position: 0 },
+      { name: 'A quiet salon by the Seine', city: 'Paris', country: 'France', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/paris.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Paris+France', position: 1 },
+      { name: 'Gold light above the marina', city: 'Dubai', country: 'United Arab Emirates', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/dubai.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Dubai', position: 2 },
+      { name: 'A townhouse jewelry counter', city: 'New York', country: 'United States', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/new-york.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=New+York', position: 3 },
+      { name: 'Lantern light on gold', city: 'Istanbul', country: 'Turkey', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/istanbul.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Istanbul', position: 4 },
+      { name: 'A precise pearl atelier', city: 'Tokyo', country: 'Japan', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/tokyo.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Tokyo', position: 5 },
+      { name: 'Afternoon light on emerald', city: 'Milan', country: 'Italy', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/milan.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Milan', position: 6 },
+      { name: 'Courtyard gold at dusk', city: 'Lahore', country: 'Pakistan', address: 'Showcase destination — not an EVERMOON boutique.', hours: null, image: '/images/locations/lahore.jpg', mapUrl: 'https://www.google.com/maps/search/?api=1&query=Lahore', position: 7 },
     ]);
     log('showcase locations created — not retail branches');
   }
@@ -235,5 +235,11 @@ export async function applyOperations(db: DB, log: (m: string) => void = () => {
     await db.update(themeConfigs).set({ published, updatedAt: new Date() }).where(eq(themeConfigs.themeId, 'dark-luxury'));
   }
   await db.execute(sql`update theme_configs set published = jsonb_set(published, '{settings,header,logoText}', '"EVERMOON"'::jsonb, true) where published is not null`);
+  const [hoursMarker] = await db.select().from(settings).where(eq(settings.key, 'location_sample_hours_cleared'));
+  if (!hoursMarker) {
+    await db.update(storeLocations).set({ hours: null }).where(eq(storeLocations.hours, 'Sample card'));
+    await db.insert(settings).values({ key: 'location_sample_hours_cleared', value: true }).onConflictDoNothing();
+    log('placeholder location hours cleared — locations were not deleted');
+  }
   log('operations sync applied');
 }

@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, LogOut, Menu, X, Database, Megaphone, MapPin, Truck, Coins,
+  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, Menu, X, Database, Megaphone, MapPin, Truck, Coins,
 } from 'lucide-react';
-import { logoutAction } from '@/app/actions/auth';
+import { LogoutButton } from '@/components/store/logout-button';
 import { cn } from '@/lib/utils';
 
 const NAV = [
@@ -79,9 +79,7 @@ export function AdminShell({ children, user, badges, dbWarning }: { children: Re
       </nav>
       <div className="border-t border-line p-3">
         <Link href="/" target="_blank" className="flex items-center gap-3 rounded-lg px-3 py-2 text-[0.84rem] text-[#4a443e] hover:bg-secondary"><ExternalLink size={16} strokeWidth={1.5} /> View store</Link>
-        <form action={logoutAction}>
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[0.84rem] text-[#4a443e] hover:bg-secondary"><LogOut size={16} strokeWidth={1.5} /> Sign out</button>
-        </form>
+        <LogoutButton area="admin" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[0.84rem] text-[#4a443e] hover:bg-secondary" />
         <div className="mt-2 flex items-center gap-3 rounded-lg bg-secondary px-3 py-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#a8844a] text-[0.75rem] font-semibold text-white">{user.name.slice(0, 1)}</span>
           <span className="min-w-0">

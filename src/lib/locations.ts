@@ -67,7 +67,7 @@ export function publicContact(store: { address?: string; phone?: string; whatsap
     address: store.address && store.address !== PLACEHOLDER_ADDRESS ? store.address : '',
     phone: store.phone && store.phone !== PLACEHOLDER_PHONE ? store.phone : '',
     whatsapp: store.whatsapp && store.whatsapp !== PLACEHOLDER_WHATSAPP ? store.whatsapp : '',
-    hours: store.hours && store.hours !== PLACEHOLDER_HOURS ? store.hours : '',
+    hours: store.hours && store.hours !== PLACEHOLDER_HOURS && !/\b(sample|demo)\b/i.test(store.hours) ? store.hours : '',
     email: store.email || '',
   };
 }

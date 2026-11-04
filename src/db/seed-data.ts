@@ -939,6 +939,7 @@ export const DEFAULT_SETTINGS = {
     whatsapp: '923001234567',
     address: '42-C Main Boulevard, Gulberg III, Lahore 54660, Pakistan',
     hours: 'Monday – Saturday, 11am – 8pm PKT',
+    hoursSchedule: null as import('@/lib/store-hours').HoursSchedule | null,
   },
   shipping: {
     freeThreshold: 1000000,

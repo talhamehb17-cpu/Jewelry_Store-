@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, Phone, CalendarDays, Plus, Minus } from 'lucide-react';
 import { useStore } from './providers';
+import { LogoutButton } from './logout-button';
 import { CurrencySwitcher } from './currency-context';
 import { Drawer } from '@/components/ui/overlay';
 import { Img } from '@/components/ui/img';
@@ -118,6 +119,7 @@ function Icons({ textLabels, user, compact, alerts = 0 }: { textLabels?: boolean
       <div className="nav-link flex items-center gap-6">
         <button onClick={() => setSearchOpen(true)} className="link-u">Search</button>
         <Link href={alerts ? '/account/notifications' : accountHref} className="link-u">{user ? 'Account' : 'Sign in'}{alerts > 0 ? ` (${alerts})` : ''}</Link>
+        {user && <LogoutButton area={user.isStaff ? 'admin' : 'store'} className="link-u" />}
         <Link href="/wishlist" className="link-u">Wishlist ({wcount})</Link>
         <button onClick={() => setCartOpen(true)} className="link-u">Bag ({count})</button>
       </div>
@@ -130,6 +132,7 @@ function Icons({ textLabels, user, compact, alerts = 0 }: { textLabels?: boolean
       <button onClick={() => setSearchOpen(true)} className={btn} aria-label="Search">
         <Search size={19} strokeWidth={SW} />
       </button>
+      {user && <span className="hidden lg:inline-flex"><LogoutButton area={user.isStaff ? 'admin' : 'store'} className="nav-link px-2 text-[0.78rem]" /></span>}
       <Link href={alerts ? '/account/notifications' : accountHref} className={cn(btn, 'max-lg:hidden')} aria-label={alerts ? `Account, ${alerts} delivery updates` : user ? 'Your account' : 'Sign in'}>
         <User size={19} strokeWidth={SW} />
         {alerts > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.58rem] font-semibold text-white">{alerts}</span>}
@@ -181,6 +184,7 @@ function MobileMenu({ nav, user, phone, current }: { nav: NavItem[]; user: Heade
           <Link href={user ? (user.isStaff ? '/admin' : '/account') : '/account/login'} className="flex items-center gap-3"><User size={17} strokeWidth={SW} /> {user ? `Hello, ${user.firstName}` : 'Sign in / Register'}</Link>
           <Link href="/wishlist" className="flex items-center gap-3"><Heart size={17} strokeWidth={SW} /> Wishlist</Link>
           <Link href="/contact" className="flex items-center gap-3"><Phone size={17} strokeWidth={SW} /> {phone}</Link>
+          {user && <LogoutButton area={user.isStaff ? 'admin' : 'store'} className="flex items-center gap-3 text-[0.92rem] text-muted" />}
         </div>
       </nav>
     </Drawer>

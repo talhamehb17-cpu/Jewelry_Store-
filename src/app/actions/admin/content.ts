@@ -152,6 +152,19 @@ export async function saveSettingsSection<K extends (typeof SETTINGS_KEYS)[numbe
     const links = [...nav.main.flatMap((m) => [m.href, ...(m.children ?? []).map((c) => c.href)]), ...nav.footer.flatMap((c) => c.links.map((l) => l.href))];
     if (links.some((h) => !/^(\/|https?:\/\/|mailto:|tel:)/.test(h))) return { ok: false, message: 'Menu links must start with /, https://, mailto: or tel:' };
   }
+  if (key === 'store') {
+    const store = value as StoreSettings['store'] & { hoursSchedule?: unknown };
+    if (store.hoursSchedule) {
+      const { scheduleError, scheduleSummary, normalizeSchedule } = await import('@/lib/store-hours');
+      const error = scheduleError(store.hoursSchedule);
+      if (error) return { ok: false, message: error };
+      const schedule = normalizeSchedule(store.hoursSchedule);
+      if (schedule) {
+        store.hoursSchedule = schedule;
+        store.hours = schedule.published ? scheduleSummary(schedule) : '';
+      }
+    }
+  }
   if (key === 'shipping') {
     const s = value as StoreSettings['shipping'];
     if (!s.methods.some((m) => m.enabled)) return { ok: false, message: 'Enable at least one shipping method.' };

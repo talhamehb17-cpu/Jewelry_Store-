@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { requireUser } from '@/lib/auth';
-import { PasswordForm, ProfileForm } from '@/components/store/profile-forms';
+import { AvatarForm, PasswordForm, ProfileForm } from '@/components/store/profile-forms';
 
 export const metadata: Metadata = { title: 'Profile & security', robots: { index: false } };
 
@@ -10,6 +10,7 @@ export default async function ProfilePage() {
     <div className="grid gap-10 xl:grid-cols-2">
       <section>
         <h2 className="t-3 mb-6">Profile</h2>
+        <AvatarForm avatar={user.avatar} />
         <ProfileForm user={{ firstName: user.firstName, lastName: user.lastName, email: user.email, phone: user.phone ?? '', acceptsMarketing: user.acceptsMarketing }} />
       </section>
       <section>
