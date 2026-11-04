@@ -439,11 +439,12 @@ export async function probeMailbox(): Promise<SmtpProbe> {
       await rememberWorkingMode(mode).catch(() => undefined);
       break;
     } catch (error) {
-      const err = error as { responseCode?: number; code?: string; message?: string };
+      const err = error as { responseCode?: number; code?: string; response?: string; message?: string };
+      const raw = String(err.response || err.message || 'Login was rejected').replace(/pass(?:word)?[=:]\S+/gi, '[secret]').slice(0, 280);
       report.steps.push({
         step: `SMTP ${mode.port} ${mode.authMethod}`,
         ok: false,
-        detail: `${err.responseCode || err.code || 'error'}: ${explainSmtpError(err.message || 'Login was rejected')}`,
+        detail: `${err.responseCode || err.code || 'error'}: ${raw}`,
       });
     }
   }
