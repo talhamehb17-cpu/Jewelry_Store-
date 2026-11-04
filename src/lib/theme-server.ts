@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { themeConfigs } from '@/db/schema';
@@ -55,6 +55,13 @@ export const getThemeContext = cache(async (): Promise<ThemeContext> => {
     }
   }
   if (!isPreview) {
+    const requested = (await headers()).get('x-evermoon-theme');
+    if (isThemeId(requested)) {
+      themeId = requested;
+      isVisitorPick = requested !== activeThemeId;
+    }
+  }
+  if (!isPreview && themeId === activeThemeId) {
     const user = await getCurrentUser();
     const accountPick = user?.themePreference;
     const cookiePick = jar.get(VISITOR_THEME_COOKIE)?.value;

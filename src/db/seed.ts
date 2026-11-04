@@ -41,7 +41,7 @@ async function seedOperator(db: DB, log: (m: string) => void, isProd: boolean) {
     log(`SEED_ADMIN_PASSWORD not set — generated admin password: ${adminPassword}`);
   }
   const adminHash = await bcrypt.hash(adminPassword, 10);
-  await db.insert(s.users).values({ email: adminEmail, passwordHash: adminHash, firstName: 'Aurelle', lastName: 'Admin', role: 'admin' }).onConflictDoNothing();
+  await db.insert(s.users).values({ email: adminEmail, passwordHash: adminHash, firstName: 'EVERMOON', lastName: 'Admin', role: 'admin' }).onConflictDoNothing();
   log(`administrator ready: ${adminEmail}`);
 }
 
@@ -174,7 +174,7 @@ export async function seedDatabase(db: DB, log: (m: string) => void = () => {}) 
     bcrypt.hash(customerPassword, 10),
     bcrypt.hash(crypto.randomBytes(24).toString('hex'), 10),
   ]);
-  await db.insert(s.users).values({ email: adminEmail, passwordHash: adminHash, firstName: 'Aurelle', lastName: 'Admin', role: 'admin', createdAt: new Date(now - 200 * DAY) });
+  await db.insert(s.users).values({ email: adminEmail, passwordHash: adminHash, firstName: 'EVERMOON', lastName: 'Admin', role: 'admin', createdAt: new Date(now - 200 * DAY) });
   await db.insert(s.users).values({ email: 'studio@maisonaurelle.pk', passwordHash: lockedHash, firstName: 'Sana', lastName: 'Studio', role: 'staff', createdAt: new Date(now - 150 * DAY) });
 
   const customers = await db
@@ -292,7 +292,7 @@ export async function seedDatabase(db: DB, log: (m: string) => void = () => {}) 
       discountCode = 'WELCOME10';
       discountTotal = Math.round(subtotal * 0.1);
     } else if (subtotal >= 2500000 && r < 0.12) {
-      discountCode = 'AURELLE15';
+      discountCode = 'EVERMOON15';
       discountTotal = Math.round(subtotal * 0.15);
     } else if (subtotal >= 1500000 && r < 0.08) {
       discountCode = 'EID2000';

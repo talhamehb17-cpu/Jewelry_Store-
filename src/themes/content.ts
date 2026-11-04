@@ -300,8 +300,8 @@ export function buildHome(look: HomeLook): SectionInstance[] {
       imagePosition: 'left',
     }),
     section('testimonials', look.reviews || 'cards', {
-      eyebrow: 'Studio notes',
-      heading: 'Three voices from the styling desk',
+      eyebrow: 'Kind words',
+      heading: 'From the people who wear them',
       items: TESTIMONIALS.slice(0, 3),
     }),
     section('image-banner', 'locations', {

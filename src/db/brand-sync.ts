@@ -24,10 +24,10 @@ Sizing, bridal consultations and engraving are arranged through the [contact pag
 
 function rebrand(text: string) {
   return text
+    .replace(/[\w.+-]*@maisonaurelle\.pk/gi, 'client care')
     .replaceAll('Maison Aurelle', 'EVERMOON')
     .replaceAll('Evermoon Jewels', 'EVERMOON')
     .replaceAll('Evermoon', 'EVERMOON')
-    .replaceAll('@maisonaurelle', 'EVERMOON')
     .replaceAll('Private appointments available at our Gulberg atelier', 'Client care replies from the contact page')
     .replaceAll('The Gulberg atelier', 'The studio')
     .replaceAll('Designed in Gulberg', 'Designed in Lahore')
@@ -59,6 +59,7 @@ export async function applyBrandHome(db: DB, log: (m: string) => void = () => {}
     const store = { ...(storeRow.value as Record<string, unknown>) };
     store.name = BRAND.name;
     store.tagline = BRAND.tagline;
+    if (typeof store.email === 'string' && /aurelle/i.test(store.email)) store.email = '';
     await db.update(settings).set({ value: store, updatedAt: new Date() }).where(eq(settings.key, 'store'));
   }
   const [seoRow] = await db.select().from(settings).where(eq(settings.key, 'seo'));
@@ -88,6 +89,8 @@ export async function applyBrandHome(db: DB, log: (m: string) => void = () => {}
     await db.execute(sql`update theme_configs set draft = replace(draft::text, ${from}, ${to})::jsonb where draft is not null and draft::text like ${'%' + from + '%'}`);
   }
 
+  await db.execute(sql`update users set first_name = 'EVERMOON' where role = 'admin' and first_name = 'Aurelle'`);
+  await db.execute(sql`update discounts set code = 'EVERMOON15' where code = 'AURELLE15'`);
   await db.execute(sql`update products set care = replace(care, 'Aurelle', 'EVERMOON') where care like '%Aurelle%'`);
   await db.execute(sql`update products set description = replace(description, 'Maison Aurelle', 'EVERMOON') where description like '%Maison Aurelle%'`);
   await db.execute(sql`update products set description = replace(description, 'Evermoon Jewels', 'EVERMOON') where description like '%Evermoon Jewels%'`);
@@ -95,7 +98,7 @@ export async function applyBrandHome(db: DB, log: (m: string) => void = () => {}
 
   const pageRows = await db.select().from(pages);
   for (const page of pageRows) {
-    const content = page.slug === 'about' ? ABOUT : rebrand(page.content || '');
+    const content = page.slug === 'about' ? ABOUT : rebrand(page.content || '').replace('usually much sooner on WhatsApp.', 'A phone or WhatsApp number is shown only after it is saved.');
     const title = page.slug === 'about' ? 'Our Story' : rebrand(page.title);
     await db
       .update(pages)

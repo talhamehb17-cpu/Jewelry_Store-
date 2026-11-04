@@ -14,6 +14,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { eligiblePurchases, presentReview } from '@/lib/reviews';
 import { ReviewsSection } from '@/components/store/review-list';
 import { absoluteUrl, cn, jsonLd } from '@/lib/utils';
+import { BRAND } from '@/lib/brand';
 import { isRemote } from '@/lib/images';
 
 type P = { params: Promise<{ slug: string }> };
@@ -26,9 +27,16 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   const img = d.images[0]?.url;
   return {
     title: p.seoTitle || p.name,
-    description: p.seoDescription || p.description.slice(0, 160),
+    description: (p.seoDescription || `${p.name}${p.subtitle ? ` — ${p.subtitle}` : ''}. ${p.description}`).replace(/\s+/g, ' ').trim().slice(0, 160),
     alternates: { canonical: `/products/${p.slug}` },
-    openGraph: { type: 'website', title: p.name, description: p.description.slice(0, 200), images: img ? [{ url: isRemote(img) ? `${img.split('?')[0]}?auto=format&w=1200&q=80` : absoluteUrl(img) }] : undefined },
+    openGraph: {
+      type: 'website',
+      url: `/products/${p.slug}`,
+      siteName: 'EVERMOON',
+      title: p.seoTitle || p.name,
+      description: (p.seoDescription || p.description).replace(/\s+/g, ' ').trim().slice(0, 200),
+      images: img ? [{ url: isRemote(img) ? `${img.split('?')[0]}?auto=format&w=1200&q=80` : absoluteUrl(img), alt: p.name }] : undefined,
+    },
   };
 }
 
@@ -64,7 +72,7 @@ export default async function ProductPage({ params }: P) {
     description: p.description,
     sku: p.sku ?? undefined,
     gtin13: p.barcode ?? undefined,
-    brand: { '@type': 'Brand', name: settings.store.name },
+    brand: { '@type': 'Brand', name: BRAND.name },
     category: d.category?.name,
     material: p.materials.join(', '),
     image: d.images.map((i) => (isRemote(i.url) ? `${i.url.split('?')[0]}?auto=format&w=1200&q=80` : absoluteUrl(i.url))),
@@ -76,7 +84,7 @@ export default async function ProductPage({ params }: P) {
       price: (priced.price / 100).toFixed(0),
       availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
-      seller: { '@type': 'Organization', name: settings.store.name },
+      seller: { '@type': 'Organization', name: BRAND.name },
     },
     ...(p.ratingCount > 0 && { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.ratingAvg.toFixed(1), reviewCount: p.ratingCount } }),
     ...(d.reviews.length > 0 && {
@@ -108,7 +116,7 @@ export default async function ProductPage({ params }: P) {
           <div className="min-w-0"><ProductGallery media={media} layout={layout.pdpVariant} /></div>
           <div className="min-w-0 lg:sticky lg:top-28 lg:self-start">
             <ProductPurchase
-              product={{ id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, details: p.details, materials: p.materials, care: p.care, price: priced.price, compareAtPrice: priced.compareAt, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount, badges: onSale ? [...new Set([...p.badges, 'sale'])] : p.badges, sku: p.sku }}
+              product={{ id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, details: p.details, materials: p.materials, care: p.care, price: priced.price, compareAtPrice: priced.compareAt, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount, badges: [...new Set([...(onSale ? ['sale'] : []), ...(p.featured ? ['featured'] : []), ...p.badges])], featured: p.featured, sku: p.sku }}
               variants={d.variants.map((v) => {
                 const base = v.price ?? p.price;
                 const shown = presentPrice(base, v.compareAtPrice ?? p.compareAtPrice, onSale, campaign?.percent ?? 0);

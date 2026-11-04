@@ -42,13 +42,18 @@ export function Badge({ children, tone = 'default', className }: { children: Rea
   return <span className={cn(tones[tone], className)}>{children}</span>;
 }
 
-export function productBadges(p: { badges: string[]; compareAtPrice: number | null; price: number; inStock: boolean; isNew: boolean }) {
+export function productBadges(
+  p: { badges: string[]; compareAtPrice: number | null; price: number; inStock: boolean; isNew: boolean; featured?: boolean },
+  opts?: { verbose?: boolean },
+) {
   const out: { label: string; tone: 'default' | 'sale' | 'dark' | 'accent' | 'muted' }[] = [];
   const off = percentOff(p.price, p.compareAtPrice);
-  if (off) out.push({ label: `−${off}%`, tone: 'sale' });
+  if (off) out.push({ label: opts?.verbose ? `Save ${off}%` : `−${off}%`, tone: 'sale' });
+  else if (p.badges.includes('sale')) out.push({ label: 'Sale', tone: 'sale' });
   if (p.isNew || p.badges.includes('new')) out.push({ label: 'New', tone: 'default' });
-  if (p.badges.includes('limited')) out.push({ label: 'Limited', tone: 'accent' });
-  if (p.badges.includes('bestseller')) out.push({ label: 'Bestseller', tone: 'dark' });
+  if (p.badges.includes('limited')) out.push({ label: opts?.verbose ? 'Limited edition' : 'Limited', tone: 'accent' });
+  if (p.badges.includes('bestseller')) out.push({ label: opts?.verbose ? 'Best seller' : 'Bestseller', tone: 'dark' });
+  if (p.featured || p.badges.includes('featured')) out.push({ label: 'Featured', tone: 'accent' });
   if (!p.inStock) out.push({ label: 'Sold out', tone: 'dark' });
   return out;
 }

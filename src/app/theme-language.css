@@ -189,6 +189,27 @@
 [data-theme='parisian'] .t-2 { font-style: italic; }
 [data-theme='parisian'] .btn-primary { border-radius: 999px; }
 [data-theme='parisian'] .media-fill-img { filter: saturate(1.02) sepia(0.06); }
+/* The arch is a semicircle: top-corner badges sit outside the visible curve and are clipped by overflow:hidden. Keep them in the rectangular band. */
+[data-theme='parisian'] .jewel-badges {
+  top: auto;
+  right: 0.45rem;
+  bottom: 0.55rem;
+  left: 0.45rem;
+  z-index: 6;
+  max-width: none;
+  width: auto;
+  transform: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+[data-theme='parisian'] .jewel-badge {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  line-height: 1.25;
+}
 
 [data-theme='golden-glamour'] {
   background:

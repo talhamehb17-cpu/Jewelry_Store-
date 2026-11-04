@@ -285,6 +285,12 @@ video {
   text-transform: uppercase;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
+.jewel-badge-wrap {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  text-align: left;
+}
 .jewel-badge-sale { background: #3b1218; color: #fff7f4; }
 .jewel-badge-limited { background: #f4e2b0; color: #1c140c; }
 .jewel-badge-neutral { background: #fffdf8; color: #1c140c; border-color: rgba(28, 20, 12, 0.16); }

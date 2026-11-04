@@ -97,6 +97,21 @@ function Badges({ p, className }: { p: CardProduct; className?: string }) {
   );
 }
 
+/** In-flow tags. Used where an arched image would clip an absolute top-corner badge. */
+function BadgeRow({ p }: { p: CardProduct }) {
+  const b = productBadges(p);
+  if (!b.length) return null;
+  return (
+    <div className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1">
+      {b.map((x) => (
+        <Badge key={x.label} tone={x.tone} className="jewel-badge-wrap">
+          {x.label}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
 export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduct; variant: CardVariant; index?: number; priority?: boolean }) {
   const { quickAdd, quickView } = useCardActions(p);
   const href = `/products/${p.slug}`;
@@ -214,15 +229,15 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
 
     case 'arch':
       return (
-        <article className="group text-center">
+        <article className="group flex h-full min-w-0 flex-col text-center">
           <div className="relative">
             <Link href={href} className="arch relative block overflow-hidden bg-surface ratio-product">
               <Images p={p} priority={priority} />
             </Link>
-            <Badges p={p} className="left-1/2 top-auto bottom-3 -translate-x-1/2 items-center" />
-            <WishButton p={p} className="absolute right-1 top-[16%] z-[3] text-ink hover:text-sale" />
+            <WishButton p={p} className="absolute right-2 top-[46%] z-[3] border border-line/60 bg-bg/90 text-ink hover:text-sale" />
           </div>
-          <Link href={href} className="font-heading mt-5 block text-[1.3rem] italic leading-tight">{p.name}</Link>
+          <div className="mt-3 min-h-7"><BadgeRow p={p} /></div>
+          <Link href={href} className="font-heading mt-3 block text-[1.3rem] italic leading-tight">{p.name}</Link>
           <p className="mt-1 text-[0.7rem] uppercase tracking-[0.2em] text-muted">{p.subtitle}</p>
           <div className="mt-2 text-[0.9rem]"><Price price={p.price} compareAt={p.compareAtPrice} className="justify-center" /></div>
         </article>

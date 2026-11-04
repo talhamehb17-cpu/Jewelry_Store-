@@ -61,6 +61,14 @@ const PLACEHOLDER_PHONE = '+92 300 1234567';
 const PLACEHOLDER_WHATSAPP = '923001234567';
 const PLACEHOLDER_HOURS = 'Monday – Saturday, 11am – 8pm PKT';
 
+/** Old seed addresses are not a public contact channel. */
+export function publicEmail(email?: string | null) {
+  const value = email?.trim() || '';
+  if (!value) return '';
+  if (/@(maisonaurelle|studio\.maisonaurelle)\.pk$/i.test(value) || /aurelle/i.test(value)) return '';
+  return value;
+}
+
 /** Hides the old seed contact details. They were never a confirmed store. */
 export function publicContact(store: { address?: string; phone?: string; whatsapp?: string; hours?: string; email?: string }) {
   return {
@@ -68,7 +76,7 @@ export function publicContact(store: { address?: string; phone?: string; whatsap
     phone: store.phone && store.phone !== PLACEHOLDER_PHONE ? store.phone : '',
     whatsapp: store.whatsapp && store.whatsapp !== PLACEHOLDER_WHATSAPP ? store.whatsapp : '',
     hours: store.hours && store.hours !== PLACEHOLDER_HOURS && !/\b(sample|demo)\b/i.test(store.hours) ? store.hours : '',
-    email: store.email || '',
+    email: publicEmail(store.email),
   };
 }
 

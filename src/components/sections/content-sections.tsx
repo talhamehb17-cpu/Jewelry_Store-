@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { Truck, Gift, ShieldCheck, RefreshCcw, Gem, Sparkles, Lock, Phone, Quote, Plus } from 'lucide-react';
+import { Truck, Gift, ShieldCheck, RefreshCcw, Gem, Sparkles, Lock, Phone, Plus } from 'lucide-react';
 import { Img } from '@/components/ui/img';
 import { LOOK, publicImage } from '@/lib/look';
 import { Instagram } from '@/components/ui/brand-icons';
-import { SectionHeading, Stars } from '@/components/ui/bits';
+import { SectionHeading } from '@/components/ui/bits';
+import { HomeReviews } from '@/components/store/home-reviews';
+import { listHomepageReviews } from '@/lib/reviews';
 import { NewsletterForm } from '@/components/store/newsletter-form';
 import { TextSlider, VideoPlayer } from './text-slider';
 import { cn } from '@/lib/utils';
@@ -304,148 +306,11 @@ export function ImageTextSection({ section }: Props) {
   }
 }
 
-type T = { quote: string; name: string; location?: string; rating?: number; product?: string; avatar?: string };
-
-const STUDIO_FACES: Record<string, { avatar: string; image: string; href: string }> = {
-  'Hira Ahmed': { avatar: '/images/reviews/hira.webp', image: '/images/products/celeste-pearl-earrings-1.webp', href: '/products/celeste-pearl-earrings' },
-  'Mahnoor Siddiqui': { avatar: '/images/reviews/mahnoor.webp', image: '/images/products/elara-solitaire-ring-1.webp', href: '/products/elara-solitaire-ring' },
-  'Ayesha Khan': { avatar: '/images/reviews/ayesha.webp', image: '/images/products/aurelia-gold-necklace-2.webp', href: '/products/aurelia-gold-necklace' },
-  'Hira A.': { avatar: '/images/reviews/hira.webp', image: '/images/products/celeste-pearl-earrings-1.webp', href: '/products/celeste-pearl-earrings' },
-  'Mahnoor S.': { avatar: '/images/reviews/mahnoor.webp', image: '/images/products/elara-solitaire-ring-1.webp', href: '/products/elara-solitaire-ring' },
-  'Ayesha K.': { avatar: '/images/reviews/ayesha.webp', image: '/images/products/aurelia-gold-necklace-2.webp', href: '/products/aurelia-gold-necklace' },
-};
-
-function studioFace(t: T) {
-  return STUDIO_FACES[t.name] ?? (t.avatar ? { avatar: t.avatar, image: '', href: '' } : null);
-}
-
-function StudioPerson({ t, align = 'start', className }: { t: T; align?: 'start' | 'center'; className?: string }) {
-  const face = studioFace(t);
-  return (
-    <span className={cn('mt-4 flex items-center gap-3', align === 'center' && 'justify-center', className)}>
-      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface">
-        {face?.avatar ? <SafeImg src={face.avatar} alt="" sizes="44px" /> : <span className="grid h-full place-items-center text-[0.72rem] tracking-wide">{t.name.slice(0, 1)}</span>}
-      </span>
-      <span className={cn('text-left', align === 'center' && 'text-left')}>
-        <span className="block text-[0.84rem] font-medium normal-case tracking-normal">{t.name}{t.location ? <span className="font-normal text-muted"> · {t.location}</span> : null}</span>
-        <span className="mt-0.5 block text-[0.62rem] uppercase tracking-[0.14em] text-muted">Studio testimonial · not a verified purchase</span>
-      </span>
-    </span>
-  );
-}
-
-export function TestimonialsSection({ section }: Props) {
+export async function TestimonialsSection({ section }: Props) {
   const st = section.settings;
-  const items: T[] = Array.isArray(st.items) ? st.items : [];
-  if (!items.length) return null;
-  switch (section.variant) {
-    case 'cards':
-      return (
-        <section className="section-y bg-surface/60">
-          <div className="container-x">
-          <SectionHeading eyebrow={st.eyebrow} heading={st.heading} />
-          <div className="grid gap-4 md:grid-cols-3">
-            {items.slice(0, 3).map((t, i) => {
-              const face = studioFace(t);
-              return (
-              <figure key={i} className="reveal flex h-full flex-col border border-line bg-bg" style={{ ['--d' as string]: `${i * 100}ms` }}>
-                <figcaption className="border-b border-line px-5 py-4">
-                  <StudioPerson t={t} className="mt-0" />
-                </figcaption>
-                <Stars value={t.rating ?? 5} size={13} className="px-5 pt-5" />
-                <blockquote className="flex-1 px-5 py-4 font-heading text-[1.15rem] italic leading-snug">“{t.quote}”</blockquote>
-                {face?.image && (
-                  <Link href={face.href} className="mt-auto flex items-center gap-3 border-t border-line px-4 py-3 text-[0.82rem] transition hover:bg-surface">
-                    <span className="relative block h-16 w-14 shrink-0 overflow-hidden bg-surface">
-                      <SafeImg src={face.image} alt="" sizes="64px" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[0.62rem] uppercase tracking-[0.14em] text-muted">Related piece</span>
-                      <span className="mt-1 block truncate font-medium">{t.product || 'View the piece'}</span>
-                    </span>
-                  </Link>
-                )}
-              </figure>
-              );
-            })}
-          </div>
-          </div>
-        </section>
-      );
-    case 'letter':
-      return (
-        <section className="section-y container-x">
-          <div className="grid gap-12 md:grid-cols-[1fr_2fr]">
-            <div className="reveal">
-              {st.eyebrow && <p className="eyebrow mb-3">{st.eyebrow}</p>}
-              <h2 className="t-2">{st.heading}</h2>
-              <Quote size={44} strokeWidth={0.75} className="mt-8 text-accent" />
-            </div>
-            <div className="divide-y divide-line">
-              {items.slice(0, 3).map((t, i) => (
-                <figure key={i} className="reveal py-8 first:pt-0">
-                  <blockquote className="font-heading text-[clamp(1.25rem,2vw,1.65rem)] italic leading-snug">“{t.quote}”</blockquote>
-                  <figcaption>
-                    <StudioPerson t={t} />
-                    {studioFace(t)?.image && (
-                      <Link href={studioFace(t)!.href} className="mt-4 flex items-center gap-3 text-[0.82rem]">
-                        <span className="relative block h-16 w-14 shrink-0 overflow-hidden rounded-theme-sm bg-bg">
-                          <SafeImg src={studioFace(t)!.image} alt="" sizes="64px" />
-                        </span>
-                        <span>Related piece: {t.product || 'View'}</span>
-                      </Link>
-                    )}
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-      );
-    case 'marquee':
-      return (
-        <section className="section-y overflow-hidden">
-          <div className="container-x"><SectionHeading heading={st.heading} align="left" /></div>
-          <div className="marquee-pause">
-            <div className="marquee-track flex gap-4" style={{ ['--marquee-speed' as string]: '55s' }}>
-              {[...items, ...items].map((t, i) => (
-                <figure key={i} className="w-[340px] shrink-0 rounded-theme bg-surface p-7">
-                  <Stars value={t.rating ?? 5} size={12} />
-                  <blockquote className="mt-4 text-[0.95rem] leading-relaxed">“{t.quote}”</blockquote>
-                  <figcaption><StudioPerson t={t} /></figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-      );
-    case 'slider':
-    default:
-      return (
-        <section className="section-y bg-surface">
-          <div className="container-x mx-auto max-w-4xl text-center">
-            {st.eyebrow && <p className="eyebrow mb-3">{st.eyebrow}</p>}
-            {st.heading && <h2 className="t-3 mb-10">{st.heading}</h2>}
-            <TextSlider>
-              {items.map((t, i) => (
-                <figure key={i}>
-                  <Stars value={t.rating ?? 5} size={14} className="justify-center" />
-                  <blockquote className="font-heading mx-auto mt-6 max-w-3xl text-[clamp(1.5rem,3vw,2.4rem)] italic leading-snug text-balance">“{t.quote}”</blockquote>
-                  <figcaption className="mt-7 flex flex-col items-center gap-4">
-                    <StudioPerson t={t} align="center" />
-                    {studioFace(t)?.image && (
-                      <Link href={studioFace(t)!.href} className="relative block h-28 w-24 overflow-hidden rounded-theme-sm bg-surface">
-                        <SafeImg src={studioFace(t)!.image} alt={t.product || ''} sizes="96px" />
-                      </Link>
-                    )}
-                  </figcaption>
-                </figure>
-              ))}
-            </TextSlider>
-          </div>
-        </section>
-      );
-  }
+  const live = await listHomepageReviews(6);
+  if (!live.length) return null;
+  return <HomeReviews variant={section.variant} eyebrow={typeof st.eyebrow === 'string' ? st.eyebrow : undefined} heading={typeof st.heading === 'string' ? st.heading : undefined} initial={live} />;
 }
 
 export function InstagramSection({ section }: Props) {

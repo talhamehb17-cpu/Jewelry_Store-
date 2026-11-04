@@ -64,6 +64,12 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(url);
     }
   }
+  const requested = searchParams.get('theme') || '';
+  if (THEME_RE.test(requested)) {
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-evermoon-theme', requested);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
   return NextResponse.next();
 }
 

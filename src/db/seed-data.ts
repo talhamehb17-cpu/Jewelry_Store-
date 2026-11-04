@@ -567,7 +567,7 @@ export const SEED_PRODUCTS: SeedProduct[] = [
 
 export const SEED_DISCOUNTS = [
   { code: 'WELCOME10', description: '10% off your first order (newsletter)', type: 'percentage', value: 10, minOrderAmount: 0, oncePerCustomer: true },
-  { code: 'AURELLE15', description: '15% off orders over Rs 25,000', type: 'percentage', value: 15, minOrderAmount: 2500000, usageLimit: 100, usageCount: 37 },
+  { code: 'EVERMOON15', description: '15% off orders over Rs 25,000', type: 'percentage', value: 15, minOrderAmount: 2500000, usageLimit: 100, usageCount: 37 },
   { code: 'FREESHIP', description: 'Free shipping on orders over Rs 5,000', type: 'free_shipping', value: 0, minOrderAmount: 500000 },
   { code: 'EID2000', description: 'Rs 2,000 off orders over Rs 15,000', type: 'fixed', value: 200000, minOrderAmount: 1500000, endsInDays: 30 },
   { code: 'PEARL20', description: '20% off The Pearl Edit', type: 'percentage', value: 20, minOrderAmount: 0, appliesTo: 'collections', collectionSlugs: ['pearl-edit'] },
@@ -767,7 +767,7 @@ If you are not completely in love with your piece, you may return or exchange it
 
 ## How to return
 
-1. Email care@maisonaurelle.pk or WhatsApp us with your order number.
+1. Use the contact page with your order number. A phone or WhatsApp number is shown there only after it is saved.
 2. We will arrange a courier pickup from your address (Rs 200 return fee, waived for exchanges).
 3. Refunds are issued within 5–7 working days of receiving your return — to your bank account, wallet or original card.
 
@@ -934,7 +934,7 @@ export const DEFAULT_SETTINGS = {
   store: {
     name: 'Evermoon Jewels',
     tagline: 'Wear Your Little Wonder',
-    email: 'care@maisonaurelle.pk',
+    email: '',
     phone: '+92 300 1234567',
     whatsapp: '923001234567',
     address: '42-C Main Boulevard, Gulberg III, Lahore 54660, Pakistan',

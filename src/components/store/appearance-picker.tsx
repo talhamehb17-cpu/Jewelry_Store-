@@ -16,13 +16,13 @@ export function AppearancePicker({ themes, current, storeDefault }: { themes: Th
   };
   return (
     <div>
-      <p className="max-w-xl text-[0.95rem] leading-relaxed text-muted">This look is saved to your account and does not change the store for anyone else. Choose the store default to follow the look set by the maison.</p>
+      <p className="max-w-xl text-[0.95rem] leading-relaxed text-muted">This look is saved to your account and does not change the store for anyone else. Choose the store default to follow the look set for EVERMOON.</p>
       <ul className="mt-8 grid gap-3 sm:grid-cols-2">
         <li>
           <button type="button" disabled={pending} onClick={() => choose(null)} className={cn('flex w-full items-center gap-3 rounded-theme border p-3 text-left', current === storeDefault ? 'border-ink' : 'border-line hover:border-muted')}>
             <span className="min-w-0 flex-1">
               <span className="block text-[0.92rem]">Store default</span>
-              <span className="block text-[0.75rem] text-muted">Follow the maison’s current theme</span>
+              <span className="block text-[0.75rem] text-muted">Follow the current EVERMOON theme</span>
             </span>
             {current === storeDefault && <Check size={16} />}
           </button>

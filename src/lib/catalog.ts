@@ -147,7 +147,7 @@ export async function hydrateCards(rows: (typeof products.$inferSelect)[]): Prom
       compareAtPrice: priced.compareAt,
       image: pi[0]?.url ?? null,
       image2: pi[1]?.url ?? null,
-      badges: p.badges ?? [],
+      badges: [...new Set([...(p.badges ?? []), ...(p.featured ? ['featured'] : [])])],
       ratingAvg: p.ratingAvg,
       ratingCount: p.ratingCount,
       inStock: total > 0,

@@ -162,7 +162,12 @@ export async function moderateReview(id: number, status: 'published' | 'hidden' 
   const [r] = await db.select().from(reviews).where(eq(reviews.id, id)).limit(1);
   if (!r) return;
   if (status === 'delete') await db.delete(reviews).where(eq(reviews.id, id));
-  else await db.update(reviews).set({ status }).where(eq(reviews.id, id));
+  else {
+    await db
+      .update(reviews)
+      .set({ status, ...(status === 'published' ? { approvedAt: r.approvedAt ?? new Date() } : {}) })
+      .where(eq(reviews.id, id));
+  }
   await recalcProductRating(r.productId);
   const [product] = await db.select({ slug: products.slug }).from(products).where(eq(products.id, r.productId)).limit(1);
   revalidatePath('/admin/reviews');

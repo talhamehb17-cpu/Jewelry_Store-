@@ -37,7 +37,14 @@ function Social({ settings, className }: { settings: StoreSettings; className?: 
     { href: s.facebook, label: 'Facebook', icon: <Facebook size={18} strokeWidth={1.25} /> },
     { href: s.pinterest, label: 'Pinterest', icon: <Pinterest /> },
     { href: s.tiktok, label: 'TikTok', icon: <TikTok /> },
-  ].filter((x) => x.href);
+  ].filter((x) => {
+    if (!x.href) return false;
+    try {
+      return new URL(x.href).pathname.replace(/\/+$/, '').length > 1;
+    } catch {
+      return false;
+    }
+  });
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {items.map((i) => (

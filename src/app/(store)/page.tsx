@@ -22,7 +22,7 @@ export default async function HomePage() {
   const org = {
     '@context': 'https://schema.org',
     '@type': 'JewelryStore',
-    name: settings.store.name,
+    name: BRAND.name,
     url: siteUrl(),
     logo: `${siteUrl()}${BRAND.logo}`,
     image: `${siteUrl()}${themeLook(ctx.themeId).hero}`,
@@ -30,12 +30,15 @@ export default async function HomePage() {
     ...(contact.email ? { email: contact.email } : {}),
     ...(contact.address ? { address: { '@type': 'PostalAddress', streetAddress: contact.address, addressCountry: 'PK' } } : {}),
     priceRange: 'Rs 6,800 – Rs 185,000',
-    sameAs: Object.values(settings.social).filter(Boolean),
+    sameAs: Object.values(settings.social).filter((href) => {
+      if (!href) return false;
+      try { return new URL(href).pathname.replace(/\/+$/, '').length > 1; } catch { return false; }
+    }),
   };
   const site = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: settings.store.name,
+    name: BRAND.name,
     url: siteUrl(),
     potentialAction: { '@type': 'SearchAction', target: `${siteUrl()}/search?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
   };

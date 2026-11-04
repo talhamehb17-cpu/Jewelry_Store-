@@ -15,8 +15,68 @@ export function presentReview(review: Review) {
     photo: review.photo,
     verified: review.verified,
     studio: !review.verified && !!review.email?.endsWith(STUDIO),
-    createdAt: review.createdAt.toISOString(),
+    createdAt: (review.approvedAt ?? review.createdAt).toISOString(),
   };
+}
+
+export type HomeReviewCard = {
+  id: string;
+  name: string;
+  rating: number;
+  title: string | null;
+  quote: string;
+  date: string | null;
+  avatar: string | null;
+  verified: boolean;
+  studio: boolean;
+  productName: string;
+  productSlug: string;
+  productImage: string | null;
+};
+
+function preview(body: string) {
+  const text = body.replace(/\s+/g, ' ').trim();
+  return text.length > 180 ? `${text.slice(0, 177).trimEnd()}…` : text;
+}
+
+/** Published reviews only, newest approved customer reviews first. One joined query. */
+export async function listHomepageReviews(limit = 6): Promise<HomeReviewCard[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({
+      id: reviews.id,
+      name: reviews.name,
+      rating: reviews.rating,
+      title: reviews.title,
+      body: reviews.body,
+      avatar: reviews.avatar,
+      verified: reviews.verified,
+      email: reviews.email,
+      createdAt: reviews.createdAt,
+      approvedAt: reviews.approvedAt,
+      productName: products.name,
+      productSlug: products.slug,
+      productImage: sql<string | null>`(select pi.url from product_images pi where pi.product_id = ${products.id} order by pi.position asc, pi.id asc limit 1)`,
+    })
+    .from(reviews)
+    .innerJoin(products, eq(products.id, reviews.productId))
+    .where(and(eq(reviews.status, 'published'), eq(products.status, 'active')))
+    .orderBy(desc(reviews.verified), desc(sql`coalesce(${reviews.approvedAt}, ${reviews.createdAt})`))
+    .limit(limit);
+  return rows.map((row) => ({
+    id: String(row.id),
+    name: row.name,
+    rating: row.rating,
+    title: row.title,
+    quote: preview(row.body),
+    date: (row.approvedAt ?? row.createdAt).toISOString(),
+    avatar: row.avatar,
+    verified: row.verified,
+    studio: !row.verified && !!row.email?.endsWith(STUDIO),
+    productName: row.productName,
+    productSlug: row.productSlug,
+    productImage: row.productImage,
+  }));
 }
 
 export type PublicReview = ReturnType<typeof presentReview>;

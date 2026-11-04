@@ -157,7 +157,7 @@ export async function submitReview(_: ActionResult | null, form: FormData): Prom
   revalidatePath('/account/reviews');
   if (product) revalidatePath(`/products/${product.slug}`);
   refresh();
-  return { ok: true, message: 'Thank you. Your review is saved and will appear beside the other reviews after the atelier approves it.' };
+  return { ok: true, message: 'Thank you. Your review is saved and will appear on this product page and the homepage after it is approved.' };
 }
 
 export async function notifyBackInStock(_: ActionResult | null, form: FormData): Promise<ActionResult> {

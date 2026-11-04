@@ -228,6 +228,7 @@ export const reviews = pgTable(
     orderItemId: integer('order_item_id'),
     status: varchar('status', { length: 20 }).notNull().default('published'), // published | pending | hidden
     verified: boolean('verified').notNull().default(false),
+    approvedAt: ts('approved_at'),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('reviews_product_idx').on(t.productId)],

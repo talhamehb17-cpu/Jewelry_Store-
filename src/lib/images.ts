@@ -1,6 +1,6 @@
 /**
  * Central image registry.
- * - Local `/images/...` files are original artwork generated for Maison Aurelle.
+ * - Local `/images/...` files are original artwork generated for EVERMOON.
  * - `images.unsplash.com/photo-*` files are free-licence Unsplash photos (Unsplash License: free for
  *   commercial use, no permission needed). They are hot-linked from Unsplash's CDN, per Unsplash
  *   guidelines, and credited in UNSPLASH_CREDITS and on the /pages/credits page.

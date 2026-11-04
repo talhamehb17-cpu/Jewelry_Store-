@@ -117,6 +117,7 @@ export async function applyOperations(db: DB, log: (m: string) => void = () => {
   if (store.phone === '+92 300 1234567') store.phone = '';
   if (store.whatsapp === '923001234567') store.whatsapp = '';
   if (store.hours === 'Monday – Saturday, 11am – 8pm PKT') store.hours = '';
+  if (typeof store.email === 'string' && /aurelle/i.test(store.email)) store.email = '';
   if (storeRow) await db.update(settings).set({ value: store, updatedAt: new Date() }).where(eq(settings.key, 'store'));
   const phone = typeof store.phone === 'string' ? store.phone : '';
   const email = typeof store.email === 'string' ? store.email : '';

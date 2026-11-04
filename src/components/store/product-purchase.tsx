@@ -7,14 +7,14 @@ import { Heart, Truck, Gift, ShieldCheck, RefreshCcw, Plus, Award, Check } from 
 import { useStore } from './providers';
 import { QtyStepper, VariantPicker, useVariantSelection, type PickerVariant } from './variant-picker';
 import { Modal } from '@/components/ui/overlay';
-import { Badge, Price, Stars } from '@/components/ui/bits';
+import { Badge, Price, Stars, productBadges } from '@/components/ui/bits';
 import { notifyBackInStock } from '@/app/actions/store';
-import { formatMoney, percentOff } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import type { ThemeLayout } from '@/themes/types';
 
 type P = {
-  product: { id: number; slug: string; name: string; subtitle: string | null; description: string; details: string[]; materials: string[]; care: string | null; price: number; compareAtPrice: number | null; ratingAvg: number; ratingCount: number; badges: string[]; sku: string | null };
+  product: { id: number; slug: string; name: string; subtitle: string | null; description: string; details: string[]; materials: string[]; care: string | null; price: number; compareAtPrice: number | null; ratingAvg: number; ratingCount: number; badges: string[]; sku: string | null; featured?: boolean };
   variants: PickerVariant[];
   image: string | null;
   category: { name: string; slug: string } | null;
@@ -123,7 +123,6 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
   const allSoldOut = variants.every((x) => x.stock <= 0);
   const soldOut = v ? v.stock <= 0 : allSoldOut;
   const low = v && v.stock > 0 && v.stock <= 3;
-  const off = percentOff(price, compare);
 
   useEffect(() => {
     if (!stickyAtc || !atcRef.current) return;
@@ -149,11 +148,10 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
 
   return (
     <div className={cn(s.wrap)}>
-      <div className={cn('flex flex-wrap items-center gap-2', style === 'romantic' && 'justify-center')}>
-        {off > 0 && <Badge tone="sale">Save {off}%</Badge>}
-        {p.badges.includes('limited') && <Badge tone="accent">Limited edition</Badge>}
-        {p.badges.includes('bestseller') && <Badge tone="muted">Best seller</Badge>}
-        {(isNew || p.badges.includes('new')) && <Badge tone="muted">New</Badge>}
+      <div className={cn('flex w-full min-w-0 flex-wrap items-center gap-2', style === 'romantic' && 'justify-center')}>
+        {productBadges({ ...p, price, compareAtPrice: compare, isNew, inStock: !(v ? v.stock <= 0 : allSoldOut) }, { verbose: true }).map((badge) => (
+          <Badge key={badge.label} tone={badge.tone} className="jewel-badge-wrap max-w-full">{badge.label}</Badge>
+        ))}
       </div>
       <h1 className={cn('mt-4', s.title)}>{p.name}</h1>
       {p.subtitle && <p className={cn('mt-2 text-[0.95rem] text-muted', style === 'heritage' && 'accent-italic text-[1.1rem]')}>{p.subtitle}</p>}

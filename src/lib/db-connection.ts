@@ -165,7 +165,7 @@ export async function createDatabaseAdmin(raw: string, email: string, password: 
       await pool.query(`update users set password_hash = $1, role = 'admin', status = 'active' where email = $2`, [hash, cleanEmail]);
     } else {
       await pool.query(
-        `insert into users (email, password_hash, first_name, last_name, role, status) values ($1, $2, 'Aurelle', 'Admin', 'admin', 'active')`,
+        `insert into users (email, password_hash, first_name, last_name, role, status) values ($1, $2, 'EVERMOON', 'Admin', 'admin', 'active')`,
         [cleanEmail, hash],
       );
     }

@@ -4,7 +4,7 @@ import { IMG } from '@/lib/images';
 
 export const metadata: Metadata = {
   title: 'Shop All Jewelry',
-  description: 'Shop rings, necklaces, earrings, bracelets and jewelry sets in 18k gold vermeil, solid gold, pearls and lab-grown diamonds.',
+  description: 'Buy EVERMOON jewellery online in Pakistan — earrings, necklaces, bracelets, rings and gifts in 18k gold vermeil, freshwater pearls and lab-grown diamonds. Cash on Delivery, EasyPaisa, JazzCash and bank transfer.',
   alternates: { canonical: '/shop' },
 };
 
