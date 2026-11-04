@@ -1,8 +1,10 @@
 import { requireUser } from '@/lib/auth';
+import { customerAlertCount } from '@/lib/fulfillment';
 import { AccountNav } from '@/components/store/account-nav';
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser('/account');
+  const alerts = await customerAlertCount(user.id);
   return (
     <div className="container-x pb-24 pt-10 md:pt-14">
       <div className="mb-10">

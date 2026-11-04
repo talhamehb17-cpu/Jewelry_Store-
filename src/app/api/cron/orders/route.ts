@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { progressOrders } from '@/lib/fulfillment';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 /** Vercel Cron calls this with Authorization: Bearer CRON_SECRET. It never marks an order delivered. */
 export async function GET(req: Request) {

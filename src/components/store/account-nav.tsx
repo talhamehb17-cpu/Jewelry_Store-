@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Package, MapPin, UserRound, Heart, LogOut, Palette } from 'lucide-react';
+import { Bell, LayoutGrid, Package, MapPin, UserRound, Heart, LogOut, Palette } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import { cn } from '@/lib/utils';
 
@@ -15,11 +15,12 @@ const LINKS = [
   { href: '/wishlist', label: 'Wishlist', icon: Heart },
 ];
 
-export function AccountNav() {
+export function AccountNav({ alerts = 0 }: { alerts?: number }) {
   const pathname = usePathname();
+  const links = [{ href: '/account/notifications', label: alerts ? `Updates (${alerts})` : 'Updates', icon: Bell }, ...LINKS];
   return (
     <nav className="no-scrollbar -mx-[var(--pad-x)] flex gap-1 overflow-x-auto px-[var(--pad-x)] lg:mx-0 lg:flex-col lg:px-0">
-      {LINKS.map(({ href, label, icon: Icon }) => {
+      {links.map(({ href, label, icon: Icon }) => {
         const active = href === '/account' ? pathname === href : pathname.startsWith(href);
         return (
           <Link key={href} href={href} className={cn('flex shrink-0 items-center gap-3 rounded-theme-sm px-4 py-3 text-[0.9rem] transition', active ? 'bg-surface text-ink' : 'text-muted hover:bg-surface/60 hover:text-ink')}>

@@ -52,14 +52,20 @@ const STATUS_COPY: Record<string, string> = {
   paid: 'Your payment has been confirmed.',
   refunded: 'A refund has been recorded on your order.',
   failed: 'We could not verify the payment receipt.',
+  delivery_request: 'Your order is out for delivery. Have you received your package?',
+  delivery_issue: 'We have recorded that the package has not arrived. It is not marked delivered.',
+  delivery_resolved: 'The delivery question on your order has been resolved.',
 };
 
 export function statusEmail(order: Order, message: string, link: string) {
   const title = STATUS_COPY[message] || `Order ${order.number}`;
   const tracking = order.trackingNumber ? `<p>Tracking: ${esc(order.trackingCarrier ?? '')} ${esc(order.trackingNumber)}</p>` : '';
+  const service = order.shippingMethodName ? `<p style="color:#8A7F74">${esc(order.shippingMethodName)}</p>` : '';
+  const confirm = message === 'delivery_request' ? `<p>This note is sent after the order is actually out for delivery. It is not sent just because the original estimate has passed. You can answer on the website, and the atelier can also confirm delivery after checking.</p>` : '';
+  const who = message === 'delivered' && order.confirmationSource === 'admin' ? `<p>The atelier confirmed delivery${order.confirmationNote ? `: ${esc(order.confirmationNote)}` : '.'}</p>` : '';
   return brandEmailLayout(
     title,
-    `<p>Order <strong>${esc(order.number)}</strong> — ${esc(title)}</p>${tracking}<p style="color:#8A7F74">Total ${formatMoney(order.total)}</p>${emailButton(link, 'VIEW ORDER')}`,
+    `<p>Order <strong>${esc(order.number)}</strong> — ${esc(title)}</p>${service}${tracking}${confirm}${who}<p style="color:#8A7F74">Total ${formatMoney(order.total)} PKR</p>${emailButton(link, 'VIEW ORDER')}`,
   );
 }
 

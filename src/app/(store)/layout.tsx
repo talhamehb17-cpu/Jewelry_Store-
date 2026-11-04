@@ -4,7 +4,7 @@ import { CurrencyProvider } from '@/components/store/currency-context';
 import { ThemeLiveProvider } from '@/components/store/theme-live';
 import { DeliveryPrompt } from '@/components/store/delivery-prompt';
 import { CURRENCY_COOKIE, getRateBook, isCurrency } from '@/lib/currency';
-import { ordersAwaitingDeliveryConfirmation } from '@/lib/fulfillment';
+import { customerAlertCount, ordersAwaitingDeliveryConfirmation } from '@/lib/fulfillment';
 import { themeLook } from '@/themes/language';
 import { THEME_IDS } from '@/themes/types';
 import { getActiveCampaign } from '@/lib/campaigns';
@@ -36,7 +36,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const picked = jar.get(CURRENCY_COOKIE)?.value;
   const code = isCurrency(picked) && (picked === 'PKR' || (book.rates[picked] ?? 0) > 0) ? picked : 'PKR';
   const looks = Object.fromEntries(THEME_IDS.map((id) => [id, themeLook(id)]));
-  const promptOrder = user ? (await ordersAwaitingDeliveryConfirmation(user.id))[0] : null;
+  const [prompts, alerts] = user ? await Promise.all([ordersAwaitingDeliveryConfirmation(user.id), customerAlertCount(user.id)]) : [[], 0];
   const s = ctx.config.settings;
   const mega = collections
     .filter((c) => c.featured)
@@ -64,6 +64,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
           user={user ? { firstName: user.firstName || 'there', isStaff: isStaff(user) } : null}
           mega={mega}
           phone={settings.store.phone}
+          alerts={alerts}
         />
         <main id="main" className="flex-1">{children}</main>
         <Footer footer={s.footer} header={s.header} settings={settings} />
@@ -75,18 +76,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         <LivePreviewBridge />
         <ThemeSync loggedIn={!!user} />
         {ctx.visitorSwitcher && <ThemeSwitcher themes={chips} current={ctx.themeId} activeId={ctx.activeThemeId} />}
-        {promptOrder && (
-          <DeliveryPrompt
-            order={{
-              id: promptOrder.id,
-              number: promptOrder.number,
-              expectedAt: promptOrder.expectedAt!.toISOString(),
-              total: promptOrder.total,
-              shippingMethodName: promptOrder.shippingMethodName,
-              summary: promptOrder.customerName,
-            }}
-          />
-        )}
+        {prompts.length > 0 && <DeliveryPrompt orders={prompts} />}
       </div>
     </StoreProvider>
     </ThemeLiveProvider>

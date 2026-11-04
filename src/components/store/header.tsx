@@ -22,6 +22,7 @@ export type HeaderProps = {
   user: { firstName: string; isStaff: boolean } | null;
   mega: { title: string; image: string | null; href: string }[];
   phone: string;
+  alerts?: number;
 };
 
 const SW = 1.25;
@@ -107,7 +108,7 @@ function NavDropdown({ item, current, mega, luxe }: { item: NavItem; current: st
   );
 }
 
-function Icons({ textLabels, user, compact }: { textLabels?: boolean; user: HeaderProps['user']; compact?: boolean }) {
+function Icons({ textLabels, user, compact, alerts = 0 }: { textLabels?: boolean; user: HeaderProps['user']; compact?: boolean; alerts?: number }) {
   const { setSearchOpen, setCartOpen, cartCount, wishlist, cartReady } = useStore();
   const count = cartReady ? cartCount : 0;
   const wcount = cartReady ? wishlist.length : 0;
@@ -116,7 +117,7 @@ function Icons({ textLabels, user, compact }: { textLabels?: boolean; user: Head
     return (
       <div className="nav-link flex items-center gap-6">
         <button onClick={() => setSearchOpen(true)} className="link-u">Search</button>
-        <Link href={accountHref} className="link-u">{user ? 'Account' : 'Sign in'}</Link>
+        <Link href={alerts ? '/account/notifications' : accountHref} className="link-u">{user ? 'Account' : 'Sign in'}{alerts > 0 ? ` (${alerts})` : ''}</Link>
         <Link href="/wishlist" className="link-u">Wishlist ({wcount})</Link>
         <button onClick={() => setCartOpen(true)} className="link-u">Bag ({count})</button>
       </div>
@@ -129,8 +130,9 @@ function Icons({ textLabels, user, compact }: { textLabels?: boolean; user: Head
       <button onClick={() => setSearchOpen(true)} className={btn} aria-label="Search">
         <Search size={19} strokeWidth={SW} />
       </button>
-      <Link href={accountHref} className={cn(btn, 'max-lg:hidden')} aria-label={user ? 'Your account' : 'Sign in'}>
+      <Link href={alerts ? '/account/notifications' : accountHref} className={cn(btn, 'max-lg:hidden')} aria-label={alerts ? `Account, ${alerts} delivery updates` : user ? 'Your account' : 'Sign in'}>
         <User size={19} strokeWidth={SW} />
+        {alerts > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.58rem] font-semibold text-white">{alerts}</span>}
       </Link>
       <Link href="/wishlist" className={cn(btn, 'max-lg:hidden')} aria-label={`Wishlist (${wcount})`}>
         <Heart size={19} strokeWidth={SW} />
@@ -218,7 +220,7 @@ function FullscreenMenu({ nav, open, onClose }: { nav: NavItem[]; open: boolean;
   );
 }
 
-export function Header({ header, mobileVariant, nav, user, mega, phone }: HeaderProps) {
+export function Header({ header, mobileVariant, nav, user, mega, phone, alerts = 0 }: HeaderProps) {
   const pathname = usePathname();
   const current = activeNavHref(pathname, nav);
   const { setMenuOpen } = useStore();
@@ -247,7 +249,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             <Menu size={21} strokeWidth={SW} />
           </button>
           <Link href="/" aria-label="Home" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"><Logo header={header} size={52} /></Link>
-          <Icons user={user} compact />
+          <Icons alerts={alerts} user={user} compact />
         </>
       ) : (
         <>
@@ -257,7 +259,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             </button>
             <Link href="/" aria-label="Home"><Logo header={header} size={48} /></Link>
           </div>
-          <Icons user={user} compact />
+          <Icons alerts={alerts} user={user} compact />
         </>
       )}
     </div>
@@ -270,7 +272,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
         <div className="hidden min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-2 lg:grid">
           <Link href="/" aria-label="Home" className="justify-self-start"><Logo header={header} size={56} /></Link>
           <nav className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-1">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
-          <div className="justify-self-end"><Icons user={user} /></div>
+          <div className="justify-self-end"><Icons alerts={alerts} user={user} /></div>
         </div>
       );
       break;
@@ -280,7 +282,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           <div className="grid grid-cols-[1fr_auto_1fr] items-center py-5">
             <SearchPill />
             <Link href="/" aria-label="Home"><Logo header={header} /></Link>
-            <div className="justify-self-end"><Icons user={user} /></div>
+            <div className="justify-self-end"><Icons alerts={alerts} user={user} /></div>
           </div>
           <nav className="flex items-center justify-center gap-3 pb-4">
             {nav.map((n, i) => (
@@ -300,7 +302,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           <Link href="/" aria-label="Home" className="px-2 xl:px-6"><Logo header={header} size={64} /></Link>
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
             <nav className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-1">{nav.slice(half).map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
-            <Icons user={user} />
+            <Icons alerts={alerts} user={user} />
           </div>
         </div>
       );
@@ -310,7 +312,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
         <div className="hidden lg:block">
           <div className="flex items-center justify-between py-2.5 text-[0.7rem] uppercase tracking-[0.2em] text-muted">
             <span>{header.logoTagline}</span>
-            <Icons user={user} />
+            <Icons alerts={alerts} user={user} />
           </div>
           <div className={cn('overflow-hidden text-center transition-all duration-500', scrolled ? 'max-h-0 opacity-0' : 'max-h-40 border-t border-line pb-3 pt-4 opacity-100')}>
             <Link href="/" aria-label="Home" className="inline-block leading-none"><Logo header={header} /></Link>
@@ -332,7 +334,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           <div className="grid grid-cols-[1fr_auto_1fr] items-center py-5">
             <span />
             <Link href="/" aria-label="Home" className="text-center"><Logo header={header} /></Link>
-            <div className="justify-self-end"><Icons user={user} /></div>
+            <div className="justify-self-end"><Icons alerts={alerts} user={user} /></div>
           </div>
           <nav className="flex items-center justify-center gap-12 border-t border-line py-3.5 [font-variant:small-caps]">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
         </div>
@@ -347,7 +349,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
             <button onClick={() => setFsOpen(true)} className="nav-link inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 transition hover:border-ink">
               <Menu size={15} strokeWidth={SW} /> Menu
             </button>
-            <Icons user={user} />
+            <Icons alerts={alerts} user={user} />
           </div>
         </div>
       );
@@ -357,7 +359,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
         <div className="hidden h-[96px] grid-cols-[1fr_auto_1fr] items-center lg:grid">
           <nav className="flex items-center gap-7">{nav.slice(0, 3).map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
           <Link href="/" aria-label="Home" className="px-8"><Logo header={header} /></Link>
-          <div className="justify-self-end"><Icons user={user} textLabels /></div>
+          <div className="justify-self-end"><Icons alerts={alerts} user={user} textLabels /></div>
         </div>
       );
       break;
@@ -367,7 +369,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           <div className="grid grid-cols-[1fr_auto_1fr] items-center py-5">
             <SearchPill />
             <Link href="/" aria-label="Home"><Logo header={header} /></Link>
-            <div className="justify-self-end"><Icons user={user} /></div>
+            <div className="justify-self-end"><Icons alerts={alerts} user={user} /></div>
           </div>
           <div className="hairline-gold" />
           <nav className="flex items-center justify-center gap-6 py-3 xl:gap-11">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} luxe />)}</nav>
@@ -384,7 +386,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
           <div className="grid grid-cols-[1fr_auto_1fr] items-center pb-4 pt-6">
             <SearchPill minimal />
             <Link href="/" aria-label="Home"><Logo header={header} /></Link>
-            <div className="justify-self-end"><Icons user={user} /></div>
+            <div className="justify-self-end"><Icons alerts={alerts} user={user} /></div>
           </div>
           <nav className="flex items-center justify-center gap-11 pb-4">{nav.map((n) => <NavDropdown key={n.href} item={n} current={current} mega={mega} />)}</nav>
         </div>
@@ -405,7 +407,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone }: Header
                 <Link key={n.href} href={n.href} onClick={(e) => e.currentTarget.blur()} aria-current={current === n.href ? 'page' : undefined} className={cn('nav-link rounded-full px-4 py-2 transition hover:bg-surface', current === n.href && 'bg-surface text-accent')}>{n.label}</Link>
               ))}
             </nav>
-            <Icons user={user} compact />
+            <Icons alerts={alerts} user={user} compact />
           </div>
         </div>
         <MobileMenu nav={nav} user={user} phone={phone} current={current} />

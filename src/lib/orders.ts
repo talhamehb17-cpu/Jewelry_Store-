@@ -4,6 +4,8 @@ import { getDb } from '@/db';
 import { discountUsages, discounts, inventoryMovements, orderEvents, orderItems, orders, products, productVariants, type Order, type OrderAddress } from '@/db/schema';
 import { buildQuote, type CartLineInput } from './pricing';
 import { deliveryServiceByCode, planFromService } from './delivery';
+import { nextPatch, scheduleStartPatch, syncDeliverySideEffects } from './delivery-effects';
+import { notificationDueAt, STATUS_RANK } from './delivery-schedule';
 
 export class OrderError extends Error {}
 
@@ -64,8 +66,6 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       l.stock = updated[0]!.stock;
     }
     const methodName = quote.shippingMethods.find((m) => m.id === quote.shippingMethod)?.name ?? service?.name ?? 'Standard Delivery';
-    const placedAt = new Date();
-    const clockStarts = input.paymentMethod === 'cod';
     const [order] = await tx
       .insert(orders)
       .values({
@@ -98,8 +98,9 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         deliveryCode: service?.code ?? quote.shippingMethod,
         deliveryMinutes: plan?.durationMinutes ?? null,
         deliveryPlan: plan,
-        timelineStartAt: clockStarts ? placedAt : null,
-        expectedAt: clockStarts && plan ? new Date(placedAt.getTime() + plan.durationMinutes * 60_000) : null,
+        timelineStartAt: null,
+        expectedAt: null,
+        automationState: 'idle',
       })
       .returning();
     const number = `EM-${10000 + order!.id}`;
@@ -165,86 +166,191 @@ export async function addOrderEvent(orderId: number, type: string, message: stri
   await db.insert(orderEvents).values({ orderId, type, message, actor });
 }
 
-export async function markOrderPaid(orderId: number, opts: { actor: string; ref?: string | null; paymentIntentId?: string | null; message?: string }) {
+export async function markOrderPaid(orderId: number, opts: { actor: string; actorId?: number | null; ref?: string | null; paymentIntentId?: string | null; message?: string }) {
   const db = await getDb();
-  const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-  if (!o || o.paymentStatus === 'paid') return o;
-  const [updated] = await db
-    .update(orders)
-    .set({
-      paymentStatus: 'paid',
-      paidAt: new Date(),
-      paymentRef: opts.ref ?? o.paymentRef,
-      paymentIntentId: opts.paymentIntentId ?? o.paymentIntentId,
-      status: o.status === 'pending' ? 'confirmed' : o.status,
-      timelineStartAt: o.timelineStartAt ?? (o.paymentMethod === 'cod' ? o.createdAt : new Date()),
-      expectedAt:
-        o.expectedAt ??
-        (o.deliveryMinutes ? new Date(Date.now() + o.deliveryMinutes * 60_000) : null),
-      updatedAt: new Date(),
-    })
-    .where(eq(orders.id, orderId))
-    .returning();
-  await addOrderEvent(orderId, 'payment', opts.message ?? 'Payment marked as received', opts.actor);
-  return updated;
+  return db.transaction(async (tx) => {
+    const [o] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
+    if (!o || o.paymentStatus === 'paid' || o.status === 'cancelled') return o;
+    const now = new Date();
+    const nextStatus = o.status === 'pending' ? 'confirmed' : o.status;
+    const schedule = await scheduleStartPatch(tx as unknown as typeof db, o, nextStatus, now);
+    const [updated] = await tx
+      .update(orders)
+      .set({
+        paymentStatus: 'paid',
+        paidAt: now,
+        paymentRef: opts.ref ?? o.paymentRef,
+        paymentIntentId: opts.paymentIntentId ?? o.paymentIntentId,
+        status: nextStatus,
+        statusVersion: o.statusVersion + 1,
+        ...(schedule ?? {}),
+        updatedAt: now,
+      })
+      .where(and(eq(orders.id, orderId), eq(orders.status, o.status)))
+      .returning();
+    if (!updated) return o;
+    await tx.insert(orderEvents).values({
+      orderId,
+      type: 'payment',
+      message: opts.message ?? 'Payment marked as received',
+      actor: opts.actor,
+      actorType: opts.actorId ? 'admin' : 'system',
+      actorId: opts.actorId ?? null,
+      source: opts.actorId ? 'admin' : 'automatic',
+    });
+    if (o.status !== nextStatus) {
+      await tx.insert(orderEvents).values({
+        orderId,
+        type: 'status',
+        message: `${o.status} → confirmed · payment verified. Delivery schedule saved with this confirmation.`,
+        actor: opts.actor,
+        fromStatus: o.status,
+        toStatus: nextStatus,
+        actorType: opts.actorId ? 'admin' : 'system',
+        actorId: opts.actorId ?? null,
+        source: opts.actorId ? 'admin' : 'automatic',
+      });
+    }
+    return updated;
+  });
 }
 
 export const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'awaiting_confirm', 'delivered', 'cancelled'] as const;
 
 export const STATUS_FLOW: Record<string, string[]> = {
-  pending: ['confirmed', 'processing', 'cancelled'],
-  confirmed: ['processing', 'shipped', 'cancelled'],
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['processing', 'cancelled'],
   processing: ['shipped', 'cancelled'],
-  shipped: ['out_for_delivery', 'awaiting_confirm', 'cancelled'],
-  out_for_delivery: ['awaiting_confirm', 'delivered', 'cancelled'],
+  shipped: ['out_for_delivery', 'cancelled'],
+  out_for_delivery: ['delivered', 'cancelled'],
   awaiting_confirm: ['delivered', 'out_for_delivery', 'cancelled'],
-  delivered: ['cancelled'],
+  delivered: [],
   cancelled: [],
 };
 
-export async function changeOrderStatus(
-  orderId: number,
-  status: string,
-  actor: string,
-  extra: { carrier?: string; tracking?: string; note?: string; reason?: string; force?: boolean; customerNote?: string } = {},
-) {
+const DELIVERABLE = new Set(['processing', 'shipped', 'out_for_delivery', 'awaiting_confirm']);
+
+export type StatusExtra = {
+  carrier?: string;
+  tracking?: string;
+  note?: string;
+  reason?: string;
+  force?: boolean;
+  customerNote?: string;
+  source?: 'automatic' | 'admin' | 'customer';
+  actorType?: 'system' | 'admin' | 'customer';
+  actorId?: number | null;
+  expectedStatus?: string;
+  confirmDelivery?: boolean;
+  verificationNote?: string;
+};
+
+export async function changeOrderStatus(orderId: number, status: string, actor: string, extra: StatusExtra = {}) {
   const db = await getDb();
-  const [o] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-  if (!o) throw new OrderError('Order not found.');
-  if (o.status === status) return o;
-  if (!ORDER_STATUSES.includes(status as (typeof ORDER_STATUSES)[number])) throw new OrderError('Unknown order status.');
-  if (status === 'cancelled' && !extra.reason && !extra.note && actor !== 'customer' && actor !== 'system') {
-    throw new OrderError('Enter a cancellation reason.');
-  }
-  const allowed = extra.force || (STATUS_FLOW[o.status] ?? []).includes(status);
-  if (!allowed) throw new OrderError(`Cannot move an order from “${o.status}” to “${status}”.`);
-  const now = new Date();
-  const patch: Partial<Order> = { status, updatedAt: now };
-  if (extra.customerNote) patch.customerVisibleNote = extra.customerNote.slice(0, 500);
-  if (status === 'shipped') {
-    patch.shippedAt = now;
-    if (extra.carrier) patch.trackingCarrier = extra.carrier;
-    if (extra.tracking) patch.trackingNumber = extra.tracking;
-  }
-  if (status === 'delivered') {
-    patch.deliveredAt = now;
-    if (o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') {
-      patch.paymentStatus = 'paid';
-      patch.paidAt = now;
+  const updated = await db.transaction(async (tx) => {
+    const [o] = await tx.select().from(orders).where(eq(orders.id, orderId)).for('update');
+    if (!o) throw new OrderError('Order not found.');
+    if (extra.expectedStatus && o.status !== extra.expectedStatus) throw new OrderError('This order changed before the scheduled step ran.');
+    if (o.status === status) {
+      if (extra.confirmDelivery) throw new OrderError(o.confirmationSource === 'customer' ? 'You already confirmed this delivery.' : 'This order is already delivered.');
+      return o;
     }
-  }
-  if (status === 'cancelled') {
-    patch.cancelledAt = now;
-    patch.cancelReason = (extra.reason || extra.note || 'Cancelled').slice(0, 500);
-  }
-  const [updated] = await db.update(orders).set(patch).where(eq(orders.id, orderId)).returning();
-  const label = status.replaceAll('_', ' ');
-  const tracking = status === 'shipped' && (extra.tracking || o.trackingNumber) ? ` · ${extra.carrier || o.trackingCarrier || ''} ${extra.tracking || o.trackingNumber}` : '';
-  const reason = extra.reason ? ` Reason: ${extra.reason}` : '';
-  await addOrderEvent(orderId, 'status', `${o.status} → ${label}${tracking}${reason}${extra.note ? ` — ${extra.note}` : ''}`, actor);
-  if (status === 'delivered' && o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') await addOrderEvent(orderId, 'payment', 'Cash collected on delivery', actor);
-  if (status === 'cancelled') await restockOrder(orderId, 'cancel', actor);
-  return updated!;
+    if (extra.source === 'automatic' && (STATUS_RANK[status] ?? 0) <= (STATUS_RANK[o.status] ?? 0)) {
+      const moved = nextPatch(o.status, o.deliveryPlan);
+      const [row] = await tx.update(orders).set({ ...moved, updatedAt: new Date() }).where(eq(orders.id, orderId)).returning();
+      return row ?? o;
+    }
+    if (!ORDER_STATUSES.includes(status as (typeof ORDER_STATUSES)[number])) throw new OrderError('Unknown order status.');
+    if (extra.source === 'automatic') {
+      if (status === 'delivered' || status === 'cancelled') throw new OrderError('Automation cannot mark an order delivered or cancelled.');
+      if (o.automationState !== 'active') throw new OrderError('This order has no active delivery schedule.');
+      if (o.paymentMethod !== 'cod' && o.paymentStatus !== 'paid') throw new OrderError('Unverified payments do not advance.');
+      if (o.paymentStatus === 'failed') throw new OrderError('Rejected payments do not advance.');
+    }
+    if (status === 'cancelled' && !extra.reason && !extra.note && actor !== 'customer' && actor !== 'system') {
+      throw new OrderError('Enter a cancellation reason.');
+    }
+    if (status === 'delivered' && !DELIVERABLE.has(o.status)) {
+      throw new OrderError('Mark delivered only after the order is being prepared or is out for delivery. Pending and cancelled orders cannot be marked delivered.');
+    }
+    const delivering = status === 'delivered';
+    if (delivering) {
+      if (extra.source === 'automatic') throw new OrderError('Automation cannot confirm delivery.');
+      if (!DELIVERABLE.has(o.status)) throw new OrderError('Mark delivered only after the order is being prepared or is out for delivery. Pending and cancelled orders stay as they are.');
+      if (extra.source === 'customer' && !['out_for_delivery', 'awaiting_confirm'].includes(o.status)) {
+        throw new OrderError('You can confirm delivery only while the order is out for delivery.');
+      }
+    }
+    const allowed = extra.force || delivering || (STATUS_FLOW[o.status] ?? []).includes(status);
+    if (!allowed) throw new OrderError(`Cannot move an order from “${o.status.replaceAll('_', ' ')}” to “${status.replaceAll('_', ' ')}”.`);
+    const now = new Date();
+    const source = extra.source ?? (actor === 'automation' || actor === 'system' ? 'automatic' : actor === 'customer' ? 'customer' : 'admin');
+    const actorType = extra.actorType ?? (source === 'automatic' ? 'system' : source === 'customer' ? 'customer' : 'admin');
+    let schedule: Awaited<ReturnType<typeof scheduleStartPatch>> = null;
+    const codConfirmed = status === 'confirmed' && o.status === 'pending' && o.paymentMethod === 'cod' && source !== 'automatic';
+    if (codConfirmed) schedule = await scheduleStartPatch(tx as unknown as typeof db, o, status, now);
+    const plan = schedule?.deliveryPlan ?? o.deliveryPlan;
+    const patch: Partial<Order> = { status, updatedAt: now, statusVersion: o.statusVersion + 1, ...(schedule ?? {}) };
+    if (extra.customerNote) patch.customerVisibleNote = extra.customerNote.slice(0, 500);
+    if (status === 'processing' && !o.processingAt) patch.processingAt = now;
+    if (status === 'shipped') {
+      patch.shippedAt = o.shippedAt ?? now;
+      if (extra.carrier) patch.trackingCarrier = extra.carrier;
+      if (extra.tracking) patch.trackingNumber = extra.tracking;
+    }
+    if (status === 'out_for_delivery') {
+      patch.outForDeliveryAt = now;
+      const delay = plan?.notificationDelayMinutes ?? 10;
+      patch.notificationDueAt = notificationDueAt(now, delay);
+    }
+    if (status === 'delivered') {
+      patch.deliveredAt = now;
+      patch.deliveryConfirmedAt = now;
+      patch.confirmationSource = source === 'customer' ? 'customer' : 'admin';
+      patch.confirmedById = extra.actorId ?? null;
+      patch.confirmationNote = (extra.verificationNote || extra.note || '').slice(0, 500) || null;
+      patch.automationState = 'complete';
+      patch.nextStatus = null;
+      patch.nextStatusAt = null;
+      if (source === 'customer') patch.deliveryResponse = 'yes';
+      if (o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') {
+        patch.paymentStatus = 'paid';
+        patch.paidAt = now;
+      }
+    } else if (status === 'cancelled') {
+      patch.cancelledAt = now;
+      patch.cancelReason = (extra.reason || extra.note || 'Cancelled').slice(0, 500);
+      patch.automationState = 'complete';
+      patch.nextStatus = null;
+      patch.nextStatusAt = null;
+    } else if (schedule || o.automationState === 'active') {
+      Object.assign(patch, nextPatch(status, plan));
+    }
+    const [row] = await tx.update(orders).set(patch).where(and(eq(orders.id, orderId), eq(orders.status, o.status), eq(orders.statusVersion, o.statusVersion))).returning();
+    if (!row) throw new OrderError('This order was updated by someone else. Refresh and try again.');
+    const label = status.replaceAll('_', ' ');
+    const tracking = status === 'shipped' && (extra.tracking || o.trackingNumber) ? ` · ${extra.carrier || o.trackingCarrier || ''} ${extra.tracking || o.trackingNumber}` : '';
+    const reason = extra.reason ? ` Reason: ${extra.reason}` : '';
+    const who = source === 'automatic' ? 'Automatic' : source === 'customer' ? 'Customer' : 'Admin';
+    await tx.insert(orderEvents).values({
+      orderId,
+      type: 'status',
+      message: `${o.status} → ${label} · ${who}${tracking}${reason}${extra.note ? ` — ${extra.note}` : ''}`,
+      actor,
+      fromStatus: o.status,
+      toStatus: status,
+      actorType,
+      actorId: extra.actorId ?? null,
+      source,
+    });
+    if (status === 'delivered' && o.paymentMethod === 'cod' && o.paymentStatus !== 'paid') {
+      await tx.insert(orderEvents).values({ orderId, type: 'payment', message: 'Cash collected on delivery', actor, actorType, actorId: extra.actorId ?? null, source });
+    }
+    await syncDeliverySideEffects(tx as unknown as typeof db, o, row, { source, actorId: extra.actorId, actor, note: extra.verificationNote || extra.note });
+    return row;
+  });
+  if (status === 'cancelled' && updated.status === 'cancelled') await restockOrder(orderId, 'cancel', actor);
+  return updated;
 }
 
 /** Guest cancellation from the order link. The token is checked here; status must still be pending. */

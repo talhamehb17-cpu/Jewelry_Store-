@@ -273,6 +273,14 @@ export type DeliveryPlan = {
   processingMinutes: number | null;
   shipMinutes: number | null;
   outMinutes: number | null;
+  notificationDelayMinutes?: number;
+  timezone?: string;
+  serviceCode?: string;
+  processingAt?: string;
+  shipAt?: string;
+  outAt?: string;
+  expectedAt?: string;
+  snapshottedAt?: string;
 };
 
 export type OrderAddress = {
@@ -331,8 +339,18 @@ export const orders = pgTable(
     deliveryMinutes: integer('delivery_minutes'),
     expectedAt: ts('expected_at'),
     timelineStartAt: ts('timeline_start_at'),
+    processingAt: ts('processing_at'),
+    outForDeliveryAt: ts('out_for_delivery_at'),
+    notificationDueAt: ts('notification_due_at'),
     deliveryConfirmedAt: ts('delivery_confirmed_at'),
     deliveryResponse: varchar('delivery_response', { length: 20 }),
+    confirmationSource: varchar('confirmation_source', { length: 20 }),
+    confirmedById: integer('confirmed_by_id').references(() => users.id, { onDelete: 'set null' }),
+    confirmationNote: text('confirmation_note'),
+    automationState: varchar('automation_state', { length: 20 }).notNull().default('idle'),
+    nextStatus: varchar('next_status', { length: 20 }),
+    nextStatusAt: ts('next_status_at'),
+    statusVersion: integer('status_version').notNull().default(0),
     deliveryPlan: jsonb('delivery_plan').$type<DeliveryPlan>(),
     cancelReason: text('cancel_reason'),
     customerVisibleNote: text('customer_visible_note'),
@@ -347,6 +365,8 @@ export const orders = pgTable(
     index('orders_email_idx').on(t.email),
     index('orders_status_idx').on(t.status),
     index('orders_created_idx').on(t.createdAt),
+    index('orders_automation_idx').on(t.automationState, t.nextStatusAt),
+    index('orders_notification_due_idx').on(t.notificationDueAt),
   ],
 );
 
@@ -397,6 +417,11 @@ export const orderEvents = pgTable(
     type: varchar('type', { length: 40 }).notNull(),
     message: text('message').notNull(),
     actor: varchar('actor', { length: 120 }),
+    fromStatus: varchar('from_status', { length: 20 }),
+    toStatus: varchar('to_status', { length: 20 }),
+    actorType: varchar('actor_type', { length: 20 }),
+    source: varchar('source', { length: 20 }),
+    actorId: integer('actor_id'),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('order_events_order_idx').on(t.orderId)],
@@ -607,14 +632,43 @@ export const deliveryIssues = pgTable(
     orderId: integer('order_id')
       .notNull()
       .references(() => orders.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
     status: varchar('status', { length: 20 }).notNull().default('open'),
     note: text('note'),
+    customerResponse: text('customer_response'),
     expectedAt: ts('expected_at'),
     createdAt: ts('created_at').notNull().defaultNow(),
     resolvedAt: ts('resolved_at'),
     resolvedBy: varchar('resolved_by', { length: 120 }),
+    resolvedById: integer('resolved_by_id'),
+    resolutionNote: text('resolution_note'),
   },
   (t) => [index('delivery_issues_status_idx').on(t.status)],
+);
+
+export const customerNotifications = pgTable(
+  'customer_notifications',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+    orderId: integer('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    type: varchar('type', { length: 40 }).notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('scheduled'),
+    title: varchar('title', { length: 200 }),
+    body: text('body'),
+    scheduledAt: ts('scheduled_at').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    seenAt: ts('seen_at'),
+    resolvedAt: ts('resolved_at'),
+    response: varchar('response', { length: 20 }),
+  },
+  (t) => [
+    index('customer_notifications_order_idx').on(t.orderId),
+    index('customer_notifications_user_idx').on(t.userId),
+    index('customer_notifications_due_idx').on(t.status, t.scheduledAt),
+  ],
 );
 
 export const exchangeRates = pgTable('exchange_rates', {

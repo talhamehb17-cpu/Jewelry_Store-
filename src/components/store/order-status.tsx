@@ -25,7 +25,7 @@ export function StatusBadge({ status, kind = 'order' }: { status: string; kind?:
   return <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-medium', tone[status] ?? 'bg-stone-100 text-stone-700 border-stone-200')}>{label}</span>;
 }
 
-export function OrderTracker({ status }: { status: string }) {
+export function OrderTracker({ status, stamps = {} }: { status: string; stamps?: Partial<Record<string, string | null>> }) {
   if (status === 'cancelled') {
     return (
       <div className="flex items-center gap-3 rounded-theme-sm bg-rose-50 px-4 py-3 text-[0.88rem] text-rose-800">
@@ -33,7 +33,8 @@ export function OrderTracker({ status }: { status: string }) {
       </div>
     );
   }
-  const idx = STEPS.indexOf(status as (typeof STEPS)[number]);
+  const visual = status === 'awaiting_confirm' ? 'out_for_delivery' : status;
+  const idx = STEPS.indexOf(visual as (typeof STEPS)[number]);
   return (
     <ol className="grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label="Order progress">
       {STEPS.map((s, i) => {
@@ -48,6 +49,7 @@ export function OrderTracker({ status }: { status: string }) {
               <span className={cn('h-px flex-1', i === STEPS.length - 1 ? 'opacity-0' : i < idx ? 'bg-accent' : 'bg-line')} />
             </div>
             <span className={cn('mt-2 text-[0.7rem] sm:text-[0.78rem]', done ? 'text-ink' : 'text-muted')}>{titleCase(s)}</span>
+            {stamps[s] && <span className="mt-1 text-[0.62rem] text-muted">{stamps[s]}</span>}
           </li>
         );
       })}

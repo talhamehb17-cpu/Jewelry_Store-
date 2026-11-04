@@ -12,8 +12,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await requireAdminPage();
   scheduleProgress();
   const db = await getDb();
-  const [[o], [l], [r], [m], kind] = await Promise.all([
+  const [[o], [express], [l], [r], [m], kind] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(orders).where(sql`${orders.status} = 'pending' or ${orders.paymentStatus} = 'awaiting'`),
+    db.select({ n: sql<number>`count(*)::int` }).from(orders).where(sql`${orders.paymentStatus} = 'awaiting' and ${orders.status} <> 'cancelled' and ${orders.paymentMethod} in ('bank', 'easypaisa', 'jazzcash', 'wallet') and (lower(coalesce(${orders.deliveryCode}, '')) like '%express%' or lower(coalesce(${orders.shippingMethod}, '')) like '%express%')`),
     db.select({ n: sql<number>`count(*)::int` }).from(productVariants).where(sql`${productVariants.stock} <= ${productVariants.lowStockThreshold}`),
     db.select({ n: sql<number>`count(*)::int` }).from(reviews).where(eq(reviews.status, 'pending')),
     db.select({ n: sql<number>`count(*)::int` }).from(contactMessages).where(eq(contactMessages.read, false)),
@@ -27,7 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     dbWarning = hours > 0 ? `Your Neon database is unclaimed and expires in about ${hours} hours. Claim it to keep your data.` : 'Your temporary Neon database has expired unless it was claimed.';
   }
   return (
-    <AdminShell user={{ name: `${user.firstName} ${user.lastName}`.trim() || user.email, email: user.email, role: user.role }} badges={{ orders: o?.n ?? 0, lowStock: l?.n ?? 0, reviews: r?.n ?? 0, messages: m?.n ?? 0 }} dbWarning={dbWarning}>
+    <AdminShell user={{ name: `${user.firstName} ${user.lastName}`.trim() || user.email, email: user.email, role: user.role }} badges={{ orders: o?.n ?? 0, express: express?.n ?? 0, lowStock: l?.n ?? 0, reviews: r?.n ?? 0, messages: m?.n ?? 0 }} dbWarning={dbWarning}>
       {children}
     </AdminShell>
   );

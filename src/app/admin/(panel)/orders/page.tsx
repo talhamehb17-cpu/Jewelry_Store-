@@ -12,14 +12,31 @@ const PM: Record<string, string> = { cod: 'COD', bank: 'Bank', wallet: 'Wallet',
 export default async function OrdersAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
-  const f = { q: sp.q, status: sp.status, payment: sp.payment, method: sp.method, from: sp.from, to: sp.to };
+  const f = { q: sp.q, status: sp.status, payment: sp.payment, method: sp.method, from: sp.from, to: sp.to, delivery: sp.delivery, lane: sp.lane };
   const { rows, count, revenue, pages } = await listOrders(f, page);
   return (
     <>
       <PageHeader title="Orders" description={`${count} orders · ${formatMoney(revenue)} revenue (excl. cancelled)`} actions={<a href={qs('/api/admin/orders/export', f)} className="btn btn-secondary"><Download size={15} /> Export CSV</a>} />
+      <div className="mb-3 flex flex-wrap gap-2">
+        {[
+          ['', 'All deliveries'],
+          ['standard', 'Standard'],
+          ['express', 'Express'],
+        ].map(([id, label]) => (
+          <Link key={label} href={qs('/admin/orders', { ...f, delivery: id || undefined, page: undefined })} className={`rounded-full border px-3 py-1 text-[0.78rem] ${(sp.delivery ?? '') === id ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink'}`}>{label}</Link>
+        ))}
+        {[
+          ['confirmation', 'Confirmation pending'],
+          ['issue', 'Delivery issues'],
+          ['out', 'Out for delivery'],
+          ['overdue', 'Past expected date'],
+        ].map(([id, label]) => (
+          <Link key={id} href={qs('/admin/orders', { ...f, lane: sp.lane === id ? undefined : id, page: undefined })} className={`rounded-full border px-3 py-1 text-[0.78rem] ${sp.lane === id ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink'}`}>{label}</Link>
+        ))}
+      </div>
       <div className="mb-4 flex flex-wrap gap-2">
         {['', ...ORDER_STATUSES].map((s) => (
-          <Link key={s || 'all'} href={qs('/admin/orders', { ...f, status: s || undefined })} className={`rounded-full border px-3 py-1 text-[0.78rem] ${(sp.status ?? '') === s ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink'}`}>{s ? titleCase(s) : 'All'}</Link>
+          <Link key={s || 'all'} href={qs('/admin/orders', { ...f, status: s || undefined, page: undefined })} className={`rounded-full border px-3 py-1 text-[0.78rem] ${(sp.status ?? '') === s ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink'}`}>{s ? titleCase(s) : 'All statuses'}</Link>
         ))}
       </div>
       <Card pad={false}>
@@ -40,7 +57,7 @@ export default async function OrdersAdmin({ searchParams }: { searchParams: Prom
         ) : (
           <div className="overflow-x-auto">
             <table className="admin-table w-full text-[0.84rem]">
-              <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>City</th><th>Method</th><th>Payment</th><th>Fulfilment</th><th className="!text-right">Total</th></tr></thead>
+              <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>City</th><th>Delivery</th><th>Method</th><th>Payment</th><th>Fulfilment</th><th className="!text-right">Total</th></tr></thead>
               <tbody>
                 {rows.map((o) => (
                   <tr key={o.id}>
@@ -48,6 +65,7 @@ export default async function OrdersAdmin({ searchParams }: { searchParams: Prom
                     <td className="whitespace-nowrap text-muted">{formatDateTime(o.createdAt)}</td>
                     <td><span className="block">{o.customerName}</span><span className="text-[0.72rem] text-muted">{o.email}</span></td>
                     <td className="text-muted">{o.shippingAddress.city}</td>
+                    <td>{o.shippingMethodName}</td>
                     <td>{PM[o.paymentMethod] ?? o.paymentMethod}</td>
                     <td><StatusBadge status={o.paymentStatus} kind="payment" /></td>
                     <td><StatusBadge status={o.status} /></td>

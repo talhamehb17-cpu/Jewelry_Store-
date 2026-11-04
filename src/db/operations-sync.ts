@@ -43,7 +43,7 @@ No. Once the order is Confirmed, Processing, Shipped or Out for delivery, the ac
 The checkout shows the delivery services the atelier has switched on, including the current estimate and charge. An estimate such as 3.5 days is a planning figure, not a promise. Weather, verification and courier operations can change the actual day.
 
 ### What do the statuses mean?
-Pending, Confirmed, Processing, Shipped, Out for delivery, and Delivered. A timer does not mark an order Delivered. After the expected time, a signed-in customer may be asked whether it arrived. Yes records delivery. No opens a delivery issue for the atelier and leaves the order undelivered.
+Pending, Confirmed, Processing, Shipped, Out for delivery, and Delivered. A timer does not mark an order Delivered. About 10 minutes after the order is actually marked Out for delivery, a signed-in customer may be asked whether the package arrived. That question uses the real out-for-delivery time, not the original estimate. Yes records delivery. No opens a delivery issue and leaves the order undelivered. The atelier can also record delivery after checking, without waiting for the customer to return.
 
 ### What if it has not arrived?
 Choose “No, I haven’t received it” on the prompt, or contact ${line}. The atelier investigates. The website will not tell you the parcel was delivered unless you or the atelier confirmed it.
@@ -63,9 +63,9 @@ Express and Normal (or any other active service) show their current estimate and
 
 ## Status
 
-An order moves through Pending, Confirmed, Processing, Shipped and, when used, Out for delivery. Delivered is set when you confirm receipt, or when the atelier records it after checking. The timer alone never marks an order delivered.
+An order moves through Pending, Confirmed, Processing, Shipped and Out for delivery. Standard and Express keep separate estimates. The clock starts when a manual payment is verified, or when the atelier confirms a Cash on Delivery order. Delivered is set when you confirm receipt, or when the atelier records it after checking. The timer alone never marks an order delivered.
 
-If the expected time has passed and the parcel has not arrived, say so on the prompt or call ${line}. That opens a delivery issue. It does not invent a delivery.
+About 10 minutes after the order is actually out for delivery, the site can ask if it arrived. If it has not, say so on the prompt or call ${line}. That opens a delivery issue. It does not invent a delivery.
 
 ## Charges
 
@@ -121,7 +121,7 @@ export async function applyOperations(db: DB, log: (m: string) => void = () => {
   const phone = typeof store.phone === 'string' ? store.phone : '';
   const email = typeof store.email === 'string' ? store.email : '';
   const copy = policy(phone, email);
-  const POLICY_VERSION = '1';
+  const POLICY_VERSION = '2';
   const [policyMarker] = await db.select().from(settings).where(eq(settings.key, 'operations_policy_version'));
   const policyCurrent = policyMarker?.value === POLICY_VERSION || policyMarker?.value === (`"${POLICY_VERSION}"` as never);
   const pagesToWrite = [
@@ -194,8 +194,36 @@ export async function applyOperations(db: DB, log: (m: string) => void = () => {
     ]);
     log('showcase locations created — not retail branches');
   }
-  await db.update(deliveryServices).set({ shipMinutes: 24 * 60, outMinutes: 60 * 60 }).where(and(eq(deliveryServices.code, 'express'), sql`${deliveryServices.shipMinutes} is null`));
-  await db.update(deliveryServices).set({ shipMinutes: 48 * 60, outMinutes: 96 * 60 }).where(and(eq(deliveryServices.code, 'standard'), sql`${deliveryServices.shipMinutes} is null`));
+  await db.update(deliveryServices).set({ shipMinutes: 24 * 60, outMinutes: 36 * 60 }).where(and(eq(deliveryServices.code, 'express'), sql`${deliveryServices.shipMinutes} is null`));
+  await db.update(deliveryServices).set({ shipMinutes: 4 * 24 * 60, outMinutes: Math.round(5.5 * 24 * 60) }).where(and(eq(deliveryServices.code, 'standard'), sql`${deliveryServices.shipMinutes} is null`));
+  const [timelineMarker] = await db.select().from(settings).where(eq(settings.key, 'delivery_timeline_v2'));
+  if (!timelineMarker) {
+    const { DEFAULT_TIMELINE } = await import('@/lib/delivery-schedule');
+    await db.insert(settings).values({ key: 'delivery_automation', value: DEFAULT_TIMELINE }).onConflictDoNothing();
+    const now = new Date();
+    await db.update(deliveryServices).set({
+      durationMinutes: DEFAULT_TIMELINE.standard.expectedMinutes,
+      confirmMinutes: null,
+      processingMinutes: DEFAULT_TIMELINE.standard.processingMinutes,
+      shipMinutes: DEFAULT_TIMELINE.standard.shipDay * 1440,
+      outMinutes: DEFAULT_TIMELINE.standard.outMinutes,
+      description: 'About 6 days after the atelier confirms the order. An estimate, not a guarantee.',
+      cutoffNote: 'Processing on day 2, shipped on day 4 evening Pakistan time, out for delivery at day 5.5. Delivered is never automatic.',
+      updatedAt: now,
+    }).where(eq(deliveryServices.code, 'standard'));
+    await db.update(deliveryServices).set({
+      durationMinutes: DEFAULT_TIMELINE.express.expectedMinutes,
+      confirmMinutes: null,
+      processingMinutes: DEFAULT_TIMELINE.express.processingMinutes,
+      shipMinutes: DEFAULT_TIMELINE.express.shipMinutes,
+      outMinutes: DEFAULT_TIMELINE.express.outMinutes,
+      description: 'About 2–3 days after payment is verified. An estimate, not a guarantee.',
+      cutoffNote: 'Processing at 12 hours, shipped at 1 day, out for delivery at 1.5 days. Delivered is never automatic.',
+      updatedAt: now,
+    }).where(eq(deliveryServices.code, 'express'));
+    await db.insert(settings).values({ key: 'delivery_timeline_v2', value: '1' }).onConflictDoNothing();
+    log('delivery timelines set for new confirmations — existing orders were not rewritten');
+  }
 
   const [dark] = await db.select().from(themeConfigs).where(eq(themeConfigs.themeId, 'dark-luxury')).limit(1);
   if (dark?.published && typeof dark.published === 'object') {

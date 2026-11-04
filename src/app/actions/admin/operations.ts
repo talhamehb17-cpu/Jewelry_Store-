@@ -4,10 +4,14 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getDb } from '@/db';
-import { deliveryIssues, deliveryServices, storeLocations } from '@/db/schema';
+import { deliveryIssues, deliveryServices, orders, storeLocations } from '@/db/schema';
 import { assertAdmin } from '@/lib/auth';
 import { daysToMinutes } from '@/lib/delivery';
+import { saveAutomationSettings } from '@/lib/delivery-effects';
+import { DEFAULT_TIMELINE, validateTimeline, type TimelineSettings } from '@/lib/delivery-schedule';
 import { progressOrders } from '@/lib/fulfillment';
+import { sendEmail, statusEmail } from '@/lib/email';
+import { absoluteUrl } from '@/lib/utils';
 import { clearRate, isCurrency, refreshExchangeRates, saveManualRate, type CurrencyCode } from '@/lib/currency';
 
 function fail(e: unknown) {
@@ -145,18 +149,87 @@ export async function runDeliveryCheck() {
   await assertAdmin();
   const result = await progressOrders();
   revalidatePath('/admin/orders');
-  return { ok: true, message: `Checked ${result.checked} open orders. Advanced ${result.advanced}. Delivered is never set by this check.` };
+  revalidatePath('/admin/express');
+  const extra = result.skipped ? ' Another check was already running.' : '';
+  return { ok: true, message: `Checked ${result.checked} scheduled orders. Advanced ${result.advanced}. Confirmation emails due: ${result.notified}. Delivered is never set by this check.${extra}` };
 }
 
 export async function resolveDeliveryIssue(id: number, note: string) {
   const u = await assertAdmin();
+  const text = note.trim();
+  if (!text) return { ok: false, message: 'Enter how the issue was resolved. The order was not changed.' };
   const db = await getDb();
+  const [issue] = await db.select().from(deliveryIssues).where(eq(deliveryIssues.id, id)).limit(1);
+  if (!issue) return { ok: false, message: 'Issue not found.' };
+  if (issue.status === 'resolved') return { ok: true, message: 'This issue is already resolved. The order was not marked delivered.' };
+  const now = new Date();
   await db
     .update(deliveryIssues)
-    .set({ status: 'resolved', resolvedAt: new Date(), resolvedBy: u.email, note: note.slice(0, 500) || null })
+    .set({ status: 'resolved', resolvedAt: now, resolvedBy: u.email, resolvedById: u.id, resolutionNote: text.slice(0, 500) })
     .where(eq(deliveryIssues.id, id));
+  const [order] = await db.select().from(orders).where(eq(orders.id, issue.orderId)).limit(1);
+  if (order && order.status !== 'cancelled') {
+    const mail = await sendEmail(order.email, `Update on ${order.number}`, statusEmail(order, 'delivery_resolved', absoluteUrl(`/account/orders/${order.number}`)), 'delivery-issue-resolved', { orderId: order.id });
+    revalidatePath('/admin/delivery');
+    revalidatePath(`/admin/orders/${order.id}`);
+    if (!mail.sent) return { ok: true, message: `Issue resolved. The order was not marked delivered. Email was not accepted: ${mail.reason || 'not sent'}.` };
+  }
   revalidatePath('/admin/delivery');
   return { ok: true, message: 'Issue marked resolved. The order was not automatically marked delivered.' };
+}
+
+export async function saveDeliveryAutomation(input: TimelineSettings) {
+  await assertAdmin({ adminOnly: true });
+  const settings: TimelineSettings = {
+    ...DEFAULT_TIMELINE,
+    popupEnabled: input.popupEnabled,
+    centerEnabled: input.centerEnabled,
+    emailsEnabled: input.emailsEnabled,
+    notificationDelayMinutes: Math.round(input.notificationDelayMinutes),
+    standard: {
+      processingMinutes: Math.round(input.standard.processingMinutes),
+      shipDay: Math.round(input.standard.shipDay),
+      shipHourPkt: Math.round(input.standard.shipHourPkt),
+      outMinutes: Math.round(input.standard.outMinutes),
+      expectedMinutes: Math.round(input.standard.expectedMinutes),
+    },
+    express: {
+      processingMinutes: Math.round(input.express.processingMinutes),
+      shipMinutes: Math.round(input.express.shipMinutes),
+      outMinutes: Math.round(input.express.outMinutes),
+      expectedMinutes: Math.round(input.express.expectedMinutes),
+    },
+  };
+  const error = validateTimeline(settings);
+  if (error) return { ok: false, message: error };
+  const db = await getDb();
+  await saveAutomationSettings(db, settings);
+  const now = new Date();
+  await db
+    .update(deliveryServices)
+    .set({
+      durationMinutes: settings.standard.expectedMinutes,
+      confirmMinutes: null,
+      processingMinutes: settings.standard.processingMinutes,
+      shipMinutes: settings.standard.shipDay * 1440,
+      outMinutes: settings.standard.outMinutes,
+      updatedAt: now,
+    })
+    .where(eq(deliveryServices.code, 'standard'));
+  await db
+    .update(deliveryServices)
+    .set({
+      durationMinutes: settings.express.expectedMinutes,
+      confirmMinutes: null,
+      processingMinutes: settings.express.processingMinutes,
+      shipMinutes: settings.express.shipMinutes,
+      outMinutes: settings.express.outMinutes,
+      updatedAt: now,
+    })
+    .where(eq(deliveryServices.code, 'express'));
+  revalidatePath('/checkout');
+  revalidatePath('/admin/delivery');
+  return { ok: true, message: 'Saved for new confirmations only. Orders that already started keep the timeline they were confirmed with.' };
 }
 
 export async function refreshRatesAction() {

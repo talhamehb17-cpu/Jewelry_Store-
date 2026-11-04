@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { asc, desc, eq, sql } from 'drizzle-orm';
 import { Printer, Mail, Phone, MapPin } from 'lucide-react';
 import { getDb } from '@/db';
-import { orderEvents, orderItems, orders, paymentProofs } from '@/db/schema';
+import { deliveryIssues, orderEvents, orderItems, orders, paymentProofs } from '@/db/schema';
 import { Card, PageHeader } from '@/components/admin/ui';
 import { StatusBadge } from '@/components/store/order-status';
 import { OrderActions } from '@/components/admin/order-actions';
@@ -12,6 +12,7 @@ import { STATUS_FLOW } from '@/lib/orders';
 import { formatMoney } from '@/lib/money';
 import { formatDateTime } from '@/lib/utils';
 import { ProofViewer } from '@/components/admin/proof-viewer';
+import { DeliveryConsole } from '@/components/admin/delivery-console';
 
 
 export const metadata = { title: 'Order' };
@@ -25,10 +26,11 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
   const [o] = await db.select().from(orders).where(eq(orders.id, oid)).limit(1);
   if (!o) notFound();
   const [proof] = await db.select({ token: paymentProofs.token, filename: paymentProofs.filename, mime: paymentProofs.mime, createdAt: paymentProofs.createdAt }).from(paymentProofs).where(eq(paymentProofs.orderId, o.id)).limit(1);
-  const [items, events, [hist]] = await Promise.all([
+  const [items, events, [hist], [issue]] = await Promise.all([
     db.select().from(orderItems).where(eq(orderItems.orderId, oid)),
     db.select().from(orderEvents).where(eq(orderEvents.orderId, oid)).orderBy(desc(orderEvents.createdAt)),
     db.select({ n: sql<number>`count(*)::int`, spent: sql<number>`coalesce(sum(${orders.total}),0)::bigint` }).from(orders).where(sql`lower(${orders.email}) = ${o.email.toLowerCase()} and ${orders.status} <> 'cancelled'`),
+    db.select().from(deliveryIssues).where(sql`${deliveryIssues.orderId} = ${o.id} and ${deliveryIssues.status} = 'open'`).limit(1),
   ]);
   const a = o.shippingAddress;
   return (
@@ -66,6 +68,30 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               {o.refundedAmount > 0 && <div className="flex justify-between text-rose-700"><dt>Refunded</dt><dd>−{formatMoney(o.refundedAmount)}</dd></div>}
             </dl>
           </Card>
+          <DeliveryConsole
+            order={{
+              id: o.id,
+              number: o.number,
+              status: o.status,
+              paymentStatus: o.paymentStatus,
+              shippingMethodName: o.shippingMethodName,
+              timelineStartAt: o.timelineStartAt?.toISOString() ?? null,
+              expectedAt: o.expectedAt?.toISOString() ?? null,
+              processingAt: o.processingAt?.toISOString() ?? null,
+              shippedAt: o.shippedAt?.toISOString() ?? null,
+              outForDeliveryAt: o.outForDeliveryAt?.toISOString() ?? null,
+              notificationDueAt: o.notificationDueAt?.toISOString() ?? null,
+              deliveryResponse: o.deliveryResponse,
+              confirmationSource: o.confirmationSource,
+              deliveryConfirmedAt: o.deliveryConfirmedAt?.toISOString() ?? null,
+              confirmationNote: o.confirmationNote,
+              automationState: o.automationState,
+              nextStatus: o.nextStatus,
+              nextStatusAt: o.nextStatusAt?.toISOString() ?? null,
+              issueId: issue?.id ?? null,
+              issueNote: issue?.note ?? null,
+            }}
+          />
           <OrderActions
             order={{ id: o.id, status: o.status, paymentStatus: o.paymentStatus, paymentMethod: o.paymentMethod, paymentRef: o.paymentRef, total: o.total, refundedAmount: o.refundedAmount, trackingCarrier: o.trackingCarrier, trackingNumber: o.trackingNumber, adminNote: o.adminNote }}
             next={STATUS_FLOW[o.status] ?? []}

@@ -10,6 +10,7 @@ import { formatMoney } from '@/lib/money';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { OrderTracker, StatusBadge } from '@/components/store/order-status';
 import { CancelOrder } from '@/components/store/cancel-order';
+import { DeliveryAnswer } from '@/components/store/delivery-answer';
 import { getSettings } from '@/lib/settings';
 import { Img } from '@/components/ui/img';
 
@@ -39,9 +40,29 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
         </div>
         <div className="flex gap-2"><StatusBadge status={o.status} /><StatusBadge status={o.paymentStatus} kind="payment" /></div>
       </div>
-      <div className="rounded-theme border border-line p-6"><OrderTracker status={o.status} /></div>
+      <div className="rounded-theme border border-line p-6">
+        <OrderTracker
+          status={o.status}
+          stamps={{
+            confirmed: o.timelineStartAt ? formatDateTime(o.timelineStartAt) : null,
+            processing: o.processingAt ? formatDateTime(o.processingAt) : null,
+            shipped: o.shippedAt ? formatDateTime(o.shippedAt) : null,
+            out_for_delivery: o.outForDeliveryAt ? formatDateTime(o.outForDeliveryAt) : null,
+            delivered: o.deliveredAt ? formatDateTime(o.deliveredAt) : null,
+          }}
+        />
+      </div>
+      {o.status === 'delivered' && (
+        <p className="rounded-theme-sm bg-surface px-4 py-3 text-[0.9rem]">Delivered{o.confirmationSource === 'admin' ? ' — confirmed by the atelier' : o.confirmationSource === 'customer' ? ' — you confirmed receipt' : ''}. {o.deliveryConfirmedAt ? formatDateTime(o.deliveryConfirmedAt) : ''}</p>
+      )}
+      {['out_for_delivery', 'awaiting_confirm'].includes(o.status) && o.deliveryResponse !== 'yes' && o.notificationDueAt && o.notificationDueAt.getTime() <= Date.now() && (
+        <DeliveryAnswer orderId={o.id} mode={o.deliveryResponse === 'no' ? 'no' : 'pending'} />
+      )}
+      {['out_for_delivery', 'awaiting_confirm'].includes(o.status) && o.notificationDueAt && o.notificationDueAt.getTime() > Date.now() && (
+        <p className="text-[0.85rem] text-muted">A delivery question opens at {formatDateTime(o.notificationDueAt)}, ten minutes after it was marked out for delivery. It is not based on the original estimate.</p>
+      )}
       <CancelOrder orderId={o.id} pendingStatus={o.status === 'pending'} phone={settings.store.phone} email={settings.store.email} />
-      {o.expectedAt && <p className="text-[0.85rem] text-muted">Expected by {formatDateTime(o.expectedAt)} PKT · {o.shippingMethodName}. This is an estimate, not a guarantee. You pay {formatMoney(o.total)} PKR.</p>}
+      <p className="text-[0.85rem] text-muted">{o.shippingMethodName}. {o.expectedAt ? `Expected by ${formatDateTime(o.expectedAt)} PKT. ` : o.paymentMethod === 'cod' ? 'The estimate starts when the atelier confirms this Cash on Delivery order. ' : 'The estimate starts when the payment is verified. '}This is an estimate, not a guarantee. You pay {formatMoney(o.total)} PKR.</p>
       {o.trackingNumber && (
         <p className="flex items-center gap-3 rounded-theme-sm bg-surface px-4 py-3 text-[0.9rem]"><Truck size={18} strokeWidth={1.25} className="text-accent" /> Shipped with {o.trackingCarrier} · Tracking number <span className="font-mono">{o.trackingNumber}</span></p>
       )}

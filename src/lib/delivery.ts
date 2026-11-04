@@ -30,7 +30,7 @@ export async function deliveryServiceByCode(code: string) {
   return row ?? null;
 }
 
-/** Clock starts when the order can actually move: COD at placement, other methods when payment is verified. */
+/** Clock starts at payment verification, or when the atelier confirms a COD order. Placement alone does not start it. */
 export function deliveryClockStart(order: { paymentMethod: string; paymentStatus: string; createdAt: Date; paidAt: Date | null; timelineStartAt: Date | null }) {
   if (order.timelineStartAt) return order.timelineStartAt;
   if (order.paymentMethod === 'cod') return order.createdAt;

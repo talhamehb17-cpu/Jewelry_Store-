@@ -42,5 +42,8 @@ export async function answerDelivery(orderId: number, received: boolean) {
   if (!user) return { ok: false, message: 'Sign in to confirm delivery.' };
   const result = await respondToDelivery(orderId, user.id, received);
   revalidatePath('/account/orders');
+  revalidatePath('/account/notifications');
+  revalidatePath('/admin/orders');
+  revalidatePath('/admin/express');
   return result;
 }
