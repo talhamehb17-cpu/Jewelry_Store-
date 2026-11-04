@@ -2,6 +2,8 @@
  * Build-time database setup: applies migrations and seeds demo content if the database is empty.
  * Runs automatically before `next build` (see package.json). Safe to run repeatedly.
  */
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from '../src/db/schema';
@@ -33,6 +35,13 @@ async function main() {
     const db = drizzle(pool, { schema });
     log(`connecting to ${new URL(url).hostname}`);
     await migrateAndSeed(db, 'postgres', log);
+    if (process.env.VERCEL) {
+      try {
+        await import(pathToFileURL(path.join(process.cwd(), 'scripts/migrate-neon.mjs')).href);
+      } catch (error) {
+        log(`neon migration check failed: ${error instanceof Error ? error.message : 'error'}`);
+      }
+    }
     if (process.env.VERCEL) {
       try {
         const { refreshExchangeRates } = await import('../src/lib/currency');
