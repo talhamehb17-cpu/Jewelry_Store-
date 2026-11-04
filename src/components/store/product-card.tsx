@@ -87,7 +87,7 @@ function Badges({ p, className }: { p: CardProduct; className?: string }) {
   const b = productBadges(p);
   if (!b.length) return null;
   return (
-    <div className={cn('pointer-events-none absolute left-3 top-3 z-[2] flex flex-col items-start gap-1.5', className)}>
+    <div className={cn('jewel-badges pointer-events-none absolute left-2 top-2 z-[4] flex max-w-[calc(100%-2.6rem)] flex-col items-start gap-1', className)}>
       {b.map((x) => (
         <Badge key={x.label} tone={x.tone}>
           {x.label}
@@ -130,7 +130,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
             <Link href={href} aria-label={p.name} className="absolute inset-0 block">
               <Images p={p} priority={priority} />
             </Link>
-            <Badges p={p} className="[&>span]:rounded-full" />
+            <Badges p={p} />
             <WishButton p={p} className="absolute right-2.5 top-2.5 z-[3] bg-bg/90 text-ink shadow-sm" />
             <button onClick={quickView} className="absolute bottom-3 left-1/2 z-[3] -translate-x-1/2 translate-y-3 rounded-full bg-bg/95 px-4 py-2 text-[0.72rem] font-medium text-ink opacity-0 shadow transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 max-md:hidden">
               <Eye size={13} strokeWidth={1.5} className="mr-1.5 inline" /> Quick view
@@ -150,7 +150,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
             <Images p={p} priority={priority} />
             <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
             <span className="pointer-events-none absolute inset-3 border border-accent/0 transition duration-700 group-hover:border-accent/60" />
-            <Badges p={p} className="[&>span]:bg-accent [&>span]:text-black" />
+            <Badges p={p} />
           </Link>
           <CardFoot p={p} href={href} center quickAdd={quickAdd} quickView={quickView} addLabel={addLabel} />
         </article>
@@ -160,8 +160,8 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
       return (
         <article className="group">
           <Link href={href} className="relative block aspect-[3/4] overflow-hidden bg-surface">
-            <Images p={p} priority={priority} className="duration-[2000ms] group-hover:scale-[1.06]" />
-            <Badges p={p} className="[&>span]:bg-ink [&>span]:text-bg" />
+            <Images p={p} priority={priority} className="duration-700 group-hover:scale-[1.04]" />
+            <Badges p={p} />
           </Link>
           <div className="mt-4 grid grid-cols-[auto_1fr] items-baseline gap-x-4 border-t border-ink pt-3">
             <span className="text-[0.7rem] tracking-[0.2em] text-muted">No. {String(index + 1).padStart(2, '0')}</span>
@@ -181,7 +181,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
         <article className="group text-center">
           <Link href={href} className="frame-inset relative block overflow-hidden bg-surface ratio-product">
             <Images p={p} priority={priority} />
-            <Badges p={p} className="left-5 top-5 [&>span]:bg-primary [&>span]:text-on-primary" />
+            <Badges p={p} className="left-4 top-4" />
           </Link>
           <div className="mt-5">
             <p className="text-[0.7rem] uppercase tracking-[0.2em] text-muted">{p.category}</p>
@@ -198,7 +198,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
         <article className="group">
           <Link href={href} className="relative block overflow-hidden rounded-theme bg-surface ratio-product">
             <Images p={p} priority={priority} className="group-hover:scale-100" />
-            <Badges p={p} className="[&>span]:rounded-full [&>span]:bg-bg [&>span]:normal-case [&>span]:tracking-normal" />
+            <Badges p={p} />
           </Link>
           <div className="mt-3 flex items-start justify-between gap-2">
             <div>
@@ -219,7 +219,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
             <Link href={href} className="arch relative block overflow-hidden bg-surface ratio-product">
               <Images p={p} priority={priority} />
             </Link>
-            <Badges p={p} className="left-1/2 top-auto bottom-4 -translate-x-1/2 items-center [&>span]:rounded-full" />
+            <Badges p={p} className="left-1/2 top-auto bottom-3 -translate-x-1/2 items-center" />
             <WishButton p={p} className="absolute right-1 top-[16%] z-[3] text-ink hover:text-sale" />
           </div>
           <Link href={href} className="font-heading mt-5 block text-[1.3rem] italic leading-tight">{p.name}</Link>
@@ -235,7 +235,7 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
             <Link href={href} aria-label={p.name} className="absolute inset-0 block">
               <Images p={p} priority={priority} />
             </Link>
-            <Badges p={p} className="[&>span]:rounded-sm" />
+            <Badges p={p} />
             <WishButton p={p} className="absolute right-2 top-2 z-[3] bg-bg/90 text-ink" />
           </div>
           <div className="flex flex-1 flex-col px-2 pt-3 text-center">
@@ -256,13 +256,12 @@ export function ProductCard({ p, variant, index = 0, priority }: { p: CardProduc
             <Images p={p} priority={priority} />
             <span className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0" />
           </Link>
-          {p.category && <span className="absolute left-3 top-3 z-[2] rounded-full bg-bg/90 px-3 py-1 text-[0.7rem]">{p.category}</span>}
-          <button onClick={quickAdd} disabled={!p.inStock} aria-label={addLabel} className="absolute right-3 top-3 z-[3] grid h-9 w-9 place-items-center rounded-full bg-ink text-bg transition hover:scale-110 disabled:opacity-40">
+          <Badges p={p} />
+          <button onClick={quickAdd} disabled={!p.inStock} aria-label={addLabel} className="absolute right-2 top-2 z-[5] grid h-9 w-9 place-items-center rounded-full bg-ink text-bg transition hover:scale-110 disabled:opacity-40">
             <Plus size={17} strokeWidth={1.5} />
           </button>
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] p-4 text-white">
-            {!p.inStock && <span className="mb-2 inline-block rounded-full bg-white/90 px-2.5 py-0.5 text-[0.65rem] text-black">Sold out</span>}
-            <p className="font-heading text-[1.1rem] leading-tight">{p.name}</p>
+            <p className="font-heading text-[1.1rem] leading-tight text-white">{p.name}</p>
             <div className="mt-1 text-[0.85rem] opacity-90"><Price price={p.price} compareAt={p.compareAtPrice} saleClass="text-white" /></div>
           </div>
         </article>

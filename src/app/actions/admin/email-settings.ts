@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { assertAdmin } from '@/lib/auth';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
-import { getEmailConfig, gmailAppPasswordError, normalizeSecret, saveEmailSettings, type EmailSecurity } from '@/lib/mailer';
+import { getEmailConfig, gmailAppPasswordError, normalizeSecret, probeMailbox, saveEmailSettings, type EmailSecurity } from '@/lib/mailer';
 import { deliverEmail } from '@/lib/mailer';
 import { testEmailHtml } from '@/lib/email';
 
@@ -34,6 +34,18 @@ export async function saveEmailSettingsAction(input: z.input<typeof schema>) {
   if (gmail && !d.username.includes('@')) return { ok: false, message: 'The Gmail username must be the full email address.' };
   await saveEmailSettings({ ...d, security: d.security as EmailSecurity, password: password || undefined, enabled: d.enabled });
   return { ok: true, message: 'Email settings saved. Send a test — success is shown only if the server accepts the login.' };
+}
+
+export async function diagnoseEmailAction() {
+  await assertAdmin({ adminOnly: true });
+  const report = await probeMailbox();
+  const failed = report.steps.filter((step) => !step.ok).map((step) => `${step.step}: ${step.detail}`).join(' ');
+  return {
+    ok: report.accepted,
+    message: report.accepted
+      ? 'SMTP accepted the login. This check did not send a message. Use Send test email for a real delivery.'
+      : failed || 'SMTP did not accept the login. Nothing was marked as sent.',
+  };
 }
 
 export async function sendTestEmailAction(to: string) {

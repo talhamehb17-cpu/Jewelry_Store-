@@ -268,6 +268,30 @@ video {
   font-size: 0.68rem;
   letter-spacing: 0.04em;
 }
+.jewel-badge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.18rem 0.42rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+.jewel-badge-sale { background: #3b1218; color: #fff7f4; }
+.jewel-badge-limited { background: #f4e2b0; color: #1c140c; }
+.jewel-badge-neutral { background: #fffdf8; color: #1c140c; border-color: rgba(28, 20, 12, 0.16); }
+.jewel-badge-dark { background: #1c140c; color: #fffdf8; }
+@media (max-width: 390px) {
+  .jewel-badge { font-size: 0.6rem; letter-spacing: 0.02em; padding: 0.12rem 0.32rem; }
+}
 @media (max-width: 420px) {
   .btn {
     white-space: normal;
@@ -650,7 +674,6 @@ input[type='radio'].checkbox:checked::after {
   transform: translateY(14px);
 }
 .js [data-anim='blur'] .reveal:not(.in-view) {
-  filter: blur(14px);
   transform: translateY(10px);
 }
 .js [data-anim='slide'] .reveal:not(.in-view) {

@@ -72,7 +72,7 @@ export function FieldControl({ field, value, onChange, data, all }: { field: Fie
     case 'toggle':
       return <label className="flex items-center gap-2 text-[0.84rem]"><input type="checkbox" className="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} /> {field.label}</label>;
     case 'image':
-      return <ImageInput label={field.label} value={value ?? ''} onChange={onChange} compact />;
+      return <ImageInput label={field.label} folder="homepage" value={value ?? ''} onChange={onChange} compact />;
     case 'images': {
       const list: string[] = Array.isArray(value) ? value : [];
       return (
@@ -81,7 +81,7 @@ export function FieldControl({ field, value, onChange, data, all }: { field: Fie
           <div className="space-y-2">
             {list.map((img, i) => (
               <div key={i} className="flex items-start gap-2">
-                <div className="flex-1"><ImageInput value={img} onChange={(v) => onChange(list.map((x, k) => (k === i ? v : x)))} compact /></div>
+                <div className="flex-1"><ImageInput folder="gallery" value={img} onChange={(v) => onChange(list.map((x, k) => (k === i ? v : x)))} compact /></div>
                 <button type="button" onClick={() => onChange(list.filter((_, k) => k !== i))} className="mt-4 text-muted hover:text-rose-600" aria-label="Remove image"><Trash2 size={14} /></button>
               </div>
             ))}

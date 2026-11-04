@@ -199,7 +199,7 @@ export function Customizer({ themeId, name, initial, hasDraft, isActive }: { the
         ])}
         {text('header.logoText', 'Logo text')}
         {text('header.logoTagline', 'Tagline under logo')}
-        <ImageInput label="Logo image (optional — replaces text)" value={s.header.logoImage} onChange={(v) => set('header.logoImage', v)} compact />
+        <ImageInput label="Logo image (optional — replaces text)" folder="brand" value={s.header.logoImage} onChange={(v) => set('header.logoImage', v)} compact />
         {range('header.logoSize', 'Logo size', 14, 96, 1, 'px')}
         {toggle('header.sticky', 'Sticky header')}
         {toggle('header.transparentOnHome', 'Transparent over homepage hero')}

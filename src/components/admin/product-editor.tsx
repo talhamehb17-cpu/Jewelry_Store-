@@ -86,7 +86,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
     setError('');
     try {
       const urls: string[] = [];
-      for (const f of Array.from(files).slice(0, 10)) urls.push(await uploadFile(f));
+      for (const f of Array.from(files).slice(0, 10)) urls.push(await uploadFile(f, 'products'));
       set('images', [...(p.images ?? []), ...urls.map((url) => ({ url, alt: p.name }))]);
     } catch (e) {
       setError((e as Error).message);
@@ -174,7 +174,7 @@ export function ProductEditor({ initial, categories, collections, productId }: {
             )}
             <div className="mt-4 grid gap-4 border-t border-line pt-4 md:grid-cols-2">
               <AddImageUrl onAdd={(url) => set('images', [...(p.images ?? []), { url, alt: p.name }])} />
-              <ImageInput label="Product video (MP4 upload or URL)" value={p.videoUrl ?? ''} onChange={(v) => set('videoUrl', v)} accept="video/mp4,video/webm" compact />
+              <ImageInput label="Product video (MP4 upload or URL)" folder="video" value={p.videoUrl ?? ''} onChange={(v) => set('videoUrl', v)} accept="video/mp4,video/webm" compact />
             </div>
           </Card>
 

@@ -118,9 +118,30 @@
   color: #f7f1e6;
   border-color: rgba(201, 169, 110, 0.7);
 }
-[data-theme='dark-luxury'] header,
-[data-theme='dark-luxury'] .field {
+[data-theme='dark-luxury'] header {
+  background: #161310;
+  color: #f7f1e6;
   border-color: rgba(201, 169, 110, 0.45);
+}
+[data-theme='dark-luxury'] .field {
+  background: #2a241e;
+  color: #f7f1e6;
+  border-color: rgba(201, 169, 110, 0.55);
+}
+[data-theme='dark-luxury'] .field::placeholder { color: #c8bba8; }
+[data-theme='dark-luxury'] .jewel-badge-neutral {
+  background: #2a241e;
+  color: #f7f1e6;
+  border-color: rgba(201, 169, 110, 0.75);
+}
+[data-theme='dark-luxury'] .jewel-badge-sale {
+  background: #3a241c;
+  color: #fff4ec;
+  border-color: #e7a08a;
+}
+[data-theme='dark-luxury'] .product-grid article {
+  background: #2a241e;
+  color: #f7f1e6;
 }
 [data-theme='dark-luxury'] .t-1,
 [data-theme='dark-luxury'] .t-2 { letter-spacing: 0.01em; }

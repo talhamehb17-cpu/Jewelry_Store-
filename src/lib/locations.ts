@@ -16,6 +16,40 @@ export function hasCoordinates(row: { latitude: number | null; longitude: number
   return row.latitude != null && row.longitude != null && Math.abs(row.latitude) <= 90 && Math.abs(row.longitude) <= 180;
 }
 
+function pair(lat: string, lng: string) {
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+  return { latitude, longitude };
+}
+
+/** Reads coordinates only when a saved map link already contains them. Does not geocode an address. */
+export function coordsFromMapUrl(url: string | null) {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+  const at = url.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (at) return pair(at[1], at[2]);
+  const d = url.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (d) return pair(d[1], d[2]);
+  try {
+    const q = new URL(url);
+    const ll = q.searchParams.get('ll') || q.searchParams.get('q') || q.searchParams.get('query');
+    const fromQuery = ll?.match(/^(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)$/);
+    if (fromQuery) return pair(fromQuery[1], fromQuery[2]);
+    const mlat = q.searchParams.get('mlat');
+    const mlon = q.searchParams.get('mlon');
+    if (mlat && mlon) return pair(mlat, mlon);
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function pinFor(row: { latitude: number | null; longitude: number | null; mapUrl: string | null }) {
+  if (hasCoordinates(row)) return { latitude: row.latitude!, longitude: row.longitude! };
+  return coordsFromMapUrl(row.mapUrl);
+}
+
 export function directionsUrl(row: { latitude: number | null; longitude: number | null; mapUrl: string | null; address: string }) {
   if (row.mapUrl && /^https?:\/\//i.test(row.mapUrl)) return row.mapUrl;
   if (hasCoordinates(row)) return `https://www.openstreetmap.org/directions?to=${row.latitude}%2C${row.longitude}`;

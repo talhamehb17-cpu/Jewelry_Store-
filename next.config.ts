@@ -34,6 +34,7 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 2678400,
     localPatterns: [{ pathname: '/images/**', search: '' }],
+    remotePatterns: [{ protocol: 'https', hostname: '**.public.blob.vercel-storage.com' }],
   },
   async headers() {
     return [

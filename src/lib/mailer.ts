@@ -32,6 +32,10 @@ export type EmailPublic = {
   lastSuccessAt: string | null;
   lastError: string | null;
   lastErrorAt: string | null;
+  passwordLength: number | null;
+  passwordShape: 'gmail-app' | 'other' | 'empty' | 'unreadable';
+  usernameIsEmail: boolean;
+  usernameMatchesAddress: boolean;
 };
 
 type Stored = Omit<EmailConfig, 'password'> & {
@@ -40,6 +44,8 @@ type Stored = Omit<EmailConfig, 'password'> & {
   lastSuccessAt?: string | null;
   lastError?: string | null;
   lastErrorAt?: string | null;
+  workingPort?: number | null;
+  workingAuth?: 'LOGIN' | 'PLAIN' | null;
 };
 
 /** Google shows App Passwords in groups of four. Spaces, newlines and invisible characters make Gmail return 535-5.7.8. */
@@ -49,7 +55,7 @@ export function normalizeSecret(value: string) {
 
 export function explainSmtpError(message: string) {
   if (/535|BadCredentials|Username and Password not accepted/i.test(message)) {
-    return 'Gmail rejected the login (535-5.7.8 Username and Password not accepted). Use a 16-letter App Password from https://myaccount.google.com/apppasswords — not the normal Gmail password. 2-Step Verification must be on. The username must be the full Gmail address. Host smtp.gmail.com, port 587 with STARTTLS, or port 465 with SSL. Spaces in the App Password are removed automatically.';
+    return 'Gmail refused SMTP login (535-5.7.8) after the saved secret was decrypted and sent. This is not marked as sent. The diagnostics show username shape, password length, host, port and the AUTH method. A 535 means Gmail rejected the login; it does not by itself prove the characters were typed wrong.';
   }
   return message.slice(0, 500);
 }
@@ -72,6 +78,10 @@ const emptyPublic = (): EmailPublic => ({
   lastSuccessAt: null,
   lastError: null,
   lastErrorAt: null,
+  passwordLength: null,
+  passwordShape: 'empty',
+  usernameIsEmail: false,
+  usernameMatchesAddress: false,
 });
 
 function asStored(value: unknown): Stored | null {
@@ -90,7 +100,14 @@ function asStored(value: unknown): Stored | null {
     lastSuccessAt: typeof v.lastSuccessAt === 'string' ? v.lastSuccessAt : null,
     lastError: typeof v.lastError === 'string' ? v.lastError : null,
     lastErrorAt: typeof v.lastErrorAt === 'string' ? v.lastErrorAt : null,
+    workingPort: v.workingPort === 465 || v.workingPort === 587 ? v.workingPort : null,
+    workingAuth: v.workingAuth === 'LOGIN' || v.workingAuth === 'PLAIN' ? v.workingAuth : null,
   };
+}
+
+export function passwordShape(password: string): EmailPublic['passwordShape'] {
+  if (!password) return 'empty';
+  return /^[a-z]{16}$/i.test(password) ? 'gmail-app' : 'other';
 }
 
 export async function getEmailSettingsPublic(): Promise<EmailPublic> {
@@ -99,11 +116,22 @@ export async function getEmailSettingsPublic(): Promise<EmailPublic> {
   const stored = asStored(row?.value);
   if (!stored) return emptyPublic();
   const configured = !!(stored.host && stored.username && stored.passwordEnc && stored.address);
+  let passwordLength: number | null = null;
+  let shape: EmailPublic['passwordShape'] = stored.passwordEnc ? 'unreadable' : 'empty';
+  if (stored.passwordEnc) {
+    try {
+      const password = normalizeSecret(decryptSecret(stored.passwordEnc));
+      passwordLength = password.length;
+      shape = passwordShape(password);
+    } catch {
+      shape = 'unreadable';
+    }
+  }
   return {
     address: stored.address,
     senderName: stored.senderName,
     host: stored.host,
-    port: stored.port,
+    port: stored.workingPort || stored.port,
     username: stored.username,
     security: stored.security,
     hasPassword: !!stored.passwordEnc,
@@ -112,6 +140,10 @@ export async function getEmailSettingsPublic(): Promise<EmailPublic> {
     lastSuccessAt: stored.lastSuccessAt ?? null,
     lastError: stored.lastError ?? null,
     lastErrorAt: stored.lastErrorAt ?? null,
+    passwordLength,
+    passwordShape: shape,
+    usernameIsEmail: stored.username.includes('@'),
+    usernameMatchesAddress: stored.username.trim().toLowerCase() === stored.address.trim().toLowerCase(),
   };
 }
 
@@ -129,15 +161,19 @@ export async function resolveMailbox(): Promise<{ config: EmailConfig | null; er
     return { config: null, error: 'The saved app password could not be read. Enter it again. It was not sent.', enabled: stored.enabled !== false };
   }
   if (!password) return { config: null, error: 'The saved app password is empty. Enter it again.', enabled: stored.enabled !== false };
-  const gmail = /gmail\.com$/i.test(stored.host) || /gmail\.com$/i.test(stored.username);
-  const security: EmailSecurity = gmail ? (stored.security === 'ssl' ? 'ssl' : 'starttls') : stored.security;
+  let username = stored.username.replace(/\s+/g, '');
+  const address = stored.address.trim();
+  const gmail = /gmail\.com$/i.test(stored.host) || /gmail\.com$/i.test(username) || /gmail\.com$/i.test(address);
+  if (gmail && !username.includes('@') && address.includes('@')) username = address.replace(/\s+/g, '');
+  const security: EmailSecurity = gmail ? (stored.workingPort === 465 || stored.security === 'ssl' ? 'ssl' : 'starttls') : stored.security;
+  const port = gmail ? (stored.workingPort === 465 || stored.workingPort === 587 ? stored.workingPort : security === 'ssl' ? 465 : 587) : stored.port;
   return {
     config: {
-      address: (gmail ? stored.username : stored.address || stored.username).trim(),
+      address: (gmail ? username : address || username).trim(),
       senderName: stored.senderName || 'EVERMOON',
       host: gmail ? 'smtp.gmail.com' : stored.host.trim(),
-      port: gmail ? (security === 'ssl' ? 465 : 587) : stored.port,
-      username: stored.username.trim(),
+      port,
+      username,
       password,
       security,
     },
@@ -193,6 +229,8 @@ export async function saveEmailSettings(input: {
     lastSuccessAt: prev?.lastSuccessAt ?? null,
     lastError: prev?.lastError ?? null,
     lastErrorAt: prev?.lastErrorAt ?? null,
+    workingPort: password ? null : prev?.workingPort ?? null,
+    workingAuth: password ? null : prev?.workingAuth ?? null,
   };
   await db
     .insert(settings)
@@ -200,19 +238,47 @@ export async function saveEmailSettings(input: {
     .onConflictDoUpdate({ target: settings.key, set: { value, updatedAt: new Date() } });
 }
 
-export function mailerFrom(cfg: EmailConfig) {
-  const secure = cfg.security === 'ssl' || cfg.port === 465;
+type AuthMode = { port: number; secure: boolean; requireTLS: boolean; authMethod: 'LOGIN' | 'PLAIN' };
+
+function modesFor(cfg: EmailConfig): AuthMode[] {
+  const first: AuthMode = cfg.port === 465 || cfg.security === 'ssl'
+    ? { port: 465, secure: true, requireTLS: false, authMethod: 'LOGIN' }
+    : { port: 587, secure: false, requireTLS: true, authMethod: 'LOGIN' };
+  const alt: AuthMode = first.port === 465
+    ? { port: 587, secure: false, requireTLS: true, authMethod: 'PLAIN' }
+    : { port: 465, secure: true, requireTLS: false, authMethod: 'PLAIN' };
+  return [first, alt];
+}
+
+export function mailerFrom(cfg: EmailConfig, mode: AuthMode = modesFor(cfg)[0]!) {
   return nodemailer.createTransport({
     host: cfg.host,
-    port: cfg.port,
-    secure,
+    port: mode.port,
+    secure: mode.secure,
     auth: { user: cfg.username, pass: cfg.password },
-    requireTLS: cfg.security === 'starttls',
-    tls: { minVersion: 'TLSv1.2' },
+    authMethod: mode.authMethod,
+    requireTLS: mode.requireTLS,
+    tls: { minVersion: 'TLSv1.2', servername: cfg.host },
     connectionTimeout: 12_000,
     greetingTimeout: 12_000,
     socketTimeout: 20_000,
-  });
+    family: 4,
+  } as nodemailer.TransportOptions);
+}
+
+async function rememberWorkingMode(mode: AuthMode) {
+  const db = await getDb();
+  const [row] = await db.select().from(settings).where(eq(settings.key, KEY)).limit(1);
+  const prev = asStored(row?.value);
+  if (!prev) return;
+  const value: Stored = {
+    ...prev,
+    port: mode.port,
+    security: mode.port === 465 ? 'ssl' : 'starttls',
+    workingPort: mode.port,
+    workingAuth: mode.authMethod,
+  };
+  await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, KEY));
 }
 
 function temporarySmtp(message: string) {
@@ -245,25 +311,28 @@ export async function deliverEmail(
   } else if (mailbox.config) {
     const cfg = mailbox.config;
     const from = `${cfg.senderName} <${cfg.address || cfg.username}>`;
-    const sendOnce = async () => {
+    const sendOnce = async (mode: AuthMode) => {
       attempts += 1;
-      const transport = mailerFrom(cfg);
+      const transport = mailerFrom(cfg, mode);
       await transport.verify();
-      const info = await transport.sendMail({ from, to, subject, html });
-      return info;
+      await transport.sendMail({ from, to, subject, html });
+      return mode;
     };
+    const modes = modesFor(cfg);
     try {
-      await sendOnce();
+      const mode = await sendOnce(modes[0]!);
       sent = true;
-      via = 'smtp';
+      via = `smtp:${mode.port}/${mode.authMethod}`;
     } catch (e) {
       const raw = e instanceof Error ? e.message : 'SMTP send failed';
-      if (temporarySmtp(raw)) {
+      const retry = temporarySmtp(raw) ? modes[0]! : modes[1];
+      if (retry) {
         try {
-          await new Promise((r) => setTimeout(r, 800));
-          await sendOnce();
+          if (temporarySmtp(raw)) await new Promise((r) => setTimeout(r, 800));
+          const mode = await sendOnce(retry);
           sent = true;
-          via = 'smtp';
+          via = `smtp:${mode.port}/${mode.authMethod}`;
+          await rememberWorkingMode(mode).catch(() => undefined);
         } catch (again) {
           error = explainSmtpError(again instanceof Error ? again.message : raw);
         }
@@ -308,6 +377,81 @@ export async function deliverEmail(
   }
   if (mailbox.config) await rememberEmailResult(sent, error).catch(() => undefined);
   return { sent, error, via, status };
+}
+
+export type SmtpProbe = {
+  configured: boolean;
+  decrypt: 'ok' | 'failed' | 'missing';
+  host: string | null;
+  port: number | null;
+  usernameIsEmail: boolean;
+  usernameMatchesAddress: boolean;
+  passwordLength: number | null;
+  passwordShape: EmailPublic['passwordShape'];
+  envOverride: false;
+  accepted: boolean;
+  steps: { step: string; ok: boolean; detail: string }[];
+};
+
+function maskMailbox(email: string) {
+  const [name, domain] = email.split('@');
+  if (!domain) return 'not-an-email';
+  return `${name.slice(0, 2)}…@${domain}`;
+}
+
+/** Checks decrypt, host, port and SMTP AUTH. Never returns the password or sends mail. */
+export async function probeMailbox(): Promise<SmtpProbe> {
+  const pub = await getEmailSettingsPublic();
+  const mailbox = await resolveMailbox();
+  const report: SmtpProbe = {
+    configured: pub.configured,
+    decrypt: pub.passwordShape === 'unreadable' ? 'failed' : pub.hasPassword ? 'ok' : 'missing',
+    host: mailbox.config?.host || pub.host || null,
+    port: mailbox.config?.port ?? pub.port,
+    usernameIsEmail: mailbox.config ? mailbox.config.username.includes('@') : pub.usernameIsEmail,
+    usernameMatchesAddress: pub.usernameMatchesAddress,
+    passwordLength: pub.passwordLength,
+    passwordShape: pub.passwordShape,
+    envOverride: false,
+    accepted: false,
+    steps: [],
+  };
+  if (!mailbox.config) {
+    report.steps.push({ step: 'read mailbox', ok: false, detail: mailbox.error || 'Email is not configured.' });
+    return report;
+  }
+  report.steps.push({
+    step: 'decrypt',
+    ok: true,
+    detail: `Saved secret decrypted. Length ${pub.passwordLength}. Shape ${pub.passwordShape}. Username ${maskMailbox(mailbox.config.username)}.`,
+  });
+  const attempts: AuthMode[] = [
+    { port: 587, secure: false, requireTLS: true, authMethod: 'LOGIN' },
+    { port: 587, secure: false, requireTLS: true, authMethod: 'PLAIN' },
+    { port: 465, secure: true, requireTLS: false, authMethod: 'LOGIN' },
+    { port: 465, secure: true, requireTLS: false, authMethod: 'PLAIN' },
+  ];
+  for (const mode of attempts) {
+    try {
+      await mailerFrom(mailbox.config, mode).verify();
+      report.accepted = true;
+      report.steps.push({ step: `SMTP ${mode.port} ${mode.authMethod}`, ok: true, detail: 'The server accepted the login. No message was sent by this check.' });
+      await rememberWorkingMode(mode).catch(() => undefined);
+      break;
+    } catch (error) {
+      const err = error as { responseCode?: number; code?: string; message?: string };
+      report.steps.push({
+        step: `SMTP ${mode.port} ${mode.authMethod}`,
+        ok: false,
+        detail: `${err.responseCode || err.code || 'error'}: ${explainSmtpError(err.message || 'Login was rejected')}`,
+      });
+    }
+  }
+  if (!report.accepted) {
+    const last = report.steps.filter((step) => !step.ok).at(-1)?.detail;
+    await rememberEmailResult(false, last || 'SMTP login was not accepted').catch(() => undefined);
+  }
+  return report;
 }
 
 export async function recentEmailLogs(limit = 12) {

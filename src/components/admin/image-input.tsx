@@ -20,19 +20,21 @@ async function compress(file: File): Promise<{ blob: Blob; width: number; height
   return { blob, width: w, height: h, name: file.name.replace(/\.[^.]+$/, '') + '.webp' };
 }
 
-export async function uploadFile(file: File): Promise<string> {
+export async function uploadFile(file: File, folder = 'media'): Promise<string> {
   const { blob, width, height, name } = await compress(file);
   const fd = new FormData();
   fd.append('file', new File([blob], name, { type: blob.type || file.type }));
   fd.append('width', String(width));
   fd.append('height', String(height));
+  fd.append('folder', folder);
   const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Upload failed');
+  if (!data.url) throw new Error('Upload did not return a file URL.');
   return data.url as string;
 }
 
-export function ImageInput({ value, onChange, label, compact, accept = 'image/*' }: { value: string; onChange: (v: string) => void; label?: string; compact?: boolean; accept?: string }) {
+export function ImageInput({ value, onChange, label, compact, accept = 'image/*', folder = 'media' }: { value: string; onChange: (v: string) => void; label?: string; compact?: boolean; accept?: string; folder?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -42,7 +44,7 @@ export function ImageInput({ value, onChange, label, compact, accept = 'image/*'
     setErr('');
     setBusy(true);
     try {
-      onChange(await uploadFile(f));
+      onChange(await uploadFile(f, folder));
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -75,7 +77,22 @@ export function ImageInput({ value, onChange, label, compact, accept = 'image/*'
             <div className="flex flex-wrap gap-1.5">
               <button type="button" onClick={() => ref.current?.click()} className="btn btn-secondary btn-sm">{value ? 'Replace' : 'Upload'}</button>
               <button type="button" onClick={() => setUrlMode(true)} className="btn btn-secondary btn-sm"><Link2 size={12} /> URL</button>
-              {value && <button type="button" onClick={() => onChange('')} className="btn btn-secondary btn-sm" aria-label="Remove image"><X size={12} /></button>}
+              {value && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = value;
+                    onChange('');
+                    if (current.includes('.blob.vercel-storage.com')) {
+                      void fetch('/api/admin/upload', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: current }) });
+                    }
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  aria-label="Remove image"
+                >
+                  <X size={12} />
+                </button>
+              )}
             </div>
           )}
           {urlMode && <button type="button" onClick={() => setUrlMode(false)} className="text-[0.72rem] text-muted underline">Done</button>}

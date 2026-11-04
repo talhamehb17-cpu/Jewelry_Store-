@@ -33,24 +33,24 @@ export function Stars({ value, size = 12, className, count }: { value: number; s
 
 export function Badge({ children, tone = 'default', className }: { children: React.ReactNode; tone?: 'default' | 'sale' | 'dark' | 'accent' | 'muted'; className?: string }) {
   const tones = {
-    default: 'bg-bg/90 text-ink',
-    sale: 'bg-sale text-white',
-    dark: 'bg-ink text-bg',
-    accent: 'bg-accent text-white',
-    muted: 'bg-surface text-muted',
+    default: 'jewel-badge jewel-badge-neutral',
+    sale: 'jewel-badge jewel-badge-sale',
+    dark: 'jewel-badge jewel-badge-dark',
+    accent: 'jewel-badge jewel-badge-limited',
+    muted: 'jewel-badge jewel-badge-neutral',
   } as const;
-  return <span className={cn('inline-flex items-center px-2 py-[3px] text-[0.62rem] font-medium uppercase tracking-[0.14em]', tones[tone], className)}>{children}</span>;
+  return <span className={cn(tones[tone], className)}>{children}</span>;
 }
 
 export function productBadges(p: { badges: string[]; compareAtPrice: number | null; price: number; inStock: boolean; isNew: boolean }) {
   const out: { label: string; tone: 'default' | 'sale' | 'dark' | 'accent' | 'muted' }[] = [];
-  if (!p.inStock) out.push({ label: 'Sold out', tone: 'dark' });
   const off = percentOff(p.price, p.compareAtPrice);
   if (off) out.push({ label: `−${off}%`, tone: 'sale' });
+  if (p.isNew || p.badges.includes('new')) out.push({ label: 'New', tone: 'default' });
   if (p.badges.includes('limited')) out.push({ label: 'Limited', tone: 'accent' });
-  if (p.badges.includes('bestseller')) out.push({ label: 'Best Seller', tone: 'default' });
-  else if (p.isNew || p.badges.includes('new')) out.push({ label: 'New', tone: 'default' });
-  return out.slice(0, 2);
+  if (p.badges.includes('bestseller')) out.push({ label: 'Bestseller', tone: 'dark' });
+  if (!p.inStock) out.push({ label: 'Sold out', tone: 'dark' });
+  return out;
 }
 
 export function EmptyState({ icon, title, body, children }: { icon?: React.ReactNode; title: string; body?: string; children?: React.ReactNode }) {

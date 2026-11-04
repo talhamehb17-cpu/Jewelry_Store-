@@ -138,7 +138,7 @@ export function CampaignManager({
             <Field label="Description" className="md:col-span-2"><textarea value={form.description} onChange={(e) => set('description', e.target.value)} className="field min-h-24" placeholder="Celebrate Eid with our exclusive luxury collection." /></Field>
           </div>
           <div className="mt-4 max-w-sm">
-            <ImageInput label="Campaign image (optional)" value={form.image || ''} onChange={(v) => set('image', v)} />
+            <ImageInput label="Campaign image (optional)" folder="campaigns" value={form.image || ''} onChange={(v) => set('image', v)} />
           </div>
           {form.appliesTo === 'products' && (
             <div className="mt-4"><p className="label">Products</p><div className="grid max-h-52 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-line p-3 md:grid-cols-3">{products.map((p) => <label key={p.id} className="flex items-center gap-2 text-[0.8rem]"><input type="checkbox" className="checkbox" checked={(form.productIds ?? []).includes(p.id)} onChange={(e) => set('productIds', e.target.checked ? [...(form.productIds ?? []), p.id] : (form.productIds ?? []).filter((x) => x !== p.id))} />{p.name}</label>)}</div></div>

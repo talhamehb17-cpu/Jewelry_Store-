@@ -66,7 +66,7 @@ export function LocationManager({ rows }: { rows: Row[] }) {
           <Field label="Longitude"><input className="field" value={form.longitude} onChange={(e) => set('longitude', e.target.value)} inputMode="decimal" /></Field>
           <Field label="Order"><input className="field" value={String(form.position)} onChange={(e) => set('position', Number(e.target.value) || 0)} /></Field>
         </div>
-        <div className="mt-3"><ImageInput label="Location image" value={form.image} onChange={(v) => set('image', v)} /></div>
+        <div className="mt-3"><ImageInput label="Location image" folder="locations" value={form.image} onChange={(v) => set('image', v)} /></div>
         <label className="mt-3 flex items-center gap-2 text-[0.82rem]"><input type="checkbox" checked={form.active} onChange={(e) => set('active', e.target.checked)} /> Active</label>
         <label className="mt-2 flex items-center gap-2 text-[0.82rem]"><input type="checkbox" checked={form.showOnHome} onChange={(e) => set('showOnHome', e.target.checked)} /> Show on homepage</label>
         <button type="button" disabled={pending} className="btn btn-primary mt-4" onClick={save}>{pending ? <Loader2 className="animate-spin" size={14} /> : null} Save location</button>

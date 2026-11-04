@@ -46,7 +46,7 @@ export function CollectionsManager({ collections, categories, products }: { coll
             <Field label="Name"><input value={edit.name ?? ''} onChange={(e) => setEdit({ ...edit, name: e.target.value })} className="field" /></Field>
             <Field label="URL handle"><input value={edit.slug ?? ''} onChange={(e) => setEdit({ ...edit, slug: e.target.value })} className="field" placeholder="auto from name" /></Field>
             <Field label="Description" className="md:col-span-2"><textarea value={edit.description ?? ''} onChange={(e) => setEdit({ ...edit, description: e.target.value })} rows={2} className="field" /></Field>
-            <ImageInput label="Banner image" value={edit.image ?? ''} onChange={(v) => setEdit({ ...edit, image: v })} />
+            <ImageInput label="Banner image" folder="collections" value={edit.image ?? ''} onChange={(v) => setEdit({ ...edit, image: v })} />
             <div className="space-y-3">
               <Field label="Products in this collection">
                 <select value={edit.rule ?? 'manual'} onChange={(e) => setEdit({ ...edit, rule: e.target.value })} className="field">{Object.entries(RULES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
@@ -127,7 +127,7 @@ export function CollectionsManager({ collections, categories, products }: { coll
             <Field label="Name"><input value={cat.name ?? ''} onChange={(e) => setCat({ ...cat, name: e.target.value })} className="field" /></Field>
             <Field label="URL handle"><input value={cat.slug ?? ''} onChange={(e) => setCat({ ...cat, slug: e.target.value })} className="field" placeholder="auto" /></Field>
             <Field label="Description" className="md:col-span-2"><input value={cat.description ?? ''} onChange={(e) => setCat({ ...cat, description: e.target.value })} className="field" /></Field>
-            <ImageInput label="Image" value={cat.image ?? ''} onChange={(v) => setCat({ ...cat, image: v })} compact />
+            <ImageInput label="Image" folder="collections" value={cat.image ?? ''} onChange={(v) => setCat({ ...cat, image: v })} compact />
             <Field label="Sort position"><input type="number" value={cat.position ?? 0} onChange={(e) => setCat({ ...cat, position: Number(e.target.value) })} className="field" /></Field>
             <div className="flex gap-2 md:col-span-2">
               <button disabled={pending} onClick={() => start(async () => done(await saveCategory({ id: cat.id, name: cat.name ?? '', slug: cat.slug ?? '', description: cat.description ?? '', image: cat.image ?? '', position: cat.position ?? 0 }), () => setCat(null)))} className="btn btn-primary">Save category</button>
