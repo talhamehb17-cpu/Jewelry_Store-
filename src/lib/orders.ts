@@ -33,6 +33,8 @@ export type CreateOrderInput = {
   discountCode?: string | null;
   customerNote?: string | null;
   userId?: number | null;
+  displayCurrency?: string | null;
+  displayRate?: number | null;
 };
 
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
@@ -91,6 +93,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         campaignName: quote.campaign?.name ?? null,
         campaignDiscount: quote.campaign?.amount ?? 0,
         customerNote: input.customerNote || null,
+        displayCurrency: input.displayCurrency || null,
+        displayRate: input.displayRate && input.displayRate > 0 ? input.displayRate : null,
         deliveryCode: service?.code ?? quote.shippingMethod,
         deliveryMinutes: plan?.durationMinutes ?? null,
         deliveryPlan: plan,

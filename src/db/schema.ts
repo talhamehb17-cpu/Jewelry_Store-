@@ -336,6 +336,8 @@ export const orders = pgTable(
     deliveryPlan: jsonb('delivery_plan').$type<DeliveryPlan>(),
     cancelReason: text('cancel_reason'),
     customerVisibleNote: text('customer_visible_note'),
+    displayCurrency: varchar('display_currency', { length: 3 }),
+    displayRate: real('display_rate'),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },

@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getDb, getDbKind } from '@/db';
 import { products, orders } from '@/db/schema';
 import { stripeConfigured, mailboxConfigured } from '@/lib/settings';
+import { blobAuthMode, blobConfigured } from '@/lib/blob-media';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export async function GET() {
       {
         status: 'ok',
         database: { kind: await getDbKind(), connected: true, products: Number(p?.n ?? 0), orders: Number(o?.n ?? 0) },
-        integrations: { stripe: stripeConfigured(), email: await mailboxConfigured() },
+        integrations: { stripe: stripeConfigured(), email: await mailboxConfigured(), blob: { configured: blobConfigured(), mode: blobAuthMode() } },
         latencyMs: Date.now() - started,
         time: new Date().toISOString(),
       },

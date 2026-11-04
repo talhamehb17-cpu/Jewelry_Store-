@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const denied = await authorised();
   if (denied) return denied;
   if (process.env.VERCEL && !blobConfigured()) {
-    return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN is not set on the server. The file was not saved.' }, { status: 503 });
+    return NextResponse.json({ error: 'Blob storage is not connected. The file was not saved.' }, { status: 503 });
   }
   const form = await req.formData().catch(() => null);
   const file = form?.get('file');
@@ -68,7 +68,7 @@ export async function DELETE(req: Request) {
   const body = (await req.json().catch(() => null)) as { url?: string } | null;
   const url = body?.url || '';
   if (!isBlobUrl(url)) return NextResponse.json({ error: 'Only Blob files can be deleted here.' }, { status: 400 });
-  if (!blobConfigured()) return NextResponse.json({ error: 'BLOB_READ_WRITE_TOKEN is not set on the server.' }, { status: 503 });
+  if (!blobConfigured()) return NextResponse.json({ error: 'Blob storage is not connected.' }, { status: 503 });
   try {
     await removeBlob(url);
     return NextResponse.json({ ok: true });

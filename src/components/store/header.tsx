@@ -76,33 +76,31 @@ function NavDropdown({ item, current, mega, luxe }: { item: NavItem; current: st
         {item.label}
         <ChevronDown size={12} strokeWidth={1.5} className="opacity-60 transition group-hover/dd:rotate-180" />
       </Link>
-      <div
-        className={cn(
-          'invisible absolute left-1/2 top-full z-50 -translate-x-1/2 translate-y-2 pt-3 opacity-0 transition duration-300 group-hover/dd:visible group-hover/dd:translate-y-0 group-hover/dd:opacity-100 group-focus-within/dd:visible group-focus-within/dd:opacity-100',
-        )}
-      >
-        <div className={cn('border border-line bg-bg text-ink shadow-[0_24px_48px_-28px_rgba(0,0,0,.35)]', luxe ? 'flex gap-8 p-7' : 'min-w-[220px] py-3')}>
-          <ul className={cn(luxe && 'min-w-[180px] space-y-1')}>
-            {item.children.map((c) => (
-              <li key={c.href}>
-                <Link href={c.href} onClick={(e) => e.currentTarget.blur()} className={cn('block whitespace-nowrap text-[0.86rem] transition hover:text-accent', (pathname === c.href || pathname.startsWith(`${c.href}/`)) && 'font-medium text-accent', luxe ? 'py-1.5' : 'px-5 py-2 hover:bg-surface')}>
-                  {c.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {luxe && (
-            <div className="grid grid-cols-3 gap-4">
-              {mega.slice(0, 3).map((m) => (
-                <Link key={m.href} href={m.href} className="group/m block w-40">
-                  <span className="relative block aspect-[4/5] overflow-hidden rounded-theme-sm bg-surface">
-                    <Img src={m.image} alt={m.title} sizes="160px" className="transition duration-700 group-hover/m:scale-105" />
-                  </span>
-                  <span className="mt-2 block text-center font-heading text-[0.95rem]">{m.title}</span>
-                </Link>
+      <div className="invisible fixed inset-x-0 top-[4.5rem] z-50 flex justify-center px-4 opacity-0 transition duration-300 group-hover/dd:visible group-hover/dd:opacity-100 group-focus-within/dd:visible group-focus-within/dd:opacity-100">
+        <div className="max-h-[70vh] w-[min(920px,calc(100vw-2rem))] overflow-auto rounded-theme border border-line bg-bg text-ink shadow-[0_24px_48px_-28px_rgba(0,0,0,.35)]">
+          <div className={cn('p-4', luxe ? 'grid gap-6 md:grid-cols-[180px_minmax(0,1fr)] md:p-6' : 'py-2')}>
+            <ul className={cn(luxe && 'space-y-1')}>
+              {item.children.map((c) => (
+                <li key={c.href}>
+                  <Link href={c.href} onClick={(e) => e.currentTarget.blur()} className={cn('block text-[0.86rem] transition hover:text-accent', (pathname === c.href || pathname.startsWith(`${c.href}/`)) && 'font-medium text-accent', luxe ? 'py-1.5' : 'px-5 py-2 hover:bg-surface')}>
+                    {c.label}
+                  </Link>
+                </li>
               ))}
-            </div>
-          )}
+            </ul>
+            {luxe && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {mega.slice(0, 3).map((m) => (
+                  <Link key={m.href} href={m.href} className="group/m block min-w-0">
+                    <span className="relative block aspect-[4/5] overflow-hidden rounded-theme-sm bg-surface">
+                      <Img src={m.image} alt={m.title} sizes="180px" className="object-cover transition duration-700 group-hover/m:scale-105" />
+                    </span>
+                    <span className="mt-2 block truncate text-center font-heading text-[0.95rem]">{m.title}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

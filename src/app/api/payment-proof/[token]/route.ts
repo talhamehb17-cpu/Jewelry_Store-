@@ -4,6 +4,7 @@ import { getDb } from '@/db';
 import { orders, paymentProofs } from '@/db/schema';
 import { getCurrentUser, isStaff } from '@/lib/auth';
 import { verifyOrderToken } from '@/lib/orders';
+import { isBlobUrl, readBlob } from '@/lib/blob-media';
 
 export const runtime = 'nodejs';
 
@@ -32,10 +33,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
   if (!allowed) return new NextResponse('Not found', { status: 404 });
 
   let bytes: Uint8Array | null = proof.data ? new Uint8Array(proof.data) : null;
-  if (!bytes && proof.url) {
+  if (!bytes && proof.url && isBlobUrl(proof.url)) {
+    const blob = await readBlob(proof.url);
+    if (blob?.stream) bytes = new Uint8Array(await new Response(blob.stream).arrayBuffer());
+  } else if (!bytes && proof.url) {
     const remote = await fetch(proof.url);
-    if (!remote.ok) return new NextResponse('Not found', { status: 404 });
-    bytes = new Uint8Array(await remote.arrayBuffer());
+    if (remote.ok) bytes = new Uint8Array(await remote.arrayBuffer());
   }
   if (!bytes) return new NextResponse('Not found', { status: 404 });
   return new NextResponse(Buffer.from(bytes), {

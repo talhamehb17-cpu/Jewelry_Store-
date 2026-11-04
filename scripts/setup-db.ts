@@ -33,6 +33,24 @@ async function main() {
     const db = drizzle(pool, { schema });
     log(`connecting to ${new URL(url).hostname}`);
     await migrateAndSeed(db, 'postgres', log);
+    if (process.env.VERCEL) {
+      try {
+        const { refreshExchangeRates } = await import('../src/lib/currency');
+        const rates = await refreshExchangeRates();
+        log(`exchange rates saved: ${rates.saved.join(', ')}`);
+      } catch (error) {
+        log(`exchange rates unchanged: ${error instanceof Error ? error.message : 'error'}`);
+      }
+    }
+    if (process.env.VERCEL && process.env.BLOB_STORE_ID) {
+      const { copyCatalogToBlob, probeBlob } = await import('../src/lib/blob-catalog');
+      await probeBlob(log);
+      try {
+        await copyCatalogToBlob(db, log);
+      } catch (error) {
+        log(`blob catalog failed ${error instanceof Error ? error.message : 'error'}`);
+      }
+    }
     if (process.env.VERCEL && process.env.GMAIL_APP_PASSWORD) {
       try {
         const { eq } = await import('drizzle-orm');

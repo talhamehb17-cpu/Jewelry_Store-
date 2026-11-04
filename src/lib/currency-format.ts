@@ -1,13 +1,17 @@
 export const CURRENCY_COOKIE = 'evermoon_currency';
 
 export const CURRENCIES = [
-  { code: 'PKR', label: 'Pakistani Rupee', symbol: 'Rs' },
-  { code: 'USD', label: 'US Dollar', symbol: 'US$' },
-  { code: 'GBP', label: 'British Pound', symbol: '£' },
-  { code: 'EUR', label: 'Euro', symbol: '€' },
-  { code: 'AED', label: 'UAE Dirham', symbol: 'AED' },
-  { code: 'SAR', label: 'Saudi Riyal', symbol: 'SAR' },
-  { code: 'CNY', label: 'Chinese Yuan', symbol: 'CN¥' },
+  { code: 'PKR', label: 'Pakistani Rupee', symbol: 'Rs', flag: '🇵🇰' },
+  { code: 'USD', label: 'US Dollar', symbol: 'US$', flag: '🇺🇸' },
+  { code: 'GBP', label: 'British Pound', symbol: '£', flag: '🇬🇧' },
+  { code: 'EUR', label: 'Euro', symbol: '€', flag: '🇪🇺' },
+  { code: 'AED', label: 'UAE Dirham', symbol: 'AED', flag: '🇦🇪' },
+  { code: 'SAR', label: 'Saudi Riyal', symbol: 'SAR', flag: '🇸🇦' },
+  { code: 'CAD', label: 'Canadian Dollar', symbol: 'CA$', flag: '🇨🇦' },
+  { code: 'AUD', label: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺' },
+  { code: 'CNY', label: 'Chinese Yuan', symbol: 'CN¥', flag: '🇨🇳' },
+  { code: 'TRY', label: 'Turkish Lira', symbol: '₺', flag: '🇹🇷' },
+  { code: 'JPY', label: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
 ] as const;
 
 export type CurrencyCode = (typeof CURRENCIES)[number]['code'];
@@ -36,7 +40,7 @@ export function formatDisplay(paisa: number, code: CurrencyCode, rates: Partial<
   if (major == null) return null;
   const meta = CURRENCIES.find((c) => c.code === code)!;
   const abs = Math.abs(major);
-  const digits = abs >= 100 ? 0 : 2;
+  const digits = code === 'JPY' || abs >= 100 ? 0 : 2;
   const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
   return `${major < 0 ? '−' : ''}${meta.symbol} ${formatted}`;
 }

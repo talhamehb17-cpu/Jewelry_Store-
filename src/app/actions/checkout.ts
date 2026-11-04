@@ -1,6 +1,6 @@
 'use server';
 
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
 import { and, eq, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -12,6 +12,7 @@ import { getSettings } from '@/lib/settings';
 import { clientIp, rateLimit } from '@/lib/rate-limit';
 import { orderConfirmationEmail, sendEmail } from '@/lib/email';
 import { formatMoney } from '@/lib/money';
+import { CURRENCY_COOKIE, getRateBook, isCurrency } from '@/lib/currency';
 import { isManualMethod } from '@/lib/payments';
 import { PROVINCES, siteUrl } from '@/lib/utils';
 
@@ -43,6 +44,15 @@ const schema = z.object({
 
 export type CheckoutInput = z.input<typeof schema>;
 export type CheckoutResult = { ok: true; redirect: string; external?: boolean } | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+async function displaySnapshot() {
+  const code = (await cookies()).get(CURRENCY_COOKIE)?.value;
+  if (!isCurrency(code) || code === 'PKR') return { displayCurrency: 'PKR', displayRate: 1 };
+  const book = await getRateBook();
+  const rate = book.rates[code];
+  if (!rate || rate <= 0) return { displayCurrency: 'PKR', displayRate: 1 };
+  return { displayCurrency: code, displayRate: rate };
+}
 
 async function origin() {
   const h = await headers();
@@ -97,6 +107,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       discountCode: d.discountCode || null,
       customerNote: d.note || null,
       userId: user?.id ?? null,
+      ...(await displaySnapshot()),
     });
   } catch (e) {
     if (e instanceof OrderError) return { ok: false, error: e.message };

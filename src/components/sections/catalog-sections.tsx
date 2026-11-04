@@ -51,8 +51,8 @@ export function CategoriesSection({ section }: Props) {
                       <span className="text-[0.75rem] tabular-nums text-muted">{String(i + 1).padStart(2, '0')}</span>
                       <span className="font-heading text-[clamp(1.6rem,3.4vw,3rem)] leading-none tracking-tight transition duration-500 group-hover:translate-x-3">{t.title}</span>
                     </span>
-                    <span className="pointer-events-none absolute right-16 top-1/2 hidden h-36 w-28 -translate-y-1/2 rotate-3 scale-90 overflow-hidden opacity-0 shadow-xl transition duration-500 group-hover:rotate-0 group-hover:scale-100 group-hover:opacity-100 md:block">
-                      <Img src={publicImage(t.image)} alt="" sizes="120px" />
+                    <span className="relative hidden h-16 w-12 shrink-0 overflow-hidden rounded-theme-sm bg-surface md:block">
+                      <Img src={publicImage(t.image)} alt="" sizes="80px" className="object-cover" />
                     </span>
                     <ArrowUpRight size={22} strokeWidth={1.25} className="text-muted transition group-hover:text-ink" />
                   </Link>

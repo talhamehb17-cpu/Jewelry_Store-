@@ -11,6 +11,7 @@ import { Img } from '@/components/ui/img';
 import { STATUS_FLOW } from '@/lib/orders';
 import { formatMoney } from '@/lib/money';
 import { formatDateTime } from '@/lib/utils';
+import { ProofViewer } from '@/components/admin/proof-viewer';
 
 
 export const metadata = { title: 'Order' };
@@ -107,9 +108,7 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               <div className="mt-3">
                 <p className="text-[0.8rem]">Receipt uploaded {formatDateTime(proof.createdAt)} · staff only</p>
                 {proof.mime.startsWith('image/') ? (
-                  <a href={`/api/payment-proof/${proof.token}`} target="_blank" rel="noreferrer">
-                    <img src={`/api/payment-proof/${proof.token}`} alt={`Payment receipt for ${o.number}`} className="mt-2 max-h-72 rounded-theme border border-line object-contain" />
-                  </a>
+                  <ProofViewer src={`/api/payment-proof/${proof.token}`} alt={`Payment receipt for ${o.number}`} />
                 ) : (
                   <a href={`/api/payment-proof/${proof.token}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-[0.8rem] underline">View payment receipt ({proof.filename})</a>
                 )}
