@@ -34,21 +34,53 @@ export async function uploadFile(file: File, folder = 'media'): Promise<string> 
   return data.url as string;
 }
 
-export function ImageInput({ value, onChange, label, compact, accept = 'image/*', folder = 'media' }: { value: string; onChange: (v: string) => void; label?: string; compact?: boolean; accept?: string; folder?: string }) {
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+
+export function ImageInput({ value, onChange, label, compact, accept = 'image/*', folder = 'media', onActivity }: { value: string; onChange: (v: string) => void; label?: string; compact?: boolean; accept?: string; folder?: string; onActivity?: (state: { busy: boolean; error: string }) => void }) {
   const ref = useRef<HTMLInputElement>(null);
+  const ticket = useRef(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [preview, setPreview] = useState('');
   const [urlMode, setUrlMode] = useState(false);
+  const report = (state: { busy: boolean; error: string }) => onActivity?.(state);
   const pick = async (f: File | undefined) => {
-    if (!f) return;
+    if (!f || busy) return;
+    if (ref.current) ref.current.value = '';
+    const imageOnly = accept.startsWith('image');
+    if (imageOnly && f.type && !IMAGE_TYPES.includes(f.type)) {
+      const message = 'Use a JPEG, PNG, WebP, AVIF or GIF image.';
+      setErr(message);
+      report({ busy: false, error: message });
+      return;
+    }
+    if (imageOnly && f.size > 4 * 1024 * 1024) {
+      const message = 'Image must be 4 MB or smaller.';
+      setErr(message);
+      report({ busy: false, error: message });
+      return;
+    }
+    const local = URL.createObjectURL(f);
+    const mine = ++ticket.current;
+    setPreview(local);
     setErr('');
     setBusy(true);
+    report({ busy: true, error: '' });
     try {
-      onChange(await uploadFile(f, folder));
+      const url = await uploadFile(f, folder);
+      if (mine !== ticket.current) return;
+      if (/^(blob:|data:)/i.test(url)) throw new Error('Upload did not return a stored image URL.');
+      onChange(url);
+      report({ busy: false, error: '' });
     } catch (e) {
-      setErr((e as Error).message);
+      if (mine !== ticket.current) return;
+      const message = (e as Error).message;
+      setErr(message);
+      report({ busy: false, error: message });
     } finally {
-      setBusy(false);
+      if (mine === ticket.current) setBusy(false);
+      URL.revokeObjectURL(local);
+      setPreview((current) => (current === local ? '' : current));
     }
   };
   return (
@@ -63,8 +95,12 @@ export function ImageInput({ value, onChange, label, compact, accept = 'image/*'
             pick(e.dataTransfer.files[0]);
           }}
         >
-          {value ? (
-            accept.startsWith('video') || /\.(mp4|webm)$/.test(value) ? <video src={value} className="h-full w-full object-cover" muted /> : <Img src={value} alt="" sizes="80px" />
+          {preview || value ? (
+            accept.startsWith('video') || /\.(mp4|webm)$/.test(value) ? <video src={preview || value} className="h-full w-full object-cover" muted /> : preview ? (
+              // Local preview only. The blob: URL is never saved.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="" className="h-full w-full object-cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : <Img src={value} alt="" sizes="80px" />
           ) : (
             <button type="button" onClick={() => ref.current?.click()} className="grid h-full w-full place-items-center text-muted" aria-label="Upload image"><ImagePlus size={18} strokeWidth={1.5} /></button>
           )}
@@ -75,9 +111,9 @@ export function ImageInput({ value, onChange, label, compact, accept = 'image/*'
             <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… or /images/…" className="field" autoFocus />
           ) : (
             <div className="flex flex-wrap gap-1.5">
-              <button type="button" onClick={() => ref.current?.click()} className="btn btn-secondary btn-sm">{value ? 'Replace' : 'Upload'}</button>
+              <button type="button" disabled={busy} onClick={() => ref.current?.click()} className="btn btn-secondary btn-sm">{busy ? 'Uploading…' : value ? 'Replace' : 'Upload'}</button>
               <button type="button" onClick={() => setUrlMode(true)} className="btn btn-secondary btn-sm"><Link2 size={12} /> URL</button>
-              {value && (
+              {value && !busy && (
                 <button
                   type="button"
                   onClick={() => {

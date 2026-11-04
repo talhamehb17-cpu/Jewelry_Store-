@@ -53,8 +53,10 @@ export async function saveCampaign(input: CampaignInput) {
   if (endsAt <= startsAt) return { ok: false as const, message: 'The end time must be after the start time.' };
   if (d.appliesTo === 'products' && !d.productIds.length) return { ok: false as const, message: 'Choose at least one product, or apply the sale to everything.' };
   if (d.appliesTo === 'categories' && !d.categoryIds.length) return { ok: false as const, message: 'Choose at least one category.' };
+  if (/^(blob:|data:)/i.test(d.image)) return { ok: false as const, message: 'The image is only a local preview. Wait for the upload to finish, then save.' };
   if (d.image && !/^(https?:\/\/|\/)/.test(d.image)) return { ok: false as const, message: 'The campaign image must be an uploaded file or an https URL.' };
   const image = d.image ? publicImage(d.image, '') : '';
+  if (d.image && !image) return { ok: false as const, message: 'That image was not stored. Upload it again before publishing.' };
   const db = await getDb();
   const base = slugify(d.name) || 'sale';
   let slug = base;

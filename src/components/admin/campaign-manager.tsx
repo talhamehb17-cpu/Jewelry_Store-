@@ -87,6 +87,7 @@ export function CampaignManager({
   const [notice, setNotice] = useState('');
   const [preview, setPreview] = useState<{ id: number; html: string; recipients: number } | null>(null);
   const [pending, start] = useTransition();
+  const [imageGate, setImageGate] = useState({ busy: false, error: '' });
   const set = <K extends keyof CampaignInput>(k: K, v: CampaignInput[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   const run = (work: () => Promise<{ ok: boolean; message: string }>) =>
@@ -137,8 +138,30 @@ export function CampaignManager({
             <Field label="Button link"><input value={form.ctaHref} onChange={(e) => set('ctaHref', e.target.value)} className="field" placeholder="/shop" /></Field>
             <Field label="Description" className="md:col-span-2"><textarea value={form.description} onChange={(e) => set('description', e.target.value)} className="field min-h-24" placeholder="Celebrate Eid with our exclusive luxury collection." /></Field>
           </div>
-          <div className="mt-4 max-w-sm">
-            <ImageInput label="Campaign image (optional)" folder="campaigns" value={form.image || ''} onChange={(v) => set('image', v)} />
+          <div className="mt-4 max-w-xl">
+            <ImageInput
+              label="Campaign image"
+              folder="campaigns"
+              value={form.image || ''}
+              onActivity={setImageGate}
+              onChange={(v) => {
+                set('image', v);
+                if (!/^(blob:|data:)/i.test(v)) setImageGate((g) => ({ ...g, error: '' }));
+              }}
+            />
+            {imageGate.busy && <p className="mt-2 text-[0.75rem] text-muted">Uploading image… saving stays blocked until this finishes.</p>}
+            {imageGate.error && (
+              <p className="mt-2 text-[0.75rem] text-rose-700">
+                {imageGate.error} This campaign was not published.
+                <button type="button" className="ml-2 underline" onClick={() => setImageGate({ busy: false, error: '' })}>Dismiss and keep the current image</button>
+              </p>
+            )}
+            {form.image && !/^(blob:|data:)/i.test(form.image) && !form.image.includes('.private.blob.') && (
+              <div className="relative mt-3 aspect-[16/10] w-full max-h-56 overflow-hidden rounded-lg border border-line bg-secondary">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.image} alt="" className="h-full w-full object-cover object-center" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+              </div>
+            )}
           </div>
           {form.appliesTo === 'products' && (
             <div className="mt-4"><p className="label">Products</p><div className="grid max-h-52 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-line p-3 md:grid-cols-3">{products.map((p) => <label key={p.id} className="flex items-center gap-2 text-[0.8rem]"><input type="checkbox" className="checkbox" checked={(form.productIds ?? []).includes(p.id)} onChange={(e) => set('productIds', e.target.checked ? [...(form.productIds ?? []), p.id] : (form.productIds ?? []).filter((x) => x !== p.id))} />{p.name}</label>)}</div></div>
@@ -149,12 +172,21 @@ export function CampaignManager({
           <label className="mt-4 flex items-start gap-2 text-[0.84rem]"><input type="checkbox" className="checkbox mt-1" checked={!!form.allowStacking} onChange={(e) => set('allowStacking', e.target.checked)} /><span>Allow a discount code to stack on top of this event. Off by default — a product gets either the event price or a code, not both, unless the code is also marked stackable.</span></label>
           <p className="mt-3 text-[0.75rem] text-muted">Saving does not email anyone. Use Send campaign email after the campaign exists. {subscribers} subscribed customer{subscribers === 1 ? '' : 's'} would receive it.</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <button disabled={pending} onClick={() => run(async () => saveCampaign(form))} className="btn btn-primary">{pending && <Loader2 size={14} className="animate-spin" />} Save campaign</button>
-            <button onClick={() => { setForm(null); setError(''); }} className="btn btn-secondary">Cancel</button>
+            <button
+              disabled={pending || imageGate.busy || !!imageGate.error}
+              onClick={() => {
+                if (imageGate.busy) { setError('Wait for the image upload to finish before saving.'); return; }
+                if (imageGate.error) { setError(imageGate.error); return; }
+                if (/^(blob:|data:)/i.test(form.image || '')) { setError('The image is only a local preview. Upload it again before saving.'); return; }
+                run(async () => saveCampaign(form));
+              }}
+              className="btn btn-primary"
+            >{pending && <Loader2 size={14} className="animate-spin" />} {imageGate.busy ? 'Uploading image…' : 'Save campaign'}</button>
+            <button onClick={() => { setForm(null); setError(''); setImageGate({ busy: false, error: '' }); }} className="btn btn-secondary">Cancel</button>
           </div>
         </Card>
       ) : (
-        <div className="flex justify-end"><button onClick={() => { setForm(blank()); setError(''); }} className="btn btn-primary"><Plus size={15} /> Create campaign</button></div>
+        <div className="flex justify-end"><button onClick={() => { setForm(blank()); setError(''); setImageGate({ busy: false, error: '' }); }} className="btn btn-primary"><Plus size={15} /> Create campaign</button></div>
       )}
 
       {(['active', 'scheduled', 'other'] as const).map((key) => (
@@ -166,7 +198,17 @@ export function CampaignManager({
                 <tbody>
                   {groups[key].map((c) => (
                     <tr key={c.id}>
-                      <td className="is-primary max-w-[220px]" data-label="Campaign"><span className="font-medium">{c.name}</span>{c.description && <span className="block text-[0.72rem] text-muted">{c.description}</span>}</td>
+                      <td className="is-primary max-w-[220px]" data-label="Campaign">
+                        <span className="flex min-w-0 items-start gap-3">
+                          {c.image && !/^(blob:|data:)/i.test(c.image) && !c.image.includes('.private.blob.') && (
+                            <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-secondary">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={c.image} alt="" className="h-full w-full object-cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </span>
+                          )}
+                          <span className="min-w-0"><span className="block break-words font-medium">{c.name}</span>{c.description && <span className="block break-words text-[0.72rem] text-muted">{c.description}</span>}</span>
+                        </span>
+                      </td>
                       <td data-label="Discount">{c.percent}% off</td>
                       <td data-label="Window" className="text-[0.75rem] text-muted">{formatDateTime(c.startsAt)}<br />→ {formatDateTime(c.endsAt)}</td>
                       <td data-label="Scope" className="text-[0.78rem] text-muted">{c.appliesTo === 'all' ? 'All products' : c.appliesTo === 'products' ? `${c.productIds.length} products` : `${c.categoryIds.length} categories`}</td>
@@ -175,7 +217,7 @@ export function CampaignManager({
                       <td data-label="" className="text-right">
                         {c.status !== 'active' && c.status !== 'expired' && <button className="mr-2 text-muted hover:text-ink" aria-label="Activate" onClick={() => run(() => setCampaignStatus(c.id, 'active'))}><Play size={14} /></button>}
                         {c.status === 'active' && <button className="mr-2 text-muted hover:text-ink" aria-label="Pause" onClick={() => run(() => setCampaignStatus(c.id, 'paused'))}><Pause size={14} /></button>}
-                        <button className="mr-2 text-muted hover:text-ink" aria-label="Edit" onClick={() => { setForm(fromRow(c)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil size={14} /></button>
+                        <button className="mr-2 text-muted hover:text-ink" aria-label="Edit" onClick={() => { setForm(fromRow(c)); setImageGate({ busy: false, error: '' }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil size={14} /></button>
                         <button className="mr-2 text-muted hover:text-ink" aria-label="Duplicate" onClick={() => run(() => duplicateCampaign(c.id))}><Copy size={14} /></button>
                         <button className="mr-2 text-muted hover:text-ink" aria-label="Preview email" onClick={() => start(async () => { const r = await previewCampaignEmail(c.id); if (r.ok) setPreview({ id: c.id, html: r.html, recipients: r.recipients }); else setNotice(r.message); })}><Send size={14} /></button>
                         <button className="text-muted hover:text-rose-600" aria-label="Delete" onClick={() => confirm(`Delete ${c.name}?`) && run(() => deleteCampaign(c.id))}><Trash2 size={14} /></button>
