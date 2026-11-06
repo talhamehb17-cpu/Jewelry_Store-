@@ -36,6 +36,56 @@ for (const [code, rate, symbol] of [
   assert.notEqual(formatAtRate(packaging, code, rate * 2), saved, `${code} must follow the rate it is given`);
 }
 
+const piece = 18_500_000;
+const book = {
+  USD: usd,
+  GBP: gbp,
+  EUR: eur,
+  AED: aed,
+  SAR: 0.0135,
+  CAD: 0.0049,
+  AUD: 0.0054,
+  CNY: 0.025,
+  TRY: 0.12,
+  JPY: jpy,
+} as const;
+
+function shown(code: keyof typeof book | 'PKR', selected: boolean) {
+  const rates = { ...book };
+  const unit = formatFromBook(packaging, code, rates);
+  const extra = selected ? packaging : 0;
+  return {
+    unit,
+    product: formatFromBook(piece, code, rates),
+    packagingLine: selected ? formatFromBook(packaging, code, rates) : null,
+    total: formatFromBook(piece + extra, code, rates),
+  };
+}
+
+let selected = false;
+assert.equal(shown('PKR', selected).unit, 'Rs 250');
+selected = true;
+assert.equal(shown('PKR', selected).packagingLine, 'Rs 250');
+assert.equal(shown('PKR', selected).total, formatMoney(piece + packaging));
+
+for (const code of ['USD', 'GBP', 'EUR', 'AED', 'SAR', 'CAD', 'AUD', 'CNY', 'TRY', 'JPY'] as const) {
+  const before = shown(code, false).unit;
+  const after = shown(code, true);
+  assert.equal(after.unit, before, `${code} unit must not change just because the box is checked`);
+  assert.equal(after.packagingLine, before);
+  assert.equal(after.unit.includes('Rs'), false, after.unit);
+  assert.equal(after.unit.includes('PKR'), false, after.unit);
+  assert.equal(after.product.includes('Rs'), false);
+  assert.equal(after.total.includes('Rs'), false);
+  assert.equal(after.total, formatFromBook(piece + packaging, code, book), `${code} total converts the PKR sum once`);
+  assert.equal(formatFromBook(packaging, code, book), formatDisplay(packaging, code, book));
+}
+
+const usdSelected = shown('USD', true);
+const gbpSelected = shown('GBP', true);
+assert.notEqual(usdSelected.unit, gbpSelected.unit);
+assert.equal(packaging, 25_000, 'the stored base stays PKR paisa');
+
 const once = convertFromPkr(packaging, 'USD', { USD: usd });
 assert.ok(once != null);
 const twice = convertFromPkr(Math.round(once * 100), 'USD', { USD: usd });
@@ -45,11 +95,8 @@ const yen = formatAtRate(packaging, 'JPY', jpy);
 assert.equal(yen?.includes('.'), false, `JPY stays on the existing zero-decimal rule: ${yen}`);
 assert.equal(yen?.includes('Rs'), false);
 
-const piece = 18_500_000;
-const withGift = piece + packaging;
-const book = { USD: usd };
-assert.equal(formatFromBook(withGift, 'USD', book), formatDisplay(withGift, 'USD', book));
-assert.notEqual(formatFromBook(withGift, 'USD', book), formatFromBook(piece, 'USD', book));
+assert.equal(formatFromBook(piece + packaging, 'USD', book), formatDisplay(piece + packaging, 'USD', book));
+assert.notEqual(formatFromBook(piece + packaging, 'USD', book), formatFromBook(piece, 'USD', book));
 
 const giftUi = readFileSync('src/components/store/gift-packaging.tsx', 'utf8');
 assert.equal(giftUi.includes('formatMoney'), false);
