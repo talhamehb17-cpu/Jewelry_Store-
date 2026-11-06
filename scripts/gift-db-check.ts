@@ -52,12 +52,26 @@ async function main() {
     throw new Error('Default packaging images are not persistent site files.');
   }
 
-  const denied = await buildQuote({
+  const offered = await buildQuote({
     lines: [{ variantId: ineligible.variantId, quantity: 1, giftPackaging: true, giftImageId: 'box' }],
     shippingMethod: 'standard',
     paymentMethod: 'cod',
   });
-  if (denied.lines[0]?.giftSelected || denied.giftTotal !== 0) throw new Error('Ineligible product was charged for packaging.');
+  if (!offered.lines[0]?.giftSelected || offered.giftTotal !== 25_000) throw new Error('A product was excluded from paid gift packaging.');
+  const declined = await buildQuote({
+    lines: [{ variantId: ineligible.variantId, quantity: 1, giftPackaging: false }],
+    shippingMethod: 'standard',
+    paymentMethod: 'cod',
+  });
+  if (declined.giftTotal !== 0 || declined.lines[0]?.giftSelected) throw new Error('Unselected packaging was charged.');
+  await saveSetting('giftPackaging', { ...settings.giftPackaging, enabled: false, price: 25_000, initialized: true });
+  const stillOffered = await buildQuote({
+    lines: [{ variantId: ineligible.variantId, quantity: 1, giftPackaging: true, giftImageId: 'box' }],
+    shippingMethod: 'standard',
+    paymentMethod: 'cod',
+  });
+  if (stillOffered.giftTotal !== 25_000) throw new Error('Turning the old switch off hid packaging from a product.');
+  await saveSetting('giftPackaging', { ...settings.giftPackaging, enabled: true, price: 25_000, initialized: true });
 
   const once = await buildQuote({
     lines: [{ variantId: eligible.variantId, quantity: 2, giftPackaging: true, giftImageId: 'pouch' }],
@@ -111,12 +125,12 @@ async function main() {
   if (still?.giftTotal !== 50_000 || stillItem?.giftUnitPrice !== 25_000) throw new Error('A price change altered an existing order.');
 
   await db.update(products).set({ giftPackaging: false }).where(eq(products.id, eligible.id));
-  const hidden = await buildQuote({
+  const stillAvailable = await buildQuote({
     lines: [{ variantId: eligible.variantId, quantity: 1, giftPackaging: true }],
     shippingMethod: 'standard',
     paymentMethod: 'cod',
   });
-  if (hidden.giftTotal !== 0 || hidden.lines[0]?.giftEligible) throw new Error('Turning a product off did not remove the charge.');
+  if (stillAvailable.giftTotal !== 40_000 || !stillAvailable.lines[0]?.giftEligible) throw new Error('A product flag hid paid gift packaging.');
 
   console.log('gift database checks passed');
 }

@@ -194,7 +194,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
               </span>
               <span className="shrink-0 text-[0.9rem]">{formatMoney(l.lineTotal)}</span>
             </div>
-            {quote?.lines.find((row) => row.variantId === l.variantId)?.giftEligible && (
+            {quote && (
               <GiftPackagingChoice
                 compact
                 price={quote.giftUnitPrice}

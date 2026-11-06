@@ -31,5 +31,5 @@ export async function saveGiftPackaging(input: unknown): Promise<{ ok: true; mes
   await saveSetting('giftPackaging', next);
   revalidatePath('/', 'layout');
   revalidatePath('/admin/packaging');
-  return { ok: true, message: next.enabled ? `Premium gift packaging is on at Rs ${parsed.data.priceRupees.toLocaleString('en-PK')} per piece.` : 'Premium gift packaging is off. Existing orders are unchanged.' };
+  return { ok: true, message: `Premium gift packaging is Rs ${parsed.data.priceRupees.toLocaleString('en-PK')} per piece on every product. Existing orders are unchanged.` };
 }

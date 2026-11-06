@@ -235,16 +235,15 @@ export async function buildQuote(input: {
   const gift = normalizeGift(settings.giftPackaging);
   let giftTotal = 0;
   for (const line of lines) {
-    const row = rows.find((x) => x.variantId === line.variantId);
     const charge = giftLineCharge({
-      enabled: gift.enabled,
-      eligible: !!row?.giftPackaging,
+      enabled: true,
+      eligible: true,
       selected: line.giftSelected,
       unitPrice: gift.price,
       quantity: line.quantity,
     });
-    line.giftEligible = gift.enabled && !!row?.giftPackaging;
-    line.giftSelected = charge.total > 0 || (line.giftEligible && line.giftSelected && gift.price === 0);
+    line.giftEligible = true;
+    line.giftSelected = charge.total > 0 || (line.giftSelected && gift.price === 0);
     const image = line.giftSelected ? giftImage(gift, line.giftImageId) : null;
     line.giftUnitPrice = line.giftSelected ? gift.price : 0;
     line.giftLineTotal = line.giftSelected ? gift.price * line.quantity : 0;

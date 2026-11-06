@@ -100,13 +100,13 @@ export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote
               </div>
             </div>
           </div>
-          {line?.giftEligible && (
+          {quote && (
             <GiftPackagingChoice
               compact={compact}
-              price={quote?.giftUnitPrice || 0}
-              images={quote?.giftImages ?? []}
-              selected={!!line.giftSelected}
-              imageId={line.giftImageId}
+              price={quote.giftUnitPrice}
+              images={quote.giftImages}
+              selected={!!(line?.giftSelected ?? item.giftPackaging)}
+              imageId={line?.giftImageId ?? item.giftImageId}
               quantity={item.quantity}
               onChange={(on, id) => setGiftPackaging(item.variantId, on, id)}
             />

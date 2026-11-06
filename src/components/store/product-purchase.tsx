@@ -187,16 +187,16 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
         <VariantPicker variants={variants} state={state} sizeLabel={sizeLabel} onSizeGuide={state.sizes.length ? () => setGuide(true) : undefined} />
         {error && <p className="mt-3 text-[0.82rem] text-sale" role="alert">{error}</p>}
         <div className="mt-7">
+          {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} quantity={qty} onChange={chooseGift} />}
+          {gift && <GiftPurchaseTotal productTotal={price * qty} packaging={gift.price * qty} selected={giftOn} />}
           {soldOut && v ? (
-            <NotifyForm product={p.slug} />
+            <div className="mt-4"><NotifyForm product={p.slug} /></div>
           ) : (
             <>
-              <p className={cn('mb-3 flex items-center gap-2 text-[0.82rem]', low ? 'text-sale' : 'text-muted')}>
+              <p className={cn('mb-3 flex items-center gap-2 text-[0.82rem]', low ? 'text-sale' : 'text-muted', gift && 'mt-4')}>
                 <span className={cn('h-2 w-2 rounded-full', low ? 'bg-sale' : 'bg-emerald-600')} />
                 {low ? `Only ${v!.stock} left — order soon` : state.needsSize ? 'Select a size to see availability' : 'In stock — dispatched within 24 hours'}
               </p>
-              {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} quantity={qty} onChange={chooseGift} />}
-              {gift && <GiftPurchaseTotal productTotal={price * qty} packaging={gift.price * qty} selected={giftOn} />}
               <div className="mt-4 flex flex-wrap gap-3">
                 <QtyStepper value={qty} onChange={setQty} max={Math.max(1, Math.min(20, v?.stock ?? 20))} />
                 <button onClick={() => add(false)} disabled={allSoldOut} className="btn btn-primary min-w-0 flex-1">{allSoldOut ? 'Sold out' : 'Add to bag'}</button>
@@ -212,7 +212,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
 
       <div className={cn('mt-8 space-y-3 rounded-theme-sm bg-surface/70 p-5 text-[0.85rem]', style === 'romantic' && 'text-left')}>
         <p className="flex items-start gap-3"><Truck size={17} strokeWidth={1.25} className="mt-0.5 shrink-0 text-accent" /><span>{eta ? <>Order today — estimated delivery <strong className="font-medium">{eta.std}</strong> (Express: {eta.exp})</> : <>Delivered in 3–5 working days nationwide (Express 1–2 days)</>}</span></p>
-        <p className="flex items-start gap-3"><Gift size={17} strokeWidth={1.25} className="mt-0.5 shrink-0 text-accent" /><span>Complimentary gift box &amp; handwritten note</span></p>
+        <p className="flex items-start gap-3"><Gift size={17} strokeWidth={1.25} className="mt-0.5 shrink-0 text-accent" /><span>Hand Written Note</span></p>
         {style === 'heritage' || p.materials.some((m) => m.includes('Diamond')) ? (
           <p className="flex items-start gap-3"><Award size={17} strokeWidth={1.25} className="mt-0.5 shrink-0 text-accent" /><span>Certificate of authenticity included</span></p>
         ) : null}

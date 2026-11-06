@@ -12,7 +12,7 @@ export default async function PackagingAdmin() {
   const gift = normalizeGift(settings.giftPackaging);
   return (
     <>
-      <PageHeader title="Gift packaging" description="Optional premium packaging. Customers only see it on products marked available, and the charge is calculated here, not in the browser." />
+      <PageHeader title="Gift packaging" description="Optional paid packaging on every product. Customers choose it while buying, and the charge is calculated here, not in the browser." />
       <PackagingForm initial={gift} />
     </>
   );

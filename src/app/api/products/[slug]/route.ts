@@ -17,7 +17,7 @@ export async function GET(_: Request, ctx: { params: Promise<{ slug: string }> }
   const giftOffer = normalizeGift(settings.giftPackaging);
   return NextResponse.json({
     product: { id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, price: priced.price, compareAtPrice: priced.compareAt, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount },
-    gift: p.giftPackaging && giftOffer.enabled ? { price: giftOffer.price, images: giftOffer.images } : null,
+    gift: { price: giftOffer.price, images: giftOffer.images },
     images: d.images.map((i) => ({ url: i.url, alt: i.alt })),
     variants: d.variants.map((v) => {
       const shown = presentPrice(v.price ?? p.price, v.compareAtPrice ?? p.compareAtPrice, onSale, campaign?.percent ?? 0);

@@ -9,7 +9,6 @@ import type { GiftPackagingSettings } from '@/lib/gift-packaging';
 
 export function PackagingForm({ initial }: { initial: GiftPackagingSettings }) {
   const router = useRouter();
-  const [enabled, setEnabled] = useState(initial.enabled);
   const [price, setPrice] = useState(String(initial.price / 100));
   const [images, setImages] = useState(initial.images);
   const [msg, setMsg] = useState('');
@@ -21,7 +20,7 @@ export function PackagingForm({ initial }: { initial: GiftPackagingSettings }) {
     setMsg('');
     start(async () => {
       const res = await saveGiftPackaging({
-        enabled,
+        enabled: true,
         priceRupees: Number(price),
         images: images.map((img, i) => ({ ...img, id: img.id || `img-${i + 1}` })),
       });
@@ -37,10 +36,7 @@ export function PackagingForm({ initial }: { initial: GiftPackagingSettings }) {
   return (
     <div className="max-w-3xl space-y-6">
       <Card title="Offer">
-        <label className="flex items-start gap-3 text-[0.9rem]">
-          <input type="checkbox" className="checkbox mt-1" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-          <span>Enable Premium Gift Packaging on eligible products. It is never added unless the customer chooses it.</span>
-        </label>
+        <p className="text-[0.9rem]">Premium Gift Packaging is offered on every product. It is never added unless the customer chooses it.</p>
         <Field label="Price per piece (PKR)" className="mt-5">
           <input className="field" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
         </Field>

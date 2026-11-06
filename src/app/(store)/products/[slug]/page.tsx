@@ -130,7 +130,7 @@ export default async function ProductPage({ params }: P) {
               stickyAtc={ctx.config.settings.mobile.stickyAtc}
               shipping={{ freeThreshold: settings.shipping.freeThreshold, standard: std, express: exp }}
               isNew={isNew}
-              gift={p.giftPackaging && giftOffer.enabled ? { price: giftOffer.price, images: giftOffer.images } : null}
+              gift={{ price: giftOffer.price, images: giftOffer.images }}
             />
           </div>
         </div>
