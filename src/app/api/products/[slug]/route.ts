@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getProductBySlug } from '@/lib/catalog';
 import { campaignHit, getActiveCampaign, presentPrice } from '@/lib/campaigns';
+import { normalizeGift } from '@/lib/gift-packaging';
+import { getSettings } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,11 +11,13 @@ export async function GET(_: Request, ctx: { params: Promise<{ slug: string }> }
   const d = await getProductBySlug(slug);
   if (!d) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const p = d.product;
-  const campaign = await getActiveCampaign();
+  const [campaign, settings] = await Promise.all([getActiveCampaign(), getSettings()]);
   const onSale = campaignHit(campaign, p.id, p.categoryId);
   const priced = presentPrice(p.price, p.compareAtPrice, onSale, campaign?.percent ?? 0);
+  const giftOffer = normalizeGift(settings.giftPackaging);
   return NextResponse.json({
     product: { id: p.id, slug: p.slug, name: p.name, subtitle: p.subtitle, description: p.description, price: priced.price, compareAtPrice: priced.compareAt, ratingAvg: p.ratingAvg, ratingCount: p.ratingCount },
+    gift: p.giftPackaging && giftOffer.enabled ? { price: giftOffer.price, images: giftOffer.images } : null,
     images: d.images.map((i) => ({ url: i.url, alt: i.alt })),
     variants: d.variants.map((v) => {
       const shown = presentPrice(v.price ?? p.price, v.compareAtPrice ?? p.compareAtPrice, onSale, campaign?.percent ?? 0);

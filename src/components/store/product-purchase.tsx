@@ -9,7 +9,7 @@ import { QtyStepper, VariantPicker, useVariantSelection, type PickerVariant } fr
 import { Modal } from '@/components/ui/overlay';
 import { Badge, Price, Stars, productBadges } from '@/components/ui/bits';
 import { notifyBackInStock } from '@/app/actions/store';
-import { GiftPackagingChoice, type GiftPreview } from './gift-packaging';
+import { GiftPackagingChoice, GiftPurchaseTotal, type GiftPreview } from './gift-packaging';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import type { ThemeLayout } from '@/themes/types';
@@ -108,7 +108,7 @@ function NotifyForm({ product }: { product: string }) {
 }
 
 export function ProductPurchase({ product: p, variants, image, category, style, stickyAtc, shipping, isNew, gift }: P) {
-  const { addToCart, toggleWishlist, inWishlist } = useStore();
+  const { addToCart, toggleWishlist, inWishlist, cart, cartReady, setGiftPackaging } = useStore();
   const router = useRouter();
   const state = useVariantSelection(variants);
   const [qty, setQty] = useState(1);
@@ -129,6 +129,14 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
   const low = v && v.stock > 0 && v.stock <= 3;
 
   useEffect(() => {
+    if (!gift || !cartReady || !v) return;
+    const existing = cart.find((item) => item.variantId === v.id);
+    if (!existing) return;
+    setGiftOn(!!existing.giftPackaging);
+    if (existing.giftImageId) setGiftImageId(existing.giftImageId);
+  }, [gift, cartReady, v?.id, cart]);
+
+  useEffect(() => {
     if (!stickyAtc || !atcRef.current) return;
     const io = new IntersectionObserver(([e]) => setShowSticky(!e!.isIntersecting && e!.boundingClientRect.top < 0), { threshold: 0 });
     io.observe(atcRef.current);
@@ -147,6 +155,11 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
     if (buyNow) router.push('/checkout');
   };
 
+  const chooseGift = (on: boolean, id: string | null) => {
+    setGiftOn(on);
+    setGiftImageId(id);
+    if (v && cart.some((item) => item.variantId === v.id)) setGiftPackaging(v.id, on, id);
+  };
   const wished = inWishlist(p.id);
   const sizeLabel = category?.slug === 'rings' ? 'Ring size' : category?.slug === 'necklaces' ? 'Length' : category?.slug === 'bracelets' ? 'Wrist size' : 'Size';
 
@@ -182,15 +195,16 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
                 <span className={cn('h-2 w-2 rounded-full', low ? 'bg-sale' : 'bg-emerald-600')} />
                 {low ? `Only ${v!.stock} left — order soon` : state.needsSize ? 'Select a size to see availability' : 'In stock — dispatched within 24 hours'}
               </p>
-              {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} quantity={qty} onChange={(on, id) => { setGiftOn(on); setGiftImageId(id); }} />}
+              {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} quantity={qty} onChange={chooseGift} />}
+              {gift && <GiftPurchaseTotal productTotal={price * qty} packaging={gift.price * qty} selected={giftOn} />}
               <div className="mt-4 flex flex-wrap gap-3">
                 <QtyStepper value={qty} onChange={setQty} max={Math.max(1, Math.min(20, v?.stock ?? 20))} />
-                <button onClick={() => add(false)} disabled={allSoldOut} className="btn btn-primary min-w-0 flex-1">{allSoldOut ? 'Sold out' : gift && giftOn ? 'Add with packaging' : 'Add to bag'}</button>
+                <button onClick={() => add(false)} disabled={allSoldOut} className="btn btn-primary min-w-0 flex-1">{allSoldOut ? 'Sold out' : 'Add to bag'}</button>
                 <button onClick={() => toggleWishlist(p.id, p.name)} aria-pressed={wished} className="grid w-12 shrink-0 place-items-center border border-line transition hover:border-ink rounded-theme-sm" aria-label={wished ? 'Remove from wishlist' : 'Save to wishlist'}>
                   <Heart size={18} strokeWidth={1.25} className={cn(wished && 'fill-current text-sale')} />
                 </button>
               </div>
-              <button onClick={() => add(true)} disabled={allSoldOut} className="btn btn-secondary mt-3 w-full">{gift && giftOn ? 'Buy it now, packaged' : 'Buy it now'}</button>
+              <button onClick={() => add(true)} disabled={allSoldOut} className="btn btn-secondary mt-3 w-full">Buy it now</button>
             </>
           )}
         </div>
@@ -237,9 +251,9 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[0.85rem] font-medium">{p.name}</p>
-              <p className="text-[0.8rem] text-muted">{formatMoney(price)}{gift && giftOn ? ` + ${formatMoney(gift.price)} packaging` : ''}{v && v.title !== 'Default' ? ` · ${v.title}` : ''}</p>
+              <p className="text-[0.8rem] text-muted">{formatMoney(price + (gift && giftOn ? gift.price : 0))}{gift && giftOn ? ` · ${formatMoney(gift.price)} packaging` : ''}{v && v.title !== 'Default' ? ` · ${v.title}` : ''}</p>
             </div>
-            <button onClick={() => add(false)} className="btn btn-primary shrink-0">{gift && giftOn ? 'Add packaged' : 'Add to bag'}</button>
+            <button onClick={() => add(false)} className="btn btn-primary shrink-0">Add to bag</button>
           </div>
         </div>
       )}

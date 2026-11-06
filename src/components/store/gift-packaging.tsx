@@ -1,6 +1,5 @@
 'use client';
 
-import { Check, Gift } from 'lucide-react';
 import { Img } from '@/components/ui/img';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
@@ -25,59 +24,94 @@ export function GiftPackagingChoice({
   quantity?: number;
 }) {
   const chosen = images.find((img) => img.id === imageId) ?? images[0] ?? null;
-  const extra = price * Math.max(1, quantity);
-  const pick = (on: boolean) => onChange(on, on ? chosen?.id ?? null : null);
+  const units = Math.max(1, quantity);
+  const extra = price * units;
+  const pick = (on: boolean, id: string | null = chosen?.id ?? null) => onChange(on, on ? id : null);
 
   return (
-    <fieldset className={cn('gift-pack gift-choice min-w-0 border-0 p-0', compact ? 'mt-3' : 'mt-5')}>
-      <legend className="mb-2 flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.16em] text-muted">
-        <Gift size={14} strokeWidth={1.5} className="text-accent" aria-hidden />
-        Send it
-      </legend>
-      <div className={cn('gift-choice-grid', compact && 'is-compact')} role="group" aria-label="Gift packaging">
-        <button type="button" className="gift-choice-card" aria-pressed={!selected} onClick={() => pick(false)}>
-          <span className="gift-choice-check" aria-hidden>{!selected && <Check size={13} strokeWidth={2} />}</span>
-          <span className="min-w-0">
-            <span className="block text-[0.9rem] font-medium">Without packaging</span>
-            <span className="mt-0.5 block text-[0.75rem] text-muted">{compact ? 'No extra charge' : 'No extra charge. The complimentary pouch and note stay included.'}</span>
+    <div className={cn('gift-pack min-w-0', compact && 'is-compact')}>
+      <label className={cn('gift-check', selected && 'is-on')}>
+        <input
+          type="checkbox"
+          className="gift-check-input"
+          checked={selected}
+          onChange={(e) => pick(e.target.checked)}
+        />
+        <span className="gift-tick-box" aria-hidden>
+          <svg viewBox="0 0 16 16" className="gift-tick">
+            <path d="M3.2 8.2 6.3 11.2 12.8 4.6" />
+          </svg>
+        </span>
+        <span className="min-w-0">
+          <span className="gift-check-title">Add Premium Gift Packaging</span>
+          <span className="gift-check-copy">Make your order extra special with our premium gift packaging.</span>
+          <span className="gift-check-price">
+            {formatMoney(price)}
+            {units > 1 ? ` each · ${formatMoney(extra)} for ${units}` : ''}
           </span>
-        </button>
-        <button type="button" className="gift-choice-card" aria-pressed={selected} onClick={() => pick(true)}>
-          <span className="gift-choice-check" aria-hidden>{selected && <Check size={13} strokeWidth={2} />}</span>
-          <span className="flex min-w-0 flex-1 items-center gap-2">
-            {chosen && (
-              <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-theme-sm bg-surface">
-                <Img src={chosen.url} alt="" sizes="48px" className="gift-still" />
+        </span>
+      </label>
+      <div className={cn('gift-reveal', selected && images.length > 0 && 'is-open')} aria-hidden={!selected} inert={!selected}>
+        <div className="gift-reveal-inner">
+          {chosen && (
+            <div className="gift-preview">
+              <span className="gift-preview-frame">
+                <Img src={chosen.url} alt={chosen.alt} sizes="160px" className="gift-still" />
               </span>
-            )}
-            <span className="min-w-0">
-              <span className="block text-[0.9rem] font-medium">With gift packaging</span>
-              <span className="mt-0.5 block text-[0.75rem] text-accent">{formatMoney(price)} each{quantity > 1 ? ` · ${formatMoney(extra)} for ${quantity}` : ''}</span>
-            </span>
-          </span>
-        </button>
+              <span className="min-w-0">
+                <span className="block text-[0.82rem]">{chosen.alt}</span>
+                <span className="mt-1 block text-[0.75rem] text-muted">
+                  {formatMoney(extra)} added separately. It is not part of the piece price.
+                </span>
+              </span>
+            </div>
+          )}
+          {images.length > 1 && (
+            <div className="gift-styles" role="group" aria-label="Packaging style">
+              {images.map((img) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  aria-pressed={chosen?.id === img.id}
+                  onClick={() => pick(true, img.id)}
+                  className={cn('gift-style', chosen?.id === img.id && 'is-on')}
+                >
+                  <span className="relative block h-14 w-14 overflow-hidden rounded-theme-sm bg-surface">
+                    <Img src={img.url} alt="" sizes="56px" className="gift-still" />
+                  </span>
+                  <span className="mt-1 block max-w-16 truncate text-[0.68rem]">{img.alt}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      {selected && images.length > 1 && (
-        <div className="gift-styles" role="group" aria-label="Packaging style">
-          {images.map((img) => (
-            <button
-              key={img.id}
-              type="button"
-              aria-pressed={chosen?.id === img.id}
-              onClick={() => onChange(true, img.id)}
-              className={cn('gift-style', chosen?.id === img.id && 'is-on')}
-            >
-              <span className="relative block h-14 w-14 overflow-hidden rounded-theme-sm bg-surface">
-                <Img src={img.url} alt="" sizes="56px" className="gift-still" />
-              </span>
-              <span className="mt-1 block max-w-16 truncate text-[0.68rem]">{img.alt}</span>
-            </button>
-          ))}
+      <p className="sr-only" aria-live="polite">
+        {selected ? `Premium Gift Packaging added. ${formatMoney(extra)}.` : 'Premium Gift Packaging removed.'}
+      </p>
+    </div>
+  );
+}
+
+/** Live product-page total. Uses the server price; it does not submit a charge. */
+export function GiftPurchaseTotal({ productTotal, packaging, selected }: { productTotal: number; packaging: number; selected: boolean }) {
+  const extra = selected ? packaging : 0;
+  return (
+    <dl className="gift-pay" aria-live="polite">
+      <div>
+        <dt>Product</dt>
+        <dd>{formatMoney(productTotal)}</dd>
+      </div>
+      {selected && (
+        <div>
+          <dt>Premium Gift Packaging</dt>
+          <dd>{formatMoney(packaging)}</dd>
         </div>
       )}
-      <p className={cn('mt-2 text-[0.75rem] text-muted', compact && 'sr-only')} aria-live="polite">
-        {selected ? `Packaging added. ${formatMoney(extra)} will be shown separately before you pay.` : 'Packaging is not added. You can choose it later in the bag.'}
-      </p>
-    </fieldset>
+      <div className="gift-pay-total">
+        <dt>Total</dt>
+        <dd>{formatMoney(productTotal + extra)}</dd>
+      </div>
+    </dl>
   );
 }

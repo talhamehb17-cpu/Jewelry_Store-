@@ -88,7 +88,7 @@ export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote
                 <div className="min-w-0">
                   <Link href={`/products/${item.slug}`} className="break-words font-heading text-[1.05rem] leading-snug">{item.name}</Link>
                   {item.variantTitle && <p className="mt-0.5 text-[0.78rem] text-muted">{item.variantTitle}</p>}
-                  {line?.giftSelected && <p className="mt-1 text-[0.75rem] text-accent">With gift packaging</p>}
+                  {line?.giftSelected && <p className="mt-1 text-[0.75rem] text-accent">Premium Gift Packaging{line.giftLineTotal ? ` · ${formatMoney(line.giftLineTotal)}` : ''}</p>}
                 </div>
                 <p className="shrink-0 text-[0.9rem]">{formatMoney(item.price * item.quantity)}</p>
               </div>
@@ -173,12 +173,13 @@ export function CartDrawer() {
         cart.length ? (
           <div className="space-y-4 px-6 py-5">
             <div className="flex items-center justify-between text-[0.95rem]">
-              <span>Subtotal</span>
+              <span>Product subtotal</span>
               <span className={loading ? 'opacity-50' : ''}>{formatMoney(subtotal)}</span>
             </div>
             {quote?.campaign && <p className="text-[0.75rem] text-accent">{quote.campaign.name} · {quote.campaign.percent}% off is included (−{formatMoney(quote.campaign.amount)}).</p>}
-            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.85rem]"><span>Gift packaging</span><span>{formatMoney(quote.giftTotal)}</span></div>}
-            <p className="text-[0.75rem] text-muted">Shipping and codes are calculated at checkout.</p>
+            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.85rem]"><span>Premium Gift Packaging</span><span>{formatMoney(quote.giftTotal)}</span></div>}
+            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.95rem]"><span>Total</span><span>{formatMoney(subtotal + quote.giftTotal)}</span></div>}
+            <p className="text-[0.75rem] text-muted">Delivery charges and discounts are calculated at checkout.</p>
             <div className="grid grid-cols-2 gap-3">
               <Link href="/cart" onClick={() => setCartOpen(false)} className="btn btn-secondary">View bag</Link>
               <Link href="/checkout" onClick={() => setCartOpen(false)} className="btn btn-primary">Checkout</Link>

@@ -92,7 +92,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
             <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
             {o.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{o.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
             {o.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {o.discountCode && `(${o.discountCode})`}</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
-            {o.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Gift packaging</dt><dd>{formatMoney(o.giftTotal)}</dd></div>}
+            {o.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{formatMoney(o.giftTotal)}</dd></div>}
             <div className="flex justify-between"><dt className="text-muted">{o.shippingMethodName}</dt><dd>{o.shippingTotal ? formatMoney(o.shippingTotal) : 'Complimentary'}</dd></div>
             {o.refundedAmount > 0 && <div className="flex justify-between text-muted"><dt>Refunded</dt><dd>−{formatMoney(o.refundedAmount)}</dd></div>}
             <div className="flex justify-between border-t border-line pt-3 text-[1.05rem]"><dt>Total</dt><dd className="font-medium">{formatMoney(o.total)}</dd></div>

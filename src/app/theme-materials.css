@@ -21,62 +21,132 @@
   object-fit: contain !important;
   background: var(--c-surface);
 }
-.gift-choice-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.55rem;
+.gift-pack {
+  margin-top: 1rem;
 }
-@media (min-width: 420px) {
-  .gift-choice-grid:not(.is-compact) {
-    grid-template-columns: 1fr 1fr;
-  }
+.gift-pack.is-compact {
+  margin-top: 0.75rem;
 }
-.gift-choice-card {
+.gift-check {
+  position: relative;
   display: flex;
   width: 100%;
   min-width: 0;
-  min-height: 3.25rem;
+  min-height: 3rem;
   align-items: flex-start;
-  gap: 0.65rem;
+  gap: 0.75rem;
   border: 1px solid var(--c-border);
   border-radius: var(--radius, 12px);
   background: var(--c-bg);
   color: var(--c-text);
-  padding: 0.7rem 0.75rem;
+  padding: 0.8rem 0.85rem;
   text-align: left;
-  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
-.gift-choice-card:focus-visible {
-  outline: 2px solid var(--c-accent);
-  outline-offset: 2px;
+.gift-pack.is-compact .gift-check {
+  padding: 0.7rem 0.75rem;
 }
-.gift-choice-card[aria-pressed='true'] {
+.gift-check.is-on {
   border-color: var(--c-text);
   background: var(--c-surface);
   box-shadow: inset 0 0 0 1px var(--c-text);
 }
-.gift-choice-check {
+.gift-check:focus-within {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+.gift-check-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.gift-tick-box {
   display: grid;
-  width: 1.15rem;
-  height: 1.15rem;
-  margin-top: 0.15rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.05rem;
   flex: none;
   place-items: center;
   border: 1px solid var(--c-border);
-  border-radius: 999px;
-  color: var(--c-bg);
+  border-radius: 0.3rem;
   background: transparent;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
-.gift-choice-card[aria-pressed='true'] .gift-choice-check {
+.gift-check.is-on .gift-tick-box {
   border-color: var(--c-text);
   background: var(--c-text);
-  color: var(--c-bg);
+}
+.gift-tick {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: none;
+  stroke: var(--c-bg);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+}
+.gift-check.is-on .gift-tick {
+  stroke-dashoffset: 0;
+}
+.gift-check-title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.gift-check-copy,
+.gift-check-price {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--c-muted);
+}
+.gift-check-price {
+  color: var(--c-accent, var(--c-text));
+}
+.gift-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+}
+.gift-reveal.is-open {
+  grid-template-rows: 1fr;
+}
+.gift-reveal-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.gift-preview {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.7rem;
+}
+.gift-preview-frame {
+  position: relative;
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--c-surface);
+}
+.gift-pack.is-compact .gift-preview-frame {
+  width: 3.25rem;
+  height: 3.25rem;
 }
 .gift-styles {
   display: flex;
   max-width: 100%;
   gap: 0.5rem;
-  margin-top: 0.7rem;
+  margin-top: 0.65rem;
   overflow-x: auto;
   padding-bottom: 0.15rem;
 }
@@ -92,20 +162,82 @@
 .gift-style.is-on .relative {
   box-shadow: inset 0 0 0 1px var(--c-text);
 }
+.gift-pay {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+}
+.gift-pay > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.gift-pay dt {
+  color: var(--c-muted);
+}
+.gift-pay-total {
+  margin-top: 0.15rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--c-border);
+  font-size: 0.95rem;
+}
+.gift-pay-total dt,
+.gift-pay-total dd {
+  color: var(--c-text);
+}
 @media (prefers-reduced-motion: no-preference) {
-  .gift-styles {
-    animation: giftChoiceIn 160ms ease;
+  .gift-check.is-on .gift-tick {
+    animation: giftTick 180ms ease forwards;
+  }
+  .gift-reveal {
+    transition: grid-template-rows 180ms ease;
   }
 }
-@keyframes giftChoiceIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+@keyframes giftTick {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gift-choice-card,
+  .gift-check,
+  .gift-tick-box,
+  .gift-tick,
+  .gift-reveal,
   .gift-styles {
     animation: none;
     transition: none;
+  }
+  .gift-check.is-on .gift-tick {
+    stroke-dashoffset: 0;
+  }
+}
+[data-theme='glassmorphism'] .gift-check {
+  background: color-mix(in srgb, var(--c-surface) 72%, transparent);
+  border-color: var(--glass-edge, var(--c-border));
+}
+[data-theme='neumorphism'] .gift-check {
+  border-color: transparent;
+  background: var(--c-bg);
+  box-shadow: 4px 4px 10px var(--neu-lo), -4px -4px 10px var(--neu-hi);
+}
+[data-theme='neumorphism'] .gift-check.is-on {
+  box-shadow: inset 3px 3px 7px var(--neu-lo), inset -3px -3px 7px var(--neu-hi);
+}
+[data-theme='neumorphism'] .gift-tick-box {
+  border-color: transparent;
+  background: var(--c-bg);
+  box-shadow: inset 2px 2px 4px var(--neu-lo), inset -2px -2px 4px var(--neu-hi);
+}
+[data-theme='neumorphism'] .gift-check.is-on .gift-tick-box {
+  background: var(--c-text);
+  box-shadow: none;
+}
+@media (max-width: 767px) {
+  [data-theme='neumorphism'] .gift-check {
+    box-shadow: 2px 2px 5px var(--neu-lo), -2px -2px 5px var(--neu-hi);
+  }
+  [data-theme='neumorphism'] .gift-check.is-on {
+    box-shadow: inset 2px 2px 4px var(--neu-lo), inset -2px -2px 4px var(--neu-hi);
   }
 }
 

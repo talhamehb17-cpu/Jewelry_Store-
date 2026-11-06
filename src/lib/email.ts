@@ -37,7 +37,7 @@ export function orderConfirmationEmail(order: Order, items: OrderItem[], link: s
      ${order.campaignDiscount ? `<p>Includes ${esc(order.campaignName || 'event sale')} savings of ${formatMoney(order.campaignDiscount)}.</p>` : ''}
      <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:14px">${rows}
        ${order.discountTotal ? `<tr><td style="padding:8px 0">Discount${order.discountCode ? ` (${esc(order.discountCode)})` : ''}</td><td style="text-align:right">−${formatMoney(order.discountTotal)}</td></tr>` : ''}
-       ${order.giftTotal ? `<tr><td style="padding:8px 0">Gift packaging</td><td style="text-align:right">${formatMoney(order.giftTotal)}</td></tr>` : ''}
+       ${order.giftTotal ? `<tr><td style="padding:8px 0">Premium Gift Packaging</td><td style="text-align:right">${formatMoney(order.giftTotal)}</td></tr>` : ''}
        <tr><td style="padding:12px 0 0">Total</td><td style="padding:12px 0 0;text-align:right"><strong>${formatMoney(order.total)}</strong></td></tr>
      </table>
      ${emailButton(link, 'VIEW YOUR ORDER')}`,

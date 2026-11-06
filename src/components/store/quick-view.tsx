@@ -8,29 +8,40 @@ import { Img } from '@/components/ui/img';
 import { Price, Stars } from '@/components/ui/bits';
 import { useStore } from './providers';
 import { QtyStepper, VariantPicker, useVariantSelection, type PickerVariant } from './variant-picker';
+import { GiftPackagingChoice, GiftPurchaseTotal, type GiftPreview } from './gift-packaging';
 import { cn } from '@/lib/utils';
 
 type QV = {
   product: { id: number; slug: string; name: string; subtitle: string | null; description: string; price: number; compareAtPrice: number | null; ratingAvg: number; ratingCount: number };
   images: { url: string; alt: string | null }[];
   variants: PickerVariant[];
+  gift?: { price: number; images: GiftPreview[] } | null;
 };
 
 function Body({ data }: { data: QV }) {
-  const { addToCart, setQuickView, toggleWishlist, inWishlist } = useStore();
+  const { addToCart, setQuickView, toggleWishlist, inWishlist, cart, setGiftPackaging } = useStore();
   const state = useVariantSelection(data.variants);
   const [qty, setQty] = useState(1);
   const [img, setImg] = useState(0);
   const [hint, setHint] = useState('');
+  const [giftOn, setGiftOn] = useState(false);
+  const [giftImageId, setGiftImageId] = useState<string | null>(data.gift?.images[0]?.id ?? null);
   const p = data.product;
   const v = state.selected;
   const price = v?.price ?? p.price;
   const compare = v?.compareAtPrice ?? p.compareAtPrice;
   const soldOut = v ? v.stock <= 0 : data.variants.every((x) => x.stock <= 0);
+  useEffect(() => {
+    if (!data.gift || !v) return;
+    const existing = cart.find((item) => item.variantId === v.id);
+    if (!existing) return;
+    setGiftOn(!!existing.giftPackaging);
+    if (existing.giftImageId) setGiftImageId(existing.giftImageId);
+  }, [data.gift, v?.id, cart]);
   const add = () => {
     if (state.needsSize || !v) return setHint('Please select a size.');
     if (soldOut) return;
-    addToCart({ variantId: v.id, productId: p.id, slug: p.slug, name: p.name, variantTitle: v.title === 'Default' ? null : v.title, image: data.images[0]?.url ?? null, price }, qty);
+    addToCart({ variantId: v.id, productId: p.id, slug: p.slug, name: p.name, variantTitle: v.title === 'Default' ? null : v.title, image: data.images[0]?.url ?? null, price, giftPackaging: !!data.gift && giftOn, giftImageId: giftOn ? giftImageId : null }, qty);
     setQuickView(null);
   };
   return (
@@ -61,6 +72,23 @@ function Body({ data }: { data: QV }) {
           <VariantPicker variants={data.variants} state={state} compact />
         </div>
         {hint && state.needsSize && <p className="mt-3 text-[0.8rem] text-sale">{hint}</p>}
+        {data.gift && (
+          <>
+            <GiftPackagingChoice
+              price={data.gift.price}
+              images={data.gift.images}
+              selected={giftOn}
+              imageId={giftImageId}
+              quantity={qty}
+              onChange={(on, id) => {
+                setGiftOn(on);
+                setGiftImageId(id);
+                if (v && cart.some((item) => item.variantId === v.id)) setGiftPackaging(v.id, on, id);
+              }}
+            />
+            <GiftPurchaseTotal productTotal={price * qty} packaging={data.gift.price * qty} selected={giftOn} />
+          </>
+        )}
         <div className="mt-6 flex items-center gap-3">
           <QtyStepper value={qty} onChange={setQty} max={Math.max(1, Math.min(20, v?.stock ?? 20))} />
           <button onClick={add} disabled={soldOut} className="btn btn-primary flex-1">{soldOut ? 'Sold out' : 'Add to bag'}</button>
