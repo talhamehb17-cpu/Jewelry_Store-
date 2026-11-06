@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { Lock, ShieldCheck, Tag, X, Banknote, Landmark, Smartphone, ShoppingBag, ChevronDown } from 'lucide-react';
+import { GiftPackagingChoice } from './gift-packaging';
 import { useStore } from './providers';
 import { useQuote, FreeShippingBar } from './cart-drawer';
 import { Img } from '@/components/ui/img';
@@ -85,7 +86,7 @@ function ProofUpload({ token, onToken }: { token: string | null; onToken: (token
 
 export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelledNotice }: { prefill: Prefill; provinces: readonly string[]; payments: Payments; loggedIn: boolean; cancelledNotice?: string | null }) {
   const router = useRouter();
-  const { cart, cartReady, clearCart } = useStore();
+  const { cart, cartReady, clearCart, setGiftPackaging } = useStore();
   const [f, setF] = useState<Prefill>(prefill);
   const [shippingMethod, setShippingMethod] = useState('standard');
   const firstPm: PayId = payments.cod.enabled ? 'cod' : payments.easypaisa.enabled ? 'easypaisa' : payments.jazzcash.enabled ? 'jazzcash' : 'bank';
@@ -180,17 +181,30 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
     <div className="space-y-5">
       <ul className="space-y-4">
         {(quote?.lines ?? cart.map((c) => ({ variantId: c.variantId, name: c.name, variantTitle: c.variantTitle, image: c.image, quantity: c.quantity, lineTotal: c.price * c.quantity, giftLineTotal: 0 }))).map((l) => (
-          <li key={l.variantId} className="flex items-center gap-4">
-            <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-theme-sm bg-surface">
-              <Img src={l.image} alt={l.name} sizes="64px" />
-              <span className="absolute -right-0 -top-0 grid h-5 min-w-5 place-items-center rounded-bl-md bg-ink px-1 text-[0.65rem] text-bg">{l.quantity}</span>
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[0.9rem]">{l.name}</span>
-              {l.variantTitle && <span className="block text-[0.78rem] text-muted">{l.variantTitle}</span>}
-              {l.giftLineTotal > 0 && <span className="block text-[0.75rem] text-accent">Gift packaging {formatMoney(l.giftLineTotal)}</span>}
-            </span>
-            <span className="text-[0.9rem]">{formatMoney(l.lineTotal)}</span>
+          <li key={l.variantId} className="min-w-0">
+            <div className="flex items-center gap-4">
+              <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-theme-sm bg-surface">
+                <Img src={l.image} alt={l.name} sizes="64px" />
+                <span className="absolute -right-0 -top-0 grid h-5 min-w-5 place-items-center rounded-bl-md bg-ink px-1 text-[0.65rem] text-bg">{l.quantity}</span>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[0.9rem]">{l.name}</span>
+                {l.variantTitle && <span className="block text-[0.78rem] text-muted">{l.variantTitle}</span>}
+                {l.giftLineTotal > 0 && <span className="block text-[0.75rem] text-accent">With gift packaging · {formatMoney(l.giftLineTotal)}</span>}
+              </span>
+              <span className="shrink-0 text-[0.9rem]">{formatMoney(l.lineTotal)}</span>
+            </div>
+            {quote?.lines.find((row) => row.variantId === l.variantId)?.giftEligible && (
+              <GiftPackagingChoice
+                compact
+                price={quote.giftUnitPrice}
+                images={quote.giftImages}
+                selected={!!quote.lines.find((row) => row.variantId === l.variantId)?.giftSelected}
+                imageId={quote.lines.find((row) => row.variantId === l.variantId)?.giftImageId}
+                quantity={l.quantity}
+                onChange={(on, id) => setGiftPackaging(l.variantId, on, id)}
+              />
+            )}
           </li>
         ))}
       </ul>

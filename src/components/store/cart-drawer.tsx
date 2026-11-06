@@ -7,8 +7,8 @@ import { Drawer } from '@/components/ui/overlay';
 import { Img } from '@/components/ui/img';
 import { QtyStepper } from './variant-picker';
 import { useStore, type CartItem } from './providers';
+import { GiftPackagingChoice } from './gift-packaging';
 import { formatMoney } from '@/lib/money';
-import { cn } from '@/lib/utils';
 import type { Quote } from '@/lib/pricing';
 import type { CardProduct } from '@/lib/catalog';
 
@@ -78,45 +78,39 @@ export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote
       {cart.map((item) => {
         const line = quote?.lines.find((l) => l.variantId === item.variantId);
         return (
-        <li key={item.variantId} className="flex gap-4 py-5">
-          <Link href={`/products/${item.slug}`} className="relative block h-28 w-[5.5rem] shrink-0 overflow-hidden rounded-theme-sm bg-surface">
-            <Img src={item.image} alt={item.name} sizes="90px" />
-          </Link>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <Link href={`/products/${item.slug}`} className="break-words font-heading text-[1.05rem] leading-snug">{item.name}</Link>
-                {item.variantTitle && <p className="mt-0.5 text-[0.78rem] text-muted">{item.variantTitle}</p>}
+        <li key={item.variantId} className="min-w-0 py-5">
+          <div className="flex gap-4">
+            <Link href={`/products/${item.slug}`} className="relative block h-28 w-[5.5rem] shrink-0 overflow-hidden rounded-theme-sm bg-surface">
+              <Img src={item.image} alt={item.name} sizes="90px" />
+            </Link>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <Link href={`/products/${item.slug}`} className="break-words font-heading text-[1.05rem] leading-snug">{item.name}</Link>
+                  {item.variantTitle && <p className="mt-0.5 text-[0.78rem] text-muted">{item.variantTitle}</p>}
+                  {line?.giftSelected && <p className="mt-1 text-[0.75rem] text-accent">With gift packaging</p>}
+                </div>
+                <p className="shrink-0 text-[0.9rem]">{formatMoney(item.price * item.quantity)}</p>
               </div>
-              <p className="shrink-0 text-[0.9rem]">{formatMoney(item.price * item.quantity)}</p>
-            </div>
-            {line?.giftEligible && (
-              <label className="mt-2 flex min-w-0 items-start gap-2 text-[0.78rem]">
-                <input type="checkbox" className="checkbox mt-0.5" checked={!!line.giftSelected} onChange={(event) => setGiftPackaging(item.variantId, event.target.checked, quote?.giftImages[0]?.id ?? null)} />
-                <span className="min-w-0">Premium gift packaging · {formatMoney(quote?.giftUnitPrice || 0)} each{line.giftSelected ? ` · ${formatMoney(line.giftLineTotal)}` : ''}</span>
-              </label>
-            )}
-            {line?.giftSelected && (quote?.giftImages.length ?? 0) > 1 && (
-              <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Packaging style">
-                {quote!.giftImages.map((img) => (
-                  <button key={img.id} type="button" aria-pressed={line.giftImageId === img.id} onClick={() => setGiftPackaging(item.variantId, true, img.id)} className={cn('relative h-11 w-11 overflow-hidden rounded-theme-sm border', line.giftImageId === img.id ? 'border-ink' : 'border-line')}>
-                    <Img src={img.url} alt={img.alt} sizes="44px" className="gift-still" />
-                  </button>
-                ))}
+              <div className="mt-auto flex items-center justify-between pt-3">
+                <QtyStepper value={item.quantity} onChange={(n) => updateQty(item.variantId, n)} small={compact} />
+                <button onClick={() => removeFromCart(item.variantId)} className="inline-flex items-center gap-1.5 text-[0.75rem] text-muted transition hover:text-sale" aria-label={`Remove ${item.name}`}>
+                  <Trash2 size={14} strokeWidth={1.25} /> Remove
+                </button>
               </div>
-            )}
-            {line?.giftSelected && line.giftImage && (quote?.giftImages.length ?? 0) < 2 && (
-              <span className="relative mt-2 block h-12 w-12 overflow-hidden rounded-theme-sm bg-surface">
-                <Img src={line.giftImage} alt="" sizes="48px" className="gift-still" />
-              </span>
-            )}
-            <div className="mt-auto flex items-center justify-between pt-3">
-              <QtyStepper value={item.quantity} onChange={(n) => updateQty(item.variantId, n)} small={compact} />
-              <button onClick={() => removeFromCart(item.variantId)} className="inline-flex items-center gap-1.5 text-[0.75rem] text-muted transition hover:text-sale" aria-label={`Remove ${item.name}`}>
-                <Trash2 size={14} strokeWidth={1.25} /> Remove
-              </button>
             </div>
           </div>
+          {line?.giftEligible && (
+            <GiftPackagingChoice
+              compact={compact}
+              price={quote?.giftUnitPrice || 0}
+              images={quote?.giftImages ?? []}
+              selected={!!line.giftSelected}
+              imageId={line.giftImageId}
+              quantity={item.quantity}
+              onChange={(on, id) => setGiftPackaging(item.variantId, on, id)}
+            />
+          )}
         </li>
         );
       })}

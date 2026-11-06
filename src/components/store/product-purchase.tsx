@@ -182,15 +182,15 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
                 <span className={cn('h-2 w-2 rounded-full', low ? 'bg-sale' : 'bg-emerald-600')} />
                 {low ? `Only ${v!.stock} left — order soon` : state.needsSize ? 'Select a size to see availability' : 'In stock — dispatched within 24 hours'}
               </p>
-              <div className="flex flex-wrap gap-3">
+              {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} quantity={qty} onChange={(on, id) => { setGiftOn(on); setGiftImageId(id); }} />}
+              <div className="mt-4 flex flex-wrap gap-3">
                 <QtyStepper value={qty} onChange={setQty} max={Math.max(1, Math.min(20, v?.stock ?? 20))} />
-                <button onClick={() => add(false)} disabled={allSoldOut} className="btn btn-primary flex-1">{allSoldOut ? 'Sold out' : 'Add to bag'}</button>
+                <button onClick={() => add(false)} disabled={allSoldOut} className="btn btn-primary min-w-0 flex-1">{allSoldOut ? 'Sold out' : gift && giftOn ? 'Add with packaging' : 'Add to bag'}</button>
                 <button onClick={() => toggleWishlist(p.id, p.name)} aria-pressed={wished} className="grid w-12 shrink-0 place-items-center border border-line transition hover:border-ink rounded-theme-sm" aria-label={wished ? 'Remove from wishlist' : 'Save to wishlist'}>
                   <Heart size={18} strokeWidth={1.25} className={cn(wished && 'fill-current text-sale')} />
                 </button>
               </div>
-              {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} onChange={(on, id) => { setGiftOn(on); setGiftImageId(id); }} />}
-              <button onClick={() => add(true)} disabled={allSoldOut} className="btn btn-secondary mt-3 w-full">Buy it now</button>
+              <button onClick={() => add(true)} disabled={allSoldOut} className="btn btn-secondary mt-3 w-full">{gift && giftOn ? 'Buy it now, packaged' : 'Buy it now'}</button>
             </>
           )}
         </div>
@@ -237,9 +237,9 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[0.85rem] font-medium">{p.name}</p>
-              <p className="text-[0.8rem] text-muted">{formatMoney(price)}{v && v.title !== 'Default' ? ` · ${v.title}` : ''}</p>
+              <p className="text-[0.8rem] text-muted">{formatMoney(price)}{gift && giftOn ? ` + ${formatMoney(gift.price)} packaging` : ''}{v && v.title !== 'Default' ? ` · ${v.title}` : ''}</p>
             </div>
-            <button onClick={() => add(false)} className="btn btn-primary shrink-0">Add to bag</button>
+            <button onClick={() => add(false)} className="btn btn-primary shrink-0">{gift && giftOn ? 'Add packaged' : 'Add to bag'}</button>
           </div>
         </div>
       )}
