@@ -14,6 +14,8 @@ const THEME_LOOK: Record<ThemeId, { hero: string; editorial: string; story: stri
   parisian: { hero: IMG.celestine1, editorial: IMG.isabella1, story: IMG.celeste1, atelier: IMG.amara1, finale: IMG.serenePearl, mobile: IMG.celestine1 },
   'golden-glamour': { hero: IMG.soleil1, editorial: LOOK.editorial, story: IMG.raniaBridal, atelier: LOOK.atelier, finale: IMG.aurora, mobile: IMG.soleil1 },
   contemporary: { hero: LOOK.worn, editorial: IMG.crescent2, story: IMG.noor1, atelier: IMG.zoyaChain, finale: IMG.tennis1, mobile: IMG.amara1 },
+  glassmorphism: { hero: LOOK.hero, editorial: IMG.celestine1, story: LOOK.story, atelier: LOOK.atelier, finale: IMG.tennis1, mobile: IMG.celeste1 },
+  neumorphism: { hero: IMG.amara1, editorial: IMG.noor1, story: LOOK.story, atelier: IMG.zoyaChain, finale: IMG.soleil1, mobile: IMG.amara1 },
 };
 
 export function themeLook(id: ThemeId) {

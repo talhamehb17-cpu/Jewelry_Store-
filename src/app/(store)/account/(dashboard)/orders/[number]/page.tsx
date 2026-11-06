@@ -70,24 +70,24 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
       {o.trackingNumber && (
         <p className="flex items-center gap-3 rounded-theme-sm bg-surface px-4 py-3 text-[0.9rem]"><Truck size={18} strokeWidth={1.25} className="text-accent" /> Shipped with {o.trackingCarrier} · Tracking number <span className="font-mono">{o.trackingNumber}</span></p>
       )}
-      <div className="grid gap-8 md:grid-cols-[1.5fr_1fr]">
-        <div className="rounded-theme border border-line p-6">
+      <div className="grid min-w-0 gap-8 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="min-w-0 rounded-theme border border-line p-4 sm:p-6">
           <ul className="divide-y divide-line">
             {items.map(({ item: i, slug }) => (
-              <li key={i.id} className="flex items-center gap-4 py-4 first:pt-0">
-                <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-theme-sm bg-surface"><Img src={i.image} alt={i.name} sizes="64px" /></span>
-                <div className="flex-1">
-                  <p className="text-[0.95rem]">{i.name}</p>
-                  {i.variantTitle && <p className="text-[0.8rem] text-muted">{i.variantTitle}</p>}
+              <li key={i.id} className="flex items-start gap-3 py-4 first:pt-0 sm:gap-4">
+                <span className="relative h-16 w-14 shrink-0 overflow-hidden rounded-theme-sm bg-surface sm:h-20 sm:w-16"><Img src={i.image} alt={i.name} sizes="64px" /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-[0.95rem]">{i.name}</p>
+                  {i.variantTitle && <p className="break-words text-[0.8rem] text-muted">{i.variantTitle}</p>}
                   <p className="text-[0.8rem] text-muted">{formatMoney(i.unitPrice)} × {i.quantity}</p>
-                  {o.status === 'delivered' && slug && purchases.some((purchase) => purchase.itemId === i.id) && <div className="mt-3"><ReviewForm productId={i.productId!} defaultName={`${user.firstName} ${user.lastName}`.trim()} avatar={user.avatar} purchases={purchases.filter((purchase) => purchase.productId === i.productId)} signedIn returnTo={`/account/orders/${o.number}`} /></div>}
+                  {o.status === 'delivered' && slug && purchases.some((purchase) => purchase.itemId === i.id) && <div className="mt-3"><ReviewForm productId={i.productId!} productName={i.name} image={i.image} defaultName={`${user.firstName} ${user.lastName}`.trim()} avatar={user.avatar} purchases={purchases.filter((purchase) => purchase.productId === i.productId)} signedIn returnTo={`/account/orders/${o.number}`} /></div>}
                   {o.status === 'delivered' && slug && !purchases.some((purchase) => purchase.itemId === i.id) && <p className="mt-2 text-[0.78rem] text-muted">Reviewed, or no longer open for this purchase.</p>}
                 </div>
-                <p>{formatMoney(i.lineTotal)}</p>
+                <p className="shrink-0 text-[0.9rem]">{formatMoney(i.lineTotal)}</p>
               </li>
             ))}
           </ul>
-          <dl className="mt-4 space-y-2 border-t border-line pt-4 text-[0.9rem]">
+          <dl className="mt-4 space-y-2 border-t border-line pt-4 text-[0.9rem] [&_div]:gap-3 [&_dd]:shrink-0 [&_dt]:min-w-0 [&_dt]:break-words">
             <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
             {o.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{o.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
             {o.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {o.discountCode && `(${o.discountCode})`}</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
@@ -96,7 +96,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
             <div className="flex justify-between border-t border-line pt-3 text-[1.05rem]"><dt>Total</dt><dd className="font-medium">{formatMoney(o.total)}</dd></div>
           </dl>
         </div>
-        <div className="space-y-6 text-[0.9rem]">
+        <div className="min-w-0 space-y-6 break-words text-[0.9rem]">
           <div><p className="label">Shipping address</p><p>{a.firstName} {a.lastName}<br />{a.line1}{a.line2 ? `, ${a.line2}` : ''}<br />{a.city}, {a.province} {a.postalCode}<br />{a.phone}</p></div>
           <div><p className="label">Payment</p><p>{PM[o.paymentMethod] ?? o.paymentMethod}</p>{o.paidAt && <p className="text-muted">Paid {formatDate(o.paidAt)}</p>}<PaymentPlanNote plan={o.paymentPlan} /></div>
           <div>

@@ -21,7 +21,7 @@ export default async function ThemesAdmin() {
   });
   return (
     <>
-      <PageHeader title="Themes" description="Ten complete storefront designs. Switching themes never touches your products, orders or customers." />
+      <PageHeader title="Themes" description="Twelve complete storefront designs. Switching themes never touches your products, orders or customers." />
       <ThemeGallery themes={themes} active={settings.theme.active} visitorSwitcher={settings.theme.visitorSwitcher} />
     </>
   );

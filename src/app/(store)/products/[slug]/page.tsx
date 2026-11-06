@@ -155,7 +155,7 @@ export default async function ProductPage({ params }: P) {
           average={p.ratingAvg}
           distribution={d.distribution}
         >
-          <ReviewForm productId={p.id} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} avatar={user?.avatar} purchases={purchases} signedIn={!!user} returnTo={`/products/${p.slug}#reviews`} />
+          <ReviewForm productId={p.id} productName={p.name} image={d.images[0]?.url} defaultName={user ? `${user.firstName} ${user.lastName}`.trim() : ''} avatar={user?.avatar} purchases={purchases} signedIn={!!user} returnTo={`/products/${p.slug}#reviews`} />
         </ReviewsSection>
       </section>
 

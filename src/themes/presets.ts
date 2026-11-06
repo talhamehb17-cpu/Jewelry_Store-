@@ -473,6 +473,66 @@ const contemporary: ThemeDefinition = {
   ],
 };
 
+const glassmorphism: ThemeDefinition = {
+  id: 'glassmorphism',
+  name: 'Glassmorphism',
+  tagline: 'Frosted pearl, soft gold light',
+  description: 'Translucent cards and a frosted header over a warm pearl ground. Blur stays on the chrome so product photographs remain the focus. Text stays dark and primary buttons stay solid.',
+  mood: ['Frosted', 'Pearl', 'Layered'],
+  settings: {
+    colors: {
+      background: '#F4EFE8', surface: '#FBF8F4', text: '#241E1A', muted: '#5C544C', primary: '#2A2420', primaryText: '#F7F3EE',
+      secondary: '#E7DFD4', accent: '#7A5A32', border: '#DDD3C7', sale: '#8E3F36', headerBg: '#F7F3EE', headerText: '#241E1A',
+      footerBg: '#EFE8DF', footerText: '#241E1A', announcementBg: '#2A2420', announcementText: '#F7F3EE',
+    },
+    typography: {
+      headingFont: 'cormorant', bodyFont: 'inter', navFont: 'inter', accentFont: 'cormorant', baseSize: 15, headingScale: 1.02,
+      headingWeight: 500, bodyWeight: 400, headingTracking: -0.02, headingCase: 'none', navTracking: 0.08, navCase: 'uppercase', navSize: 12, lineHeight: 1.6,
+    },
+    layout: {
+      containerWidth: 1320, sectionSpacing: 96, gridColumns: 4, gridGap: 20, radius: 18, imageRatio: 'portrait',
+      cardVariant: 'rounded', pdpVariant: 'thumbs-left', pdpStyle: 'soft', collectionVariant: 'topbar',
+    },
+    buttons: { shape: 'soft', style: 'solid', hover: 'lift', uppercase: false, tracking: 0.04, size: 'md', weight: 560 },
+    header: { variant: 'floating', sticky: true, transparentOnHome: false, logoText: 'EVERMOON', logoTagline: '', logoImage: '', logoSize: 22, borderBottom: false },
+    footer: { variant: 'soft', tagline: 'Frosted light, solid gold. Jewelry remains the focus.', showNewsletter: true, showSocial: true, showPayments: true },
+    announcement: { ...ANNOUNCEMENT },
+    mobile: { ...MOBILE, headerVariant: 'left', containerPadding: 16 },
+    animation: { style: 'fade', speed: 500 },
+  },
+  sections: [],
+};
+
+const neumorphism: ThemeDefinition = {
+  id: 'neumorphism',
+  name: 'Neumorphism',
+  tagline: 'Soft clay, quiet depth',
+  description: 'A warm clay surface with balanced raised and inset shadows, rounded controls, and a pressed state. Mobile shadows stay small so the boutique remains readable and fast.',
+  mood: ['Sculpted', 'Soft', 'Quiet'],
+  settings: {
+    colors: {
+      background: '#E6DFD4', surface: '#E6DFD4', text: '#2C261F', muted: '#5C534A', primary: '#2C261F', primaryText: '#F6F1EA',
+      secondary: '#DDD4C8', accent: '#7A5428', border: '#D5CBBF', sale: '#8E3F36', headerBg: '#E6DFD4', headerText: '#2C261F',
+      footerBg: '#E6DFD4', footerText: '#2C261F', announcementBg: '#2C261F', announcementText: '#F6F1EA',
+    },
+    typography: {
+      headingFont: 'outfit', bodyFont: 'outfit', navFont: 'outfit', accentFont: 'cormorant', baseSize: 15, headingScale: 1,
+      headingWeight: 500, bodyWeight: 400, headingTracking: -0.02, headingCase: 'none', navTracking: 0.04, navCase: 'none', navSize: 14, lineHeight: 1.6,
+    },
+    layout: {
+      containerWidth: 1280, sectionSpacing: 88, gridColumns: 4, gridGap: 22, radius: 22, imageRatio: 'portrait',
+      cardVariant: 'nordic', pdpVariant: 'stacked', pdpStyle: 'nordic', collectionVariant: 'topbar',
+    },
+    buttons: { shape: 'rounded', style: 'solid', hover: 'darken', uppercase: false, tracking: 0.02, size: 'md', weight: 600 },
+    header: { variant: 'centered', sticky: true, transparentOnHome: false, logoText: 'EVERMOON', logoTagline: '', logoImage: '', logoSize: 22, borderBottom: false },
+    footer: { variant: 'nordic', tagline: 'Soft surfaces, clear pieces. Designed in Lahore.', showNewsletter: true, showSocial: true, showPayments: true },
+    announcement: { ...ANNOUNCEMENT, style: 'static' },
+    mobile: { ...MOBILE, containerPadding: 16 },
+    animation: { style: 'fade', speed: 480 },
+  },
+  sections: [],
+};
+
 const LOGO = { logoText: 'EVERMOON', logoTagline: BRAND.tagline, logoImage: BRAND.logo, logoSize: 72 };
 softLuxury.settings.header = { ...softLuxury.settings.header, ...LOGO };
 modernMinimal.settings.header = { ...modernMinimal.settings.header, ...LOGO, logoSize: 64 };
@@ -484,6 +544,8 @@ scandinavian.settings.header = { ...scandinavian.settings.header, ...LOGO, logoS
 parisian.settings.header = { ...parisian.settings.header, ...LOGO };
 goldenGlamour.settings.header = { ...goldenGlamour.settings.header, ...LOGO };
 contemporary.settings.header = { ...contemporary.settings.header, ...LOGO, logoSize: 60 };
+glassmorphism.settings.header = { ...glassmorphism.settings.header, ...LOGO, logoSize: 36 };
+neumorphism.settings.header = { ...neumorphism.settings.header, ...LOGO, logoSize: 56 };
 
 softLuxury.sections = buildHome({ hero: 'campaign', categories: 'tiles', featured: 'asymmetric', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards' });
 modernMinimal.sections = buildHome({ hero: 'split', heroImage: LOOK.worn, categories: 'list', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', editorialImage: IMG.celestine1, introImage: IMG.noor1 });
@@ -495,6 +557,8 @@ scandinavian.sections = buildHome({ hero: 'minimal', heroImage: IMG.amara1, cate
 parisian.sections = buildHome({ hero: 'split', heroImage: IMG.celestine1, categories: 'circles', featured: 'carousel', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'slider', editorialImage: IMG.isabella1 });
 goldenGlamour.sections = buildHome({ hero: 'split', heroImage: LOOK.hero, categories: 'tiles', featured: 'grid', arrivals: 'carousel', bestsellers: 'grid', story: 'split', reviews: 'cards', promoImage: IMG.soleil1, editorialImage: LOOK.editorial });
 contemporary.sections = buildHome({ hero: 'mosaic', heroImage: LOOK.worn, categories: 'pills', featured: 'grid', arrivals: 'grid', bestsellers: 'carousel', story: 'split', reviews: 'cards', editorialImage: IMG.crescent2, introImage: IMG.noor1 });
+glassmorphism.sections = buildHome({ hero: 'split', heroImage: LOOK.hero, categories: 'pills', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', editorialImage: IMG.celestine1, introImage: LOOK.story });
+neumorphism.sections = buildHome({ hero: 'minimal', heroImage: IMG.amara1, categories: 'tiles', featured: 'grid', arrivals: 'grid', bestsellers: 'grid', story: 'split', reviews: 'cards', editorialImage: IMG.noor1, introImage: LOOK.story });
 
 export const THEMES: Record<ThemeId, ThemeDefinition> = {
   'soft-luxury': softLuxury,
@@ -507,6 +571,8 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
   parisian,
   'golden-glamour': goldenGlamour,
   contemporary,
+  glassmorphism,
+  neumorphism,
 };
 
 export const THEME_LIST: ThemeDefinition[] = Object.values(THEMES);

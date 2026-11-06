@@ -11,6 +11,8 @@ export const THEME_IDS = [
   'parisian',
   'golden-glamour',
   'contemporary',
+  'glassmorphism',
+  'neumorphism',
 ] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 

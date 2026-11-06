@@ -97,7 +97,7 @@ export function ThemeSwitcher({ themes, current, activeId }: { themes: ThemeChip
   return (
     <div className="fixed bottom-4 left-4 z-[60] md:bottom-6 md:left-6">
       {open && (
-        <div className="slide-up mb-3 w-[300px] overflow-hidden rounded-xl border border-black/10 bg-white text-[#23201d] shadow-2xl">
+        <div className="slide-up mb-3 w-[min(18.75rem,calc(100vw-3rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-black/10 bg-white text-[#23201d] shadow-2xl">
           <div className="flex items-center justify-between border-b border-black/10 px-4 py-3">
             <div>
               <p className="text-[0.85rem] font-semibold">Your look</p>

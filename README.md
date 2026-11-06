@@ -81,7 +81,7 @@ src/
   components/         store, sections, admin and UI components
   db/                 schema, migrations runner, seed data
   lib/                catalog, pricing, orders, auth, analytics, stripe, email, markdown…
-  themes/             theme types, presets (10 themes), engine, section registry, fonts
+  themes/             theme types, presets (12 themes), engine, section registry, fonts
 public/images         original product & campaign photography (WebP)
 public/videos         atelier & product films
 ```
