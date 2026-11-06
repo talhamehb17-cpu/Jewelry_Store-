@@ -4,7 +4,7 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { orderItems, orders } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
-import { formatMoney } from '@/lib/money';
+import { formatAtRate } from '@/lib/currency-format';
 import { formatDate } from '@/lib/utils';
 import { StatusBadge } from '@/components/store/order-status';
 import { Img } from '@/components/ui/img';
@@ -36,7 +36,7 @@ export default async function OrdersPage() {
                     <p className="text-[0.8rem] text-muted">Placed {formatDate(o.createdAt)} · {its.reduce((a, i) => a + i.quantity, 0)} items</p>
                   </div>
                   <div className="flex items-center gap-2"><StatusBadge status={o.status} /><StatusBadge status={o.paymentStatus} kind="payment" /></div>
-                  <p className="font-heading text-xl">{formatMoney(o.total)}</p>
+                  <p className="font-heading text-xl">{formatAtRate(o.total, o.displayCurrency, o.displayRate)}</p>
                 </div>
                 <div className="mt-4 flex gap-2">
                   {its.slice(0, 5).map((i) => (

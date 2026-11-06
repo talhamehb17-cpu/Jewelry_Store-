@@ -8,7 +8,7 @@ import { Img } from '@/components/ui/img';
 import { QtyStepper } from './variant-picker';
 import { useStore, type CartItem } from './providers';
 import { GiftPackagingChoice } from './gift-packaging';
-import { formatMoney } from '@/lib/money';
+import { useDisplayMoney } from './currency-context';
 import type { Quote } from '@/lib/pricing';
 import type { CardProduct } from '@/lib/catalog';
 
@@ -50,6 +50,7 @@ export function useQuote(extra: { discountCode?: string | null; shippingMethod?:
 }
 
 export function FreeShippingBar({ remaining, threshold }: { remaining: number; threshold: number }) {
+  const money = useDisplayMoney();
   if (threshold <= 0) return null;
   const pct = Math.min(100, Math.round(((threshold - remaining) / threshold) * 100));
   return (
@@ -58,7 +59,7 @@ export function FreeShippingBar({ remaining, threshold }: { remaining: number; t
         <Truck size={16} strokeWidth={1.25} className="text-accent" />
         {remaining > 0 ? (
           <span>
-            You’re <strong className="font-semibold">{formatMoney(remaining)}</strong> away from complimentary shipping
+            You’re <strong className="font-semibold">{money(remaining)}</strong> away from complimentary shipping
           </span>
         ) : (
           <span>You’ve unlocked <strong className="font-semibold">complimentary shipping</strong></span>
@@ -73,6 +74,7 @@ export function FreeShippingBar({ remaining, threshold }: { remaining: number; t
 
 export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote | null }) {
   const { cart, updateQty, removeFromCart, setGiftPackaging } = useStore();
+  const money = useDisplayMoney();
   return (
     <ul className="divide-y divide-line">
       {cart.map((item) => {
@@ -88,9 +90,9 @@ export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote
                 <div className="min-w-0">
                   <Link href={`/products/${item.slug}`} className="break-words font-heading text-[1.05rem] leading-snug">{item.name}</Link>
                   {item.variantTitle && <p className="mt-0.5 text-[0.78rem] text-muted">{item.variantTitle}</p>}
-                  {line?.giftSelected && <p className="mt-1 text-[0.75rem] text-accent">Premium Gift Packaging{line.giftLineTotal ? ` · ${formatMoney(line.giftLineTotal)}` : ''}</p>}
+                  {line?.giftSelected && <p className="mt-1 text-[0.75rem] text-accent">Premium Gift Packaging{line.giftLineTotal ? ` · ${money(line.giftLineTotal)}` : ''}</p>}
                 </div>
-                <p className="shrink-0 text-[0.9rem]">{formatMoney(item.price * item.quantity)}</p>
+                <p className="shrink-0 text-[0.9rem]">{money(item.price * item.quantity)}</p>
               </div>
               <div className="mt-auto flex items-center justify-between pt-3">
                 <QtyStepper value={item.quantity} onChange={(n) => updateQty(item.variantId, n)} small={compact} />
@@ -119,6 +121,7 @@ export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote
 }
 
 export function Recommendations({ exclude, title = 'You may also like', limit = 3 }: { exclude: number[]; title?: string; limit?: number }) {
+  const money = useDisplayMoney();
   const [items, setItems] = useState<CardProduct[]>([]);
   const { addToCart, setQuickView } = useStore();
   const key = exclude.join(',');
@@ -140,7 +143,7 @@ export function Recommendations({ exclude, title = 'You may also like', limit = 
             </Link>
             <p className="mt-2 truncate text-[0.78rem]">{p.name}</p>
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[0.75rem] text-muted">{formatMoney(p.price)}</span>
+              <span className="text-[0.75rem] text-muted">{money(p.price)}</span>
               <button
                 onClick={() =>
                   p.variantCount === 1 && p.defaultVariantId
@@ -161,6 +164,7 @@ export function Recommendations({ exclude, title = 'You may also like', limit = 
 }
 
 export function CartDrawer() {
+  const money = useDisplayMoney();
   const { cartOpen, setCartOpen, cart, cartCount } = useStore();
   const { quote, loading } = useQuote({}, cartOpen);
   const subtotal = quote?.subtotal ?? cart.reduce((a, b) => a + b.price * b.quantity, 0);
@@ -174,11 +178,11 @@ export function CartDrawer() {
           <div className="space-y-4 px-6 py-5">
             <div className="flex items-center justify-between text-[0.95rem]">
               <span>Product subtotal</span>
-              <span className={loading ? 'opacity-50' : ''}>{formatMoney(subtotal)}</span>
+              <span className={loading ? 'opacity-50' : ''}>{money(subtotal)}</span>
             </div>
-            {quote?.campaign && <p className="text-[0.75rem] text-accent">{quote.campaign.name} · {quote.campaign.percent}% off is included (−{formatMoney(quote.campaign.amount)}).</p>}
-            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.85rem]"><span>Premium Gift Packaging</span><span>{formatMoney(quote.giftTotal)}</span></div>}
-            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.95rem]"><span>Total</span><span>{formatMoney(subtotal + quote.giftTotal)}</span></div>}
+            {quote?.campaign && <p className="text-[0.75rem] text-accent">{quote.campaign.name} · {quote.campaign.percent}% off is included (−{money(quote.campaign.amount)}).</p>}
+            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.85rem]"><span>Premium Gift Packaging</span><span>{money(quote.giftTotal)}</span></div>}
+            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.95rem]"><span>Total</span><span>{money(subtotal + quote.giftTotal)}</span></div>}
             <p className="text-[0.75rem] text-muted">Delivery charges and discounts are calculated at checkout.</p>
             <div className="grid grid-cols-2 gap-3">
               <Link href="/cart" onClick={() => setCartOpen(false)} className="btn btn-secondary">View bag</Link>

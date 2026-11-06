@@ -3,24 +3,43 @@
 import { createContext, useContext, useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { setCurrencyAction } from '@/app/actions/currency';
-import { CURRENCIES, formatDisplay, type CurrencyCode } from '@/lib/currency-format';
+import { CURRENCIES, formatDisplay, formatFromBook, isCurrency, type CurrencyCode } from '@/lib/currency-format';
 import { formatMoney } from '@/lib/money';
 
 type Book = { code: CurrencyCode; rates: Partial<Record<CurrencyCode, number>>; fetchedAt: string | null; source: string | null };
 
 const Ctx = createContext<Book | null>(null);
+const SetCode = createContext<(code: CurrencyCode) => void>(() => {});
 
 export function CurrencyProvider({ value, children }: { value: Book; children: React.ReactNode }) {
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  const [code, setCode] = useState(value.code);
+  useEffect(() => {
+    setCode(value.code);
+  }, [value.code]);
+  const book = code === value.code ? value : { ...value, code };
+  return (
+    <SetCode.Provider value={setCode}>
+      <Ctx.Provider value={book}>{children}</Ctx.Provider>
+    </SetCode.Provider>
+  );
 }
 
 export function useCurrency() {
   return useContext(Ctx);
 }
 
-export function Money({ minor, className }: { minor: number; className?: string }) {
+export function useSetDisplayCurrency() {
+  return useContext(SetCode);
+}
+
+/** Formats a PKR paisa amount with the currency already loaded in the page. Does not fetch a rate. */
+export function useDisplayMoney() {
   const book = useCurrency();
-  const text = !book || book.code === 'PKR' ? formatMoney(minor) : formatDisplay(minor, book.code, book.rates) ?? formatMoney(minor);
+  return (minor: number) => formatFromBook(minor, book?.code ?? 'PKR', book?.rates ?? {});
+}
+
+export function Money({ minor, className }: { minor: number; className?: string }) {
+  const text = useDisplayMoney()(minor);
   return <span className={className}>{text}</span>;
 }
 
@@ -37,10 +56,12 @@ export function PayLine({ minor }: { minor: number }) {
 
 export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
   const book = useCurrency();
+  const setDisplay = useSetDisplayCurrency();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const box = useRef<HTMLDivElement>(null);
+  const wanted = useRef(book?.code ?? 'PKR');
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => {
@@ -59,11 +80,22 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
   if (!book) return null;
   const available = CURRENCIES.filter((c) => c.code === 'PKR' || (book.rates[c.code] ?? 0) > 0);
   const current = available.find((c) => c.code === book.code) ?? available[0];
-  const choose = (code: string) => start(async () => {
-    await setCurrencyAction(code);
+  const choose = (code: string) => {
+    if (!isCurrency(code) || code === book.code) {
+      setOpen(false);
+      return;
+    }
+    const previous = book.code;
+    wanted.current = code;
+    setDisplay(code);
     setOpen(false);
-    router.refresh();
-  });
+    start(async () => {
+      const res = await setCurrencyAction(code);
+      if (wanted.current !== code) return;
+      if (!res.ok) setDisplay(previous);
+      else router.refresh();
+    });
+  };
   return (
     <div ref={box} className="relative">
       <button

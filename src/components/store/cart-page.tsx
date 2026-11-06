@@ -5,12 +5,13 @@ import { useState } from 'react';
 import { ShoppingBag, Tag, X, Lock } from 'lucide-react';
 import { useStore } from './providers';
 import { CartLines, FreeShippingBar, Recommendations, useQuote } from './cart-drawer';
-import { formatMoney } from '@/lib/money';
+import { useDisplayMoney } from './currency-context';
 import { discountFieldChange } from '@/lib/shopping-rules';
 import { cn } from '@/lib/utils';
 
 export function CartPageView() {
   const { cart, cartReady, cartCount } = useStore();
+  const money = useDisplayMoney();
   const [codeInput, setCodeInput] = useState('');
   const [code, setCode] = useState<string | null>(null);
   const [method, setMethod] = useState('standard');
@@ -68,19 +69,19 @@ export function CartPageView() {
                   <label key={m.id} className={cn('flex cursor-pointer items-center gap-3 rounded-theme-sm border bg-bg px-3 py-2.5 text-[0.85rem]', method === m.id ? 'border-ink' : 'border-line')}>
                     <input type="radio" className="checkbox" checked={method === m.id} onChange={() => setMethod(m.id)} />
                     <span className="flex-1">{m.name}<span className="block text-[0.75rem] text-muted">{m.description}</span></span>
-                    <span>{m.price ? formatMoney(m.price) : 'Free'}</span>
+                    <span>{m.price ? money(m.price) : 'Free'}</span>
                   </label>
                 ))}
               </div>
             </div>
             {quote && (
               <dl className={cn('space-y-2.5 border-t border-line pt-5 text-[0.9rem]', loading && 'opacity-60')}>
-                <div className="flex justify-between"><dt className="text-muted">Product subtotal</dt><dd>{formatMoney(quote.catalogSubtotal || quote.subtotal)}</dd></div>
-                {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name}</dt><dd>−{formatMoney(quote.campaign.amount)}</dd></div>}
-                {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Discount</dt><dd>−{formatMoney(quote.discount.amount)}</dd></div>}
-                {quote.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{formatMoney(quote.giftTotal)}</dd></div>}
-                <div className="flex justify-between"><dt className="text-muted">Delivery charges</dt><dd>{quote.shipping ? formatMoney(quote.shipping) : 'Complimentary'}</dd></div>
-                <div className="flex items-baseline justify-between border-t border-line pt-4"><dt>Estimated total</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)}</dd></div>
+                <div className="flex justify-between"><dt className="text-muted">Product subtotal</dt><dd>{money(quote.catalogSubtotal || quote.subtotal)}</dd></div>
+                {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name}</dt><dd>−{money(quote.campaign.amount)}</dd></div>}
+                {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Discount</dt><dd>−{money(quote.discount.amount)}</dd></div>}
+                {quote.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{money(quote.giftTotal)}</dd></div>}
+                <div className="flex justify-between"><dt className="text-muted">Delivery charges</dt><dd>{quote.shipping ? money(quote.shipping) : 'Complimentary'}</dd></div>
+                <div className="flex items-baseline justify-between border-t border-line pt-4"><dt>Estimated total</dt><dd className="font-heading text-[1.5rem]">{money(quote.total)}</dd></div>
               </dl>
             )}
             <Link href="/checkout" className="btn btn-primary btn-block !py-4"><Lock size={14} /> Secure checkout</Link>

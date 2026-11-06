@@ -10,7 +10,7 @@ import { useQuote, FreeShippingBar } from './cart-drawer';
 import { Img } from '@/components/ui/img';
 import { placeOrder } from '@/app/actions/checkout';
 import { formatMoney } from '@/lib/money';
-import { PayLine } from './currency-context';
+import { PayLine, useCurrency, useDisplayMoney } from './currency-context';
 import { cn } from '@/lib/utils';
 import { discountFieldChange, discountToSubmit } from '@/lib/shopping-rules';
 
@@ -86,6 +86,8 @@ function ProofUpload({ token, onToken }: { token: string | null; onToken: (token
 
 export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelledNotice }: { prefill: Prefill; provinces: readonly string[]; payments: Payments; loggedIn: boolean; cancelledNotice?: string | null }) {
   const router = useRouter();
+  const money = useDisplayMoney();
+  const displayCode = useCurrency()?.code ?? 'PKR';
   const { cart, cartReady, clearCart, setGiftPackaging } = useStore();
   const [f, setF] = useState<Prefill>(prefill);
   const [shippingMethod, setShippingMethod] = useState('standard');
@@ -190,9 +192,9 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[0.9rem]">{l.name}</span>
                 {l.variantTitle && <span className="block text-[0.78rem] text-muted">{l.variantTitle}</span>}
-                {l.giftLineTotal > 0 && <span className="block text-[0.75rem] text-accent">Premium Gift Packaging · {formatMoney(l.giftLineTotal)}</span>}
+                {l.giftLineTotal > 0 && <span className="block text-[0.75rem] text-accent">Premium Gift Packaging · {money(l.giftLineTotal)}</span>}
               </span>
-              <span className="shrink-0 text-[0.9rem]">{formatMoney(l.lineTotal)}</span>
+              <span className="shrink-0 text-[0.9rem]">{money(l.lineTotal)}</span>
             </div>
             {quote && (
               <GiftPackagingChoice
@@ -226,20 +228,20 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
       </div>
       {quote && (
         <dl className={cn('space-y-2.5 border-t border-line pt-5 text-[0.9rem]', loading && 'opacity-60')}>
-          <div className="flex justify-between"><dt className="text-muted">Product subtotal</dt><dd>{formatMoney(quote.catalogSubtotal || quote.subtotal)}</dd></div>
-          {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name} ({quote.campaign.percent}%)</dt><dd>−{formatMoney(quote.campaign.amount)}</dd></div>}
-          {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Discount ({quote.discount.code})</dt><dd>−{formatMoney(quote.discount.amount)}</dd></div>}
-          {quote.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{formatMoney(quote.giftTotal)}</dd></div>}
-          <div className="flex justify-between"><dt className="text-muted">Delivery charges</dt><dd>{quote.shipping === 0 ? 'Complimentary' : formatMoney(quote.shipping)}</dd></div>
-          {quote.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatMoney(quote.codFee)}</dd></div>}
-          {quote.tax > 0 && <div className="flex justify-between"><dt className="text-muted">{quote.taxLabel}</dt><dd>{formatMoney(quote.tax)}</dd></div>}
+          <div className="flex justify-between"><dt className="text-muted">Product subtotal</dt><dd>{money(quote.catalogSubtotal || quote.subtotal)}</dd></div>
+          {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name} ({quote.campaign.percent}%)</dt><dd>−{money(quote.campaign.amount)}</dd></div>}
+          {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Discount ({quote.discount.code})</dt><dd>−{money(quote.discount.amount)}</dd></div>}
+          {quote.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{money(quote.giftTotal)}</dd></div>}
+          <div className="flex justify-between"><dt className="text-muted">Delivery charges</dt><dd>{quote.shipping === 0 ? 'Complimentary' : money(quote.shipping)}</dd></div>
+          {quote.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{money(quote.codFee)}</dd></div>}
+          {quote.tax > 0 && <div className="flex justify-between"><dt className="text-muted">{quote.taxLabel}</dt><dd>{money(quote.tax)}</dd></div>}
           {quote.highValue?.applied && (
             <>
-              <div className="flex justify-between"><dt className="text-muted">Pay now</dt><dd>{formatMoney(quote.highValue.advanceAmount)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted">Cash on delivery</dt><dd>{formatMoney(quote.highValue.remainingAmount)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Pay now</dt><dd>{money(quote.highValue.advanceAmount)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Cash on delivery</dt><dd>{money(quote.highValue.remainingAmount)}</dd></div>
             </>
           )}
-          <div className="flex items-baseline justify-between border-t border-line pt-4 text-[1.1rem]"><dt>Total to pay</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)} PKR</dd></div>
+          <div className="flex items-baseline justify-between border-t border-line pt-4 text-[1.1rem]"><dt>{displayCode === 'PKR' ? 'Total to pay' : 'Total'}</dt><dd className="font-heading text-[1.5rem]">{money(quote.total)}{displayCode === 'PKR' ? ' PKR' : ''}</dd></div>
           <PayLine minor={quote.total} />
         </dl>
       )}
@@ -259,7 +261,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         <details className="rounded-theme-sm border border-line lg:hidden" open={summaryOpen} onToggle={(e) => setSummaryOpen((e.target as HTMLDetailsElement).open)}>
           <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-[0.9rem] [&::-webkit-details-marker]:hidden">
             <span className="inline-flex items-center gap-2">Order summary <ChevronDown size={15} className={cn('transition', summaryOpen && 'rotate-180')} /></span>
-            <span className="font-medium">{quote ? formatMoney(quote.total) : '…'}</span>
+            <span className="font-medium">{quote ? money(quote.total) : '…'}</span>
           </summary>
           <div className="border-t border-line p-4">{summary}</div>
         </details>
@@ -310,7 +312,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
                   <span className="block text-[0.92rem]">{m.name}</span>
                   <span className="block text-[0.8rem] text-muted">{m.description}</span>
                 </span>
-                <span className="text-[0.9rem]">{m.price === 0 ? (m.originalPrice > 0 ? <><s className="mr-2 text-muted">{formatMoney(m.originalPrice)}</s>Free</> : 'Free') : formatMoney(m.price)}</span>
+                <span className="text-[0.9rem]">{m.price === 0 ? (m.originalPrice > 0 ? <><s className="mr-2 text-muted">{money(m.originalPrice)}</s>Free</> : 'Free') : money(m.price)}</span>
               </label>
             ))}
             {!quote && <div className="skeleton h-16 rounded-theme-sm" />}
@@ -377,7 +379,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         </section>
 
         <button type="submit" disabled={pending || !quote || loading || !!quote.checkoutBlock || (needsProof && !proofToken) || visiblePayments.length === 0} className="btn btn-primary btn-block !py-4 text-[0.85rem]">
-          {pending ? 'Placing your order and sending the confirmation…' : `Place order · ${quote ? formatMoney(split ? split.advanceAmount : quote.total) : ''}`}
+          {pending ? 'Placing your order and sending the confirmation…' : `Place order · ${quote ? money(split ? split.advanceAmount : quote.total) : ''}`}
         </button>
         <p className="flex items-center justify-center gap-2 text-[0.75rem] text-muted"><ShieldCheck size={14} /> By placing your order you agree to our <Link href="/policies/terms-of-service" className="underline">Terms</Link> and <Link href="/policies/privacy-policy" className="underline">Privacy Policy</Link>.</p>
       </div>

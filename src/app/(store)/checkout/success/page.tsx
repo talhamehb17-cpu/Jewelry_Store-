@@ -9,6 +9,7 @@ import { verifyOrderToken } from '@/lib/orders';
 import { confirmStripeSession } from '@/lib/stripe';
 import { getSettings } from '@/lib/settings';
 import { getCurrentUser } from '@/lib/auth';
+import { formatAtRate } from '@/lib/currency-format';
 import { formatMoney } from '@/lib/money';
 import { Img } from '@/components/ui/img';
 import { PaymentPlanNote } from '@/components/store/payment-plan-note';
@@ -37,6 +38,8 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
     else paymentNote = 'We’re waiting for Stripe to confirm your payment. This page will show “Paid” once it’s verified — you’ll also receive an email.';
   }
   const [items, settings] = await Promise.all([db.select().from(orderItems).where(eq(orderItems.orderId, order.id)), getSettings()]);
+  const show = (paisa: number) => formatAtRate(paisa, order.displayCurrency, order.displayRate);
+  const displayCode = order.displayCurrency && order.displayCurrency !== 'PKR' ? order.displayCurrency : 'PKR';
   const a = order.shippingAddress;
   const paid = order.paymentStatus === 'paid';
   const p = settings.payments;
@@ -85,19 +88,20 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
               {items.map((i) => (
                 <li key={i.id} className="flex items-center gap-4">
                   <span className="relative h-16 w-14 shrink-0 overflow-hidden rounded-theme-sm bg-surface"><Img src={i.image} alt={i.name} sizes="56px" /></span>
-                  <span className="flex-1 text-[0.9rem]">{i.name}{i.variantTitle && <span className="block text-[0.78rem] text-muted">{i.variantTitle}</span>}{i.giftPackaging && <span className="block text-[0.75rem] text-accent">Premium Gift Packaging {formatMoney(i.giftLineTotal)}</span>}</span>
+                  <span className="flex-1 text-[0.9rem]">{i.name}{i.variantTitle && <span className="block text-[0.78rem] text-muted">{i.variantTitle}</span>}{i.giftPackaging && <span className="block text-[0.75rem] text-accent">Premium Gift Packaging {show(i.giftLineTotal)}</span>}</span>
                   <span className="text-[0.85rem] text-muted">× {i.quantity}</span>
-                  <span className="w-24 text-right text-[0.9rem]">{formatMoney(i.lineTotal)}</span>
+                  <span className="w-24 text-right text-[0.9rem]">{show(i.lineTotal)}</span>
                 </li>
               ))}
             </ul>
             <dl className="mt-5 space-y-2 border-t border-line pt-4 text-[0.88rem]">
-              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(order.subtotal + (order.campaignDiscount || 0))}</dd></div>
-              {order.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{order.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(order.campaignDiscount)}</dd></div>}
-              {order.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {order.discountCode && `(${order.discountCode})`}</dt><dd>−{formatMoney(order.discountTotal)}</dd></div>}
-              {order.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{formatMoney(order.giftTotal)}</dd></div>}
-              <div className="flex justify-between"><dt className="text-muted">{order.shippingMethodName}</dt><dd>{order.shippingTotal ? formatMoney(order.shippingTotal) : 'Complimentary'}</dd></div>
-              <div className="flex justify-between border-t border-line pt-3 text-[1rem]"><dt>Total to pay</dt><dd className="font-medium">{formatMoney(order.total)} PKR</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{show(order.subtotal + (order.campaignDiscount || 0))}</dd></div>
+              {order.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{order.campaignName || 'Event sale'} included</dt><dd>−{show(order.campaignDiscount)}</dd></div>}
+              {order.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {order.discountCode && `(${order.discountCode})`}</dt><dd>−{show(order.discountTotal)}</dd></div>}
+              {order.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{show(order.giftTotal)}</dd></div>}
+              <div className="flex justify-between"><dt className="text-muted">{order.shippingMethodName}</dt><dd>{order.shippingTotal ? show(order.shippingTotal) : 'Complimentary'}</dd></div>
+              <div className="flex justify-between border-t border-line pt-3 text-[1rem]"><dt>{displayCode === 'PKR' ? 'Total to pay' : 'Total'}</dt><dd className="font-medium">{displayCode === 'PKR' ? `${show(order.total)} PKR` : show(order.total)}</dd></div>
+              {displayCode !== 'PKR' && <p className="text-[0.78rem] text-muted">You pay {formatMoney(order.total)} PKR. The amounts above use the rate saved with this order.</p>}
             </dl>
           </div>
           <div className="space-y-6 text-[0.9rem]">

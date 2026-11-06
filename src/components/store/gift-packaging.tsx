@@ -1,7 +1,7 @@
 'use client';
 
 import { Img } from '@/components/ui/img';
-import { formatMoney } from '@/lib/money';
+import { useDisplayMoney } from './currency-context';
 import { cn } from '@/lib/utils';
 
 export type GiftPreview = { id: string; url: string; alt: string };
@@ -23,6 +23,7 @@ export function GiftPackagingChoice({
   compact?: boolean;
   quantity?: number;
 }) {
+  const money = useDisplayMoney();
   const chosen = images.find((img) => img.id === imageId) ?? images[0] ?? null;
   const units = Math.max(1, quantity);
   const extra = price * units;
@@ -46,8 +47,8 @@ export function GiftPackagingChoice({
           <span className="gift-check-title">Add Premium Gift Packaging</span>
           <span className="gift-check-copy">Make your order extra special with our premium gift packaging.</span>
           <span className="gift-check-price">
-            {formatMoney(price)}
-            {units > 1 ? ` each · ${formatMoney(extra)} for ${units}` : ''}
+            {money(price)}
+            {units > 1 ? ` each · ${money(extra)} for ${units}` : ''}
           </span>
         </span>
       </label>
@@ -61,7 +62,7 @@ export function GiftPackagingChoice({
               <span className="min-w-0">
                 <span className="block text-[0.82rem]">{chosen.alt}</span>
                 <span className="mt-1 block text-[0.75rem] text-muted">
-                  {formatMoney(extra)} added separately. It is not part of the piece price.
+                  {money(extra)} added separately. It is not part of the piece price.
                 </span>
               </span>
             </div>
@@ -87,7 +88,7 @@ export function GiftPackagingChoice({
         </div>
       </div>
       <p className="sr-only" aria-live="polite">
-        {selected ? `Premium Gift Packaging added. ${formatMoney(extra)}.` : 'Premium Gift Packaging removed.'}
+        {selected ? `Premium Gift Packaging added. ${money(extra)}.` : 'Premium Gift Packaging removed.'}
       </p>
     </div>
   );
@@ -95,22 +96,23 @@ export function GiftPackagingChoice({
 
 /** Live product-page total. Uses the server price; it does not submit a charge. */
 export function GiftPurchaseTotal({ productTotal, packaging, selected }: { productTotal: number; packaging: number; selected: boolean }) {
+  const money = useDisplayMoney();
   const extra = selected ? packaging : 0;
   return (
     <dl className="gift-pay" aria-live="polite">
       <div>
         <dt>Product</dt>
-        <dd>{formatMoney(productTotal)}</dd>
+        <dd>{money(productTotal)}</dd>
       </div>
       {selected && (
         <div>
           <dt>Premium Gift Packaging</dt>
-          <dd>{formatMoney(packaging)}</dd>
+          <dd>{money(packaging)}</dd>
         </div>
       )}
       <div className="gift-pay-total">
         <dt>Total</dt>
-        <dd>{formatMoney(productTotal + extra)}</dd>
+        <dd>{money(productTotal + extra)}</dd>
       </div>
     </dl>
   );

@@ -6,6 +6,7 @@ import { ArrowLeft, Truck } from 'lucide-react';
 import { getDb } from '@/db';
 import { orderEvents, orderItems, orders, products } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
+import { formatAtRate } from '@/lib/currency-format';
 import { formatMoney } from '@/lib/money';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { OrderTracker, StatusBadge } from '@/components/store/order-status';
@@ -34,6 +35,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
     o.status === 'delivered' ? eligiblePurchases(user.id, user.email) : Promise.resolve([]),
   ]);
   const a = o.shippingAddress;
+  const show = (paisa: number) => formatAtRate(paisa, o.displayCurrency, o.displayRate);
   return (
     <div className="space-y-8">
       <Link href="/account/orders" className="inline-flex items-center gap-2 text-[0.85rem] text-muted hover:text-ink"><ArrowLeft size={15} /> All orders</Link>
@@ -79,23 +81,23 @@ export default async function OrderDetail({ params }: { params: Promise<{ number
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-[0.95rem]">{i.name}</p>
                   {i.variantTitle && <p className="break-words text-[0.8rem] text-muted">{i.variantTitle}</p>}
-                  <p className="text-[0.8rem] text-muted">{formatMoney(i.unitPrice)} × {i.quantity}</p>
-                  {i.giftPackaging && <p className="text-[0.78rem]">Premium gift packaging · {formatMoney(i.giftUnitPrice)} × {i.quantity} · {formatMoney(i.giftLineTotal)}</p>}
+                  <p className="text-[0.8rem] text-muted">{show(i.unitPrice)} × {i.quantity}</p>
+                  {i.giftPackaging && <p className="text-[0.78rem]">Premium gift packaging · {show(i.giftUnitPrice)} × {i.quantity} · {show(i.giftLineTotal)}</p>}
                   {o.status === 'delivered' && slug && purchases.some((purchase) => purchase.itemId === i.id) && <div className="mt-3"><ReviewForm productId={i.productId!} productName={i.name} image={i.image} defaultName={`${user.firstName} ${user.lastName}`.trim()} avatar={user.avatar} purchases={purchases.filter((purchase) => purchase.productId === i.productId)} signedIn returnTo={`/account/orders/${o.number}`} /></div>}
                   {o.status === 'delivered' && slug && !purchases.some((purchase) => purchase.itemId === i.id) && <p className="mt-2 text-[0.78rem] text-muted">Reviewed, or no longer open for this purchase.</p>}
                 </div>
-                <p className="shrink-0 text-[0.9rem]">{formatMoney(i.lineTotal)}</p>
+                <p className="shrink-0 text-[0.9rem]">{show(i.lineTotal)}</p>
               </li>
             ))}
           </ul>
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-[0.9rem] [&_div]:gap-3 [&_dd]:shrink-0 [&_dt]:min-w-0 [&_dt]:break-words">
-            <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
-            {o.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{o.campaignName || 'Event sale'} included</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
-            {o.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {o.discountCode && `(${o.discountCode})`}</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
-            {o.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{formatMoney(o.giftTotal)}</dd></div>}
-            <div className="flex justify-between"><dt className="text-muted">{o.shippingMethodName}</dt><dd>{o.shippingTotal ? formatMoney(o.shippingTotal) : 'Complimentary'}</dd></div>
-            {o.refundedAmount > 0 && <div className="flex justify-between text-muted"><dt>Refunded</dt><dd>−{formatMoney(o.refundedAmount)}</dd></div>}
-            <div className="flex justify-between border-t border-line pt-3 text-[1.05rem]"><dt>Total</dt><dd className="font-medium">{formatMoney(o.total)}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{show(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
+            {o.campaignDiscount > 0 && <div className="flex justify-between text-accent"><dt>{o.campaignName || 'Event sale'} included</dt><dd>−{show(o.campaignDiscount)}</dd></div>}
+            {o.discountTotal > 0 && <div className="flex justify-between text-accent"><dt>Discount {o.discountCode && `(${o.discountCode})`}</dt><dd>−{show(o.discountTotal)}</dd></div>}
+            {o.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Premium Gift Packaging</dt><dd>{show(o.giftTotal)}</dd></div>}
+            <div className="flex justify-between"><dt className="text-muted">{o.shippingMethodName}</dt><dd>{o.shippingTotal ? show(o.shippingTotal) : 'Complimentary'}</dd></div>
+            {o.refundedAmount > 0 && <div className="flex justify-between text-muted"><dt>Refunded</dt><dd>−{show(o.refundedAmount)}</dd></div>}
+            <div className="flex justify-between border-t border-line pt-3 text-[1.05rem]"><dt>Total</dt><dd className="font-medium">{show(o.total)}</dd></div>
           </dl>
         </div>
         <div className="min-w-0 space-y-6 break-words text-[0.9rem]">

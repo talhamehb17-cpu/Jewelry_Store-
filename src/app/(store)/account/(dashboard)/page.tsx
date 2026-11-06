@@ -5,6 +5,7 @@ import { Package, Heart, MapPin, ArrowRight } from 'lucide-react';
 import { getDb } from '@/db';
 import { addresses, orders, wishlistItems } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
+import { formatAtRate } from '@/lib/currency-format';
 import { formatMoney } from '@/lib/money';
 import { formatDate } from '@/lib/utils';
 import { StatusBadge } from '@/components/store/order-status';
@@ -62,7 +63,7 @@ export default async function AccountOverview({ searchParams }: { searchParams: 
                   <p className="text-[0.8rem] text-muted">{formatDate(o.createdAt)}</p>
                 </div>
                 <StatusBadge status={o.status} />
-                <p className="text-[0.95rem]">{formatMoney(o.total)}</p>
+                <p className="text-[0.95rem]">{formatAtRate(o.total, o.displayCurrency, o.displayRate)}</p>
               </Link>
             ))}
           </div>

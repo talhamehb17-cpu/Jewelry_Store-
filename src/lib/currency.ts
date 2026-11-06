@@ -3,7 +3,7 @@ import { getDb } from '@/db';
 import { exchangeRates } from '@/db/schema';
 import { CURRENCIES, isCurrency, type CurrencyCode } from './currency-format';
 
-export { CURRENCY_COOKIE, CURRENCIES, convertFromPkr, formatDisplay, isCurrency, type CurrencyCode } from './currency-format';
+export { CURRENCY_COOKIE, CURRENCIES, convertFromPkr, formatAtRate, formatDisplay, formatFromBook, isCurrency, type CurrencyCode } from './currency-format';
 
 export type RateBook = {
   code: CurrencyCode;

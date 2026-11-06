@@ -10,7 +10,7 @@ import { Modal } from '@/components/ui/overlay';
 import { Badge, Price, Stars, productBadges } from '@/components/ui/bits';
 import { notifyBackInStock } from '@/app/actions/store';
 import { GiftPackagingChoice, GiftPurchaseTotal, type GiftPreview } from './gift-packaging';
-import { formatMoney } from '@/lib/money';
+import { useDisplayMoney } from './currency-context';
 import { cn } from '@/lib/utils';
 import type { ThemeLayout } from '@/themes/types';
 
@@ -109,6 +109,7 @@ function NotifyForm({ product }: { product: string }) {
 
 export function ProductPurchase({ product: p, variants, image, category, style, stickyAtc, shipping, isNew, gift }: P) {
   const { addToCart, toggleWishlist, inWishlist, cart, cartReady, setGiftPackaging } = useStore();
+  const money = useDisplayMoney();
   const router = useRouter();
   const state = useVariantSelection(variants);
   const [qty, setQty] = useState(1);
@@ -180,7 +181,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
           </a>
         )}
       </div>
-      <p className="mt-2 text-[0.78rem] text-muted">Tax included. {price >= shipping.freeThreshold ? 'Complimentary shipping.' : `Free shipping over ${formatMoney(shipping.freeThreshold)}.`}</p>
+      <p className="mt-2 text-[0.78rem] text-muted">Tax included. {price >= shipping.freeThreshold ? 'Complimentary shipping.' : `Free shipping over ${money(shipping.freeThreshold)}.`}</p>
       <p className={cn('mt-6 text-[0.95rem] leading-[1.8]', style === 'romantic' ? 'mx-auto max-w-md text-muted' : 'text-muted')}>{p.description}</p>
 
       <div className={cn('mt-8', style === 'romantic' && 'text-left')} ref={atcRef}>
@@ -228,7 +229,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
         </Accordion>
         <Accordion title="Care instructions">{p.care}</Accordion>
         <Accordion title="Shipping & returns">
-          <p>Standard delivery ({formatMoney(shipping.standard)}) arrives in 3–5 working days nationwide — complimentary over {formatMoney(shipping.freeThreshold)}. Express delivery ({formatMoney(shipping.express)}) arrives in 1–2 working days in Lahore, Karachi and Islamabad.</p>
+          <p>Standard delivery ({money(shipping.standard)}) arrives in 3–5 working days nationwide — complimentary over {money(shipping.freeThreshold)}. Express delivery ({money(shipping.express)}) arrives in 1–2 working days in Lahore, Karachi and Islamabad.</p>
           <p className="mt-3">Pay by Cash on Delivery, EasyPaisa, JazzCash or bank transfer. Wallet and bank payments need a receipt at checkout. Unworn pieces can be returned or exchanged within 7 days. <Link href="/policies/return-policy" className="underline underline-offset-4">Read our returns policy</Link>.</p>
         </Accordion>
       </div>
@@ -251,7 +252,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[0.85rem] font-medium">{p.name}</p>
-              <p className="text-[0.8rem] text-muted">{formatMoney(price + (gift && giftOn ? gift.price : 0))}{gift && giftOn ? ` · ${formatMoney(gift.price)} packaging` : ''}{v && v.title !== 'Default' ? ` · ${v.title}` : ''}</p>
+              <p className="text-[0.8rem] text-muted">{money(price + (gift && giftOn ? gift.price : 0))}{gift && giftOn ? ` · ${money(gift.price)} packaging` : ''}{v && v.title !== 'Default' ? ` · ${v.title}` : ''}</p>
             </div>
             <button onClick={() => add(false)} className="btn btn-primary shrink-0">Add to bag</button>
           </div>

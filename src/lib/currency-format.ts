@@ -44,3 +44,21 @@ export function formatDisplay(paisa: number, code: CurrencyCode, rates: Partial<
   const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
   return `${major < 0 ? '−' : ''}${meta.symbol} ${formatted}`;
 }
+
+/** Live storefront display. Converts PKR paisa once. A missing rate stays in PKR rather than inventing one. */
+export function formatFromBook(paisa: number, code: CurrencyCode, rates: Partial<Record<CurrencyCode, number>>) {
+  if (code === 'PKR') return formatDisplay(paisa, 'PKR', {})!;
+  return formatDisplay(paisa, code, rates) ?? formatDisplay(paisa, 'PKR', {})!;
+}
+
+/**
+ * Historical order display. Uses only the rate saved on that order.
+ * A later live rate must not be passed here, and a missing snapshot stays in PKR.
+ */
+export function formatAtRate(paisa: number, code: string | null | undefined, rate: number | string | null | undefined) {
+  const numeric = typeof rate === 'number' ? rate : typeof rate === 'string' && rate.trim() !== '' ? Number(rate) : Number.NaN;
+  if (!isCurrency(code) || code === 'PKR' || !(Number.isFinite(numeric) && numeric > 0)) {
+    return formatDisplay(paisa, 'PKR', {})!;
+  }
+  return formatDisplay(paisa, code, { [code]: numeric }) ?? formatDisplay(paisa, 'PKR', {})!;
+}
