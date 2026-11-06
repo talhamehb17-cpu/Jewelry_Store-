@@ -40,7 +40,7 @@ const schema = z.object({
   discountCode: z.string().trim().max(60).optional().default(''),
   note: z.string().trim().max(1000).optional().default(''),
   saveAddress: z.boolean().optional().default(false),
-  lines: z.array(z.object({ variantId: z.number().int().positive(), quantity: z.number().int().min(1).max(20) })).min(1, 'Your bag is empty.').max(50),
+  lines: z.array(z.object({ variantId: z.number().int().positive(), quantity: z.number().int().min(1).max(20), giftPackaging: z.boolean().optional(), giftImageId: z.string().max(40).nullish() })).min(1, 'Your bag is empty.').max(50),
 });
 
 export type CheckoutInput = z.input<typeof schema>;

@@ -252,7 +252,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone, alerts =
           <button onClick={() => setMenuOpen(true)} className="grid h-10 w-10 place-items-center" aria-label="Open menu">
             <Menu size={21} strokeWidth={SW} />
           </button>
-          <Link href="/" aria-label="Home" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"><Logo header={header} size={52} /></Link>
+          <Link href="/" aria-label="Home" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"><Logo header={header} size={40} /></Link>
           <Icons alerts={alerts} user={user} compact />
         </>
       ) : (
@@ -261,7 +261,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone, alerts =
             <button onClick={() => setMenuOpen(true)} className="-ml-2 grid h-10 w-10 place-items-center" aria-label="Open menu">
               <Menu size={21} strokeWidth={SW} />
             </button>
-            <Link href="/" aria-label="Home"><Logo header={header} size={48} /></Link>
+            <Link href="/" aria-label="Home"><Logo header={header} size={40} /></Link>
           </div>
           <Icons alerts={alerts} user={user} compact />
         </>
@@ -404,7 +404,7 @@ export function Header({ header, mobileVariant, nav, user, mega, phone, alerts =
           <div className={cn('mx-auto flex h-[60px] max-w-[var(--container)] items-center justify-between rounded-full border border-black/5 bg-[var(--c-header-bg)]/85 px-4 text-[var(--c-header-text)] backdrop-blur-xl transition-shadow duration-500 md:px-6', scrolled ? 'shadow-[0_14px_40px_-20px_rgba(0,0,0,.35)]' : 'shadow-[0_6px_24px_-18px_rgba(0,0,0,.25)]')}>
             <div className="flex items-center gap-2">
               <button onClick={() => setMenuOpen(true)} className="grid h-10 w-10 place-items-center lg:hidden" aria-label="Open menu"><Menu size={20} strokeWidth={SW} /></button>
-              <Link href="/" aria-label="Home"><Logo header={header} /></Link>
+              <Link href="/" aria-label="Home" className="[&>span]:max-lg:!h-10 [&>span]:max-lg:!w-10"><Logo header={header} /></Link>
             </div>
             <nav className="hidden items-center gap-1 lg:flex">
               {nav.map((n) => (

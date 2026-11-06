@@ -16,7 +16,7 @@ export default async function EditProduct({ params }: { params: Promise<{ id: st
   if (id === 'new') {
     const blank: EditorProduct = {
       name: '', slug: '', subtitle: '', description: '', details: [], materials: [], care: 'Store in the pouch provided, away from moisture. Remove before swimming or bathing.', categoryId: null, collectionIds: [], status: 'draft',
-      price: '', compareAtPrice: '', costPrice: '', sku: '', barcode: '', tags: [], badges: [], featured: false, videoUrl: '', seoTitle: '', seoDescription: '', images: [],
+      price: '', compareAtPrice: '', costPrice: '', sku: '', barcode: '', tags: [], badges: [], featured: false, giftPackaging: false, videoUrl: '', seoTitle: '', seoDescription: '', images: [],
       variants: [{ size: null, color: null, sku: '', barcode: '', price: '', compareAtPrice: '', stock: 0, lowStockThreshold: 3 }],
     };
     return <ProductEditor initial={blank} categories={catList} collections={colList} />;
@@ -49,6 +49,7 @@ export default async function EditProduct({ params }: { params: Promise<{ id: st
     tags: p.tags,
     badges: p.badges as EditorProduct['badges'],
     featured: p.featured,
+    giftPackaging: p.giftPackaging,
     videoUrl: p.videoUrl ?? '',
     seoTitle: p.seoTitle ?? '',
     seoDescription: p.seoDescription ?? '',

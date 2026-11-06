@@ -7,8 +7,9 @@ import { formatMoney } from './money';
 import { campaignHit, discountPrice, getActiveCampaign } from './campaigns';
 import { activeDeliveryServices, formatDuration } from './delivery';
 import { evaluateHighValue, normalizeRule, normalizeShopping, type HighValueQuote } from './shopping-rules';
+import { giftImage, giftLineCharge, normalizeGift, type GiftImage } from './gift-packaging';
 
-export type CartLineInput = { variantId: number; quantity: number };
+export type CartLineInput = { variantId: number; quantity: number; giftPackaging?: boolean; giftImageId?: string | null };
 
 export type QuoteLine = {
   variantId: number;
@@ -26,6 +27,12 @@ export type QuoteLine = {
   lineTotal: number;
   stock: number;
   sku: string | null;
+  giftEligible: boolean;
+  giftSelected: boolean;
+  giftUnitPrice: number;
+  giftLineTotal: number;
+  giftImage: string | null;
+  giftImageId: string | null;
 };
 
 export type Quote = {
@@ -48,6 +55,10 @@ export type Quote = {
   issues: string[];
   highValue: HighValueQuote;
   checkoutBlock: string | null;
+  giftEnabled: boolean;
+  giftUnitPrice: number;
+  giftTotal: number;
+  giftImages: GiftImage[];
 };
 
 export async function validateDiscount(
@@ -130,7 +141,12 @@ export async function buildQuote(input: {
   const issues: string[] = [];
   const clean = input.lines
     .filter((l) => Number.isInteger(l.variantId) && l.variantId > 0)
-    .map((l) => ({ variantId: l.variantId, quantity: Math.min(20, Math.max(1, Math.floor(l.quantity) || 1)) }))
+    .map((l) => ({
+      variantId: l.variantId,
+      quantity: Math.min(20, Math.max(1, Math.floor(l.quantity) || 1)),
+      giftPackaging: l.giftPackaging === true,
+      giftImageId: typeof l.giftImageId === 'string' ? l.giftImageId.slice(0, 40) : null,
+    }))
     .slice(0, 50);
   const ids = [...new Set(clean.map((l) => l.variantId))];
   const rows = ids.length
@@ -149,6 +165,7 @@ export async function buildQuote(input: {
           compareAtPrice: products.compareAtPrice,
           categoryId: products.categoryId,
           status: products.status,
+          giftPackaging: products.giftPackaging,
         })
         .from(productVariants)
         .innerJoin(products, eq(products.id, productVariants.productId))
@@ -182,10 +199,13 @@ export async function buildQuote(input: {
     const hit = campaignHit(campaign, r.productId, r.categoryId);
     const unit = hit && campaign ? discountPrice(catalogUnit, campaign.percent) : catalogUnit;
     const image = imgs.filter((i) => i.productId === r.productId).sort((a, b) => a.position - b.position)[0]?.url ?? null;
+    const wantGift = l.giftPackaging === true;
     const existing = lines.find((x) => x.variantId === r.variantId);
     if (existing) {
       existing.quantity = Math.min(r.stock, existing.quantity + qty);
       existing.lineTotal = existing.quantity * existing.unitPrice;
+      if (wantGift) existing.giftSelected = true;
+      if (!existing.giftImageId && l.giftImageId) existing.giftImageId = l.giftImageId;
       continue;
     }
     lines.push({
@@ -204,7 +224,33 @@ export async function buildQuote(input: {
       lineTotal: unit * qty,
       stock: r.stock,
       sku: r.sku,
+      giftEligible: false,
+      giftSelected: wantGift,
+      giftUnitPrice: 0,
+      giftLineTotal: 0,
+      giftImage: null,
+      giftImageId: l.giftImageId,
     });
+  }
+  const gift = normalizeGift(settings.giftPackaging);
+  let giftTotal = 0;
+  for (const line of lines) {
+    const row = rows.find((x) => x.variantId === line.variantId);
+    const charge = giftLineCharge({
+      enabled: gift.enabled,
+      eligible: !!row?.giftPackaging,
+      selected: line.giftSelected,
+      unitPrice: gift.price,
+      quantity: line.quantity,
+    });
+    line.giftEligible = gift.enabled && !!row?.giftPackaging;
+    line.giftSelected = charge.total > 0 || (line.giftEligible && line.giftSelected && gift.price === 0);
+    const image = line.giftSelected ? giftImage(gift, line.giftImageId) : null;
+    line.giftUnitPrice = line.giftSelected ? gift.price : 0;
+    line.giftLineTotal = line.giftSelected ? gift.price * line.quantity : 0;
+    line.giftImage = image?.url ?? null;
+    line.giftImageId = image?.id ?? null;
+    giftTotal += line.giftLineTotal;
   }
   const subtotal = lines.reduce((a, l) => a + l.lineTotal, 0);
   const catalogSubtotal = lines.reduce((a, l) => a + l.catalogUnitPrice * l.quantity, 0);
@@ -249,11 +295,11 @@ export async function buildQuote(input: {
   const rule = normalizeRule(shopping.highValue);
   const fee = settings.payments.cod.fee ?? 0;
   let codFee = input.paymentMethod === 'cod' ? fee : 0;
-  let total = preFee + codFee;
+  let total = preFee + codFee + giftTotal;
   let highValue = evaluateHighValue({ total, subtotal, rule });
   if (highValue.applied && rule.allowRemainingCod && codFee === 0 && fee > 0) {
     codFee = fee;
-    total = preFee + codFee;
+    total = preFee + codFee + giftTotal;
     highValue = evaluateHighValue({ total, subtotal, rule });
   }
   const checkoutBlock = shopping.minOrderEnabled && shopping.minOrderAmount > 0 && subtotal < shopping.minOrderAmount
@@ -280,5 +326,9 @@ export async function buildQuote(input: {
     issues,
     highValue,
     checkoutBlock,
+    giftEnabled: gift.enabled,
+    giftUnitPrice: gift.price,
+    giftTotal,
+    giftImages: gift.images,
   };
 }

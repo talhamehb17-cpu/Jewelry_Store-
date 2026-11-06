@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
-  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, Menu, X, Database, Megaphone, MapPin, Truck, Coins, Scale,
+  LayoutDashboard, Package, Layers, ShoppingCart, Users, Boxes, BadgePercent, LayoutTemplate, Palette, FileText, BarChart3, Settings, MessageSquare, Star, ExternalLink, Menu, X, Database, Megaphone, MapPin, Truck, Coins, Scale, Gift,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/store/logout-button';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,7 @@ const NAV = [
       { href: '/admin/customers', label: 'Customers', icon: Users },
       { href: '/admin/discounts', label: 'Discounts', icon: BadgePercent },
       { href: '/admin/shopping', label: 'Shopping conditions', icon: Scale },
+      { href: '/admin/packaging', label: 'Gift packaging', icon: Gift },
       { href: '/admin/marketing', label: 'Events & campaigns', icon: Megaphone },
       { href: '/admin/delivery', label: 'Delivery settings', icon: Truck },
       { href: '/admin/locations', label: 'Locations', icon: MapPin },

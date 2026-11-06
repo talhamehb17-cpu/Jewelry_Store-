@@ -16,6 +16,7 @@ import { ReviewsSection } from '@/components/store/review-list';
 import { absoluteUrl, cn, jsonLd } from '@/lib/utils';
 import { BRAND } from '@/lib/brand';
 import { isRemote } from '@/lib/images';
+import { normalizeGift } from '@/lib/gift-packaging';
 
 type P = { params: Promise<{ slug: string }> };
 
@@ -91,6 +92,7 @@ export default async function ProductPage({ params }: P) {
       review: d.reviews.slice(0, 5).map((r) => ({ '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: r.rating }, author: { '@type': 'Person', name: r.name.split(' · ')[0] }, reviewBody: r.body })),
     }),
   };
+  const giftOffer = normalizeGift(settings.giftPackaging);
   const crumbs = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -128,6 +130,7 @@ export default async function ProductPage({ params }: P) {
               stickyAtc={ctx.config.settings.mobile.stickyAtc}
               shipping={{ freeThreshold: settings.shipping.freeThreshold, standard: std, express: exp }}
               isNew={isNew}
+              gift={p.giftPackaging && giftOffer.enabled ? { price: giftOffer.price, images: giftOffer.images } : null}
             />
           </div>
         </div>

@@ -44,7 +44,7 @@ export default async function Invoice({ params }: { params: Promise<{ id: string
           <thead><tr className="border-b border-[#23201d] text-left text-[0.72rem] uppercase tracking-wider"><th className="py-2">Item</th><th className="py-2">SKU</th><th className="py-2 text-right">Price</th><th className="py-2 text-right">Qty</th><th className="py-2 text-right">Total</th></tr></thead>
           <tbody>
             {items.map((i) => (
-              <tr key={i.id} className="border-b border-line"><td className="py-3">{i.name}{i.variantTitle && <span className="block text-[0.75rem] text-muted">{i.variantTitle}</span>}</td><td className="py-3 text-muted">{i.sku}</td><td className="py-3 text-right">{formatMoney(i.unitPrice)}</td><td className="py-3 text-right">{i.quantity}</td><td className="py-3 text-right">{formatMoney(i.lineTotal)}</td></tr>
+              <tr key={i.id} className="border-b border-line"><td className="py-3">{i.name}{i.variantTitle && <span className="block text-[0.75rem] text-muted">{i.variantTitle}</span>}{i.giftPackaging && <span className="block text-[0.75rem]">Premium gift packaging {formatMoney(i.giftUnitPrice)} × {i.quantity}</span>}</td><td className="py-3 text-muted">{i.sku}</td><td className="py-3 text-right">{formatMoney(i.unitPrice)}</td><td className="py-3 text-right">{i.quantity}</td><td className="py-3 text-right">{formatMoney(i.lineTotal)}</td></tr>
             ))}
           </tbody>
         </table>
@@ -53,6 +53,7 @@ export default async function Invoice({ params }: { params: Promise<{ id: string
           <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
           {o.campaignDiscount > 0 && <div className="flex justify-between"><dt className="text-muted">{o.campaignName || 'Event sale'}</dt><dd>−{formatMoney(o.campaignDiscount)}</dd></div>}
           {o.discountTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd>−{formatMoney(o.discountTotal)}</dd></div>}
+          {o.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Gift packaging</dt><dd>{formatMoney(o.giftTotal)}</dd></div>}
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{formatMoney(o.shippingTotal)}</dd></div>
           <div className="flex justify-between border-t border-[#23201d] pt-2 text-[1rem] font-semibold"><dt>Total (PKR)</dt><dd>{formatMoney(o.total)}</dd></div>
         </dl>

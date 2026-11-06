@@ -9,6 +9,7 @@ import { QtyStepper, VariantPicker, useVariantSelection, type PickerVariant } fr
 import { Modal } from '@/components/ui/overlay';
 import { Badge, Price, Stars, productBadges } from '@/components/ui/bits';
 import { notifyBackInStock } from '@/app/actions/store';
+import { GiftPackagingChoice, type GiftPreview } from './gift-packaging';
 import { formatMoney } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import type { ThemeLayout } from '@/themes/types';
@@ -22,6 +23,7 @@ type P = {
   stickyAtc: boolean;
   shipping: { freeThreshold: number; standard: number; express: number };
   isNew: boolean;
+  gift?: { price: number; images: GiftPreview[] } | null;
 };
 
 const STYLE: Record<ThemeLayout['pdpStyle'], { wrap: string; title: string; price: string; label?: string }> = {
@@ -105,13 +107,15 @@ function NotifyForm({ product }: { product: string }) {
   );
 }
 
-export function ProductPurchase({ product: p, variants, image, category, style, stickyAtc, shipping, isNew }: P) {
+export function ProductPurchase({ product: p, variants, image, category, style, stickyAtc, shipping, isNew, gift }: P) {
   const { addToCart, toggleWishlist, inWishlist } = useStore();
   const router = useRouter();
   const state = useVariantSelection(variants);
   const [qty, setQty] = useState(1);
   const [error, setError] = useState('');
   const [guide, setGuide] = useState(false);
+  const [giftOn, setGiftOn] = useState(false);
+  const [giftImageId, setGiftImageId] = useState<string | null>(gift?.images[0]?.id ?? null);
   const [showSticky, setShowSticky] = useState(false);
   const [eta, setEta] = useState<{ std: string; exp: string } | null>(null);
   useEffect(() => setEta({ std: deliveryWindow([3, 5]), exp: deliveryWindow([1, 2]) }), []);
@@ -139,7 +143,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
       return;
     }
     if (soldOut) return;
-    addToCart({ variantId: v.id, productId: p.id, slug: p.slug, name: p.name, variantTitle: v.title === 'Default' ? null : v.title, image, price }, qty, { silent: buyNow });
+    addToCart({ variantId: v.id, productId: p.id, slug: p.slug, name: p.name, variantTitle: v.title === 'Default' ? null : v.title, image, price, giftPackaging: !!gift && giftOn, giftImageId: giftOn ? giftImageId : null }, qty, { silent: buyNow });
     if (buyNow) router.push('/checkout');
   };
 
@@ -185,6 +189,7 @@ export function ProductPurchase({ product: p, variants, image, category, style, 
                   <Heart size={18} strokeWidth={1.25} className={cn(wished && 'fill-current text-sale')} />
                 </button>
               </div>
+              {gift && <GiftPackagingChoice price={gift.price} images={gift.images} selected={giftOn} imageId={giftImageId} onChange={(on, id) => { setGiftOn(on); setGiftImageId(id); }} />}
               <button onClick={() => add(true)} disabled={allSoldOut} className="btn btn-secondary mt-3 w-full">Buy it now</button>
             </>
           )}

@@ -52,6 +52,12 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
                   <div className="min-w-0 flex-1">
                     {i.productId ? <Link href={`/admin/products/${i.productId}`} className="font-medium hover:underline">{i.name}</Link> : <span className="font-medium">{i.name}</span>}
                     <p className="text-[0.75rem] text-muted">{[i.variantTitle, i.sku && `SKU ${i.sku}`].filter(Boolean).join(' · ')}</p>
+                    {i.giftPackaging ? (
+                      <div className="mt-2 flex items-center gap-2 text-[0.75rem]">
+                        {i.giftImage && <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded bg-secondary"><Img src={i.giftImage} alt="Premium gift packaging" sizes="40px" className="gift-still" /></span>}
+                        <span>Premium gift packaging: selected for {i.name}{i.variantTitle ? ` · ${i.variantTitle}` : ''} · {formatMoney(i.giftUnitPrice)} each × {i.quantity} = {formatMoney(i.giftLineTotal)}</span>
+                      </div>
+                    ) : o.giftTotal > 0 ? <p className="mt-1 text-[0.75rem] text-muted">Premium gift packaging: not selected</p> : null}
                     <p className="mt-1 text-[0.84rem] sm:hidden">{formatMoney(i.unitPrice)} × {i.quantity} · <span className="font-medium">{formatMoney(i.lineTotal)}</span></p>
                   </div>
                   <span className="hidden text-[0.84rem] text-muted sm:block">{formatMoney(i.unitPrice)} × {i.quantity}</span>
@@ -63,6 +69,7 @@ export default async function OrderAdmin({ params }: { params: Promise<{ id: str
               <div className="flex justify-between gap-3"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(o.subtotal + (o.campaignDiscount || 0))}</dd></div>
               {o.campaignDiscount > 0 && <div className="flex justify-between gap-3"><dt className="min-w-0 text-muted">{o.campaignName || 'Event sale'} included</dt><dd className="shrink-0">−{formatMoney(o.campaignDiscount)}</dd></div>}
               {o.discountTotal > 0 && <div className="flex justify-between gap-3"><dt className="min-w-0 text-muted">Discount {o.discountCode && `(${o.discountCode})`}</dt><dd className="shrink-0">−{formatMoney(o.discountTotal)}</dd></div>}
+              {o.giftTotal > 0 ? <div className="flex justify-between gap-3"><dt className="text-muted">Gift packaging</dt><dd>{formatMoney(o.giftTotal)}</dd></div> : <div className="flex justify-between gap-3"><dt className="text-muted">Gift packaging</dt><dd>Not selected</dd></div>}
               <div className="flex justify-between gap-3"><dt className="min-w-0 text-muted">{o.shippingMethodName}</dt><dd className="shrink-0">{formatMoney(o.shippingTotal)}</dd></div>
               {o.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatMoney(o.codFee)}</dd></div>}
               {o.taxTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Tax</dt><dd>{formatMoney(o.taxTotal)}</dd></div>}

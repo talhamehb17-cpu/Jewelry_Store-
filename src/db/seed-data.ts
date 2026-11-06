@@ -1011,4 +1011,14 @@ export const DEFAULT_SETTINGS = {
     },
     audit: null as { by: string; at: string } | null,
   },
+  giftPackaging: {
+    enabled: true,
+    price: 25_000,
+    images: [
+      { id: 'box', url: '/images/packaging/gift-box.webp', alt: 'Cream jewelry box with a champagne ribbon' },
+      { id: 'pouch', url: '/images/packaging/gift-pouch.webp', alt: 'Suede jewelry pouch with a gold-tone cord' },
+    ],
+    initialized: false,
+    audit: null as { by: string; at: string } | null,
+  },
 };

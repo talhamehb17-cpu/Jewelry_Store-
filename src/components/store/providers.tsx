@@ -11,6 +11,8 @@ export type CartItem = {
   image: string | null;
   price: number;
   quantity: number;
+  giftPackaging?: boolean;
+  giftImageId?: string | null;
 };
 
 type Toast = { id: number; title: string; body?: string; tone?: 'default' | 'error' };
@@ -23,6 +25,7 @@ type StoreCtx = {
   cartReady: boolean;
   addToCart: (item: Omit<CartItem, 'quantity'>, qty?: number, opts?: { silent?: boolean }) => void;
   updateQty: (variantId: number, qty: number) => void;
+  setGiftPackaging: (variantId: number, selected: boolean, imageId?: string | null) => void;
   removeFromCart: (variantId: number) => void;
   clearCart: () => void;
   replaceCart: (items: CartItem[]) => void;
@@ -101,13 +104,16 @@ export function StoreProvider({ children, loggedIn }: { children: React.ReactNod
   const addToCart = useCallback<StoreCtx['addToCart']>((item, qty = 1, opts) => {
     setCart((prev) => {
       const existing = prev.find((x) => x.variantId === item.variantId);
-      if (existing) return prev.map((x) => (x.variantId === item.variantId ? { ...x, ...item, quantity: Math.min(20, x.quantity + qty) } : x));
+      if (existing) return prev.map((x) => (x.variantId === item.variantId ? { ...x, ...item, giftPackaging: 'giftPackaging' in item ? item.giftPackaging : x.giftPackaging, giftImageId: 'giftPackaging' in item ? item.giftImageId : x.giftImageId, quantity: Math.min(20, x.quantity + qty) } : x));
       return [...prev, { ...item, quantity: Math.min(20, qty) }];
     });
     if (!opts?.silent) setCartOpen(true);
   }, []);
   const updateQty = useCallback((variantId: number, qty: number) => {
     setCart((prev) => (qty <= 0 ? prev.filter((x) => x.variantId !== variantId) : prev.map((x) => (x.variantId === variantId ? { ...x, quantity: Math.min(20, qty) } : x))));
+  }, []);
+  const setGiftPackaging = useCallback((variantId: number, selected: boolean, imageId?: string | null) => {
+    setCart((prev) => prev.map((x) => (x.variantId === variantId ? { ...x, giftPackaging: selected, giftImageId: selected ? imageId ?? x.giftImageId ?? null : null } : x)));
   }, []);
   const removeFromCart = useCallback((variantId: number) => setCart((prev) => prev.filter((x) => x.variantId !== variantId)), []);
   const clearCart = useCallback(() => setCart([]), []);
@@ -136,6 +142,7 @@ export function StoreProvider({ children, loggedIn }: { children: React.ReactNod
       cartReady,
       addToCart,
       updateQty,
+      setGiftPackaging,
       removeFromCart,
       clearCart,
       replaceCart,
@@ -155,7 +162,7 @@ export function StoreProvider({ children, loggedIn }: { children: React.ReactNod
       dismissToast,
       loggedIn,
     }),
-    [cart, cartReady, addToCart, updateQty, removeFromCart, clearCart, replaceCart, cartOpen, searchOpen, menuOpen, quickView, wishlist, toggleWishlist, inWishlist, toasts, toast, dismissToast, loggedIn],
+    [cart, cartReady, addToCart, updateQty, setGiftPackaging, removeFromCart, clearCart, replaceCart, cartOpen, searchOpen, menuOpen, quickView, wishlist, toggleWishlist, inWishlist, toasts, toast, dismissToast, loggedIn],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

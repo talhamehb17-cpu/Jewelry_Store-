@@ -242,6 +242,13 @@ export function ProductEditor({ initial, categories, collections, productId }: {
                 return <button type="button" key={b.id} onClick={() => set('badges', on ? (p.badges ?? []).filter((x) => x !== b.id) : [...(p.badges ?? []), b.id])} className={cn('rounded-full border px-3 py-1 text-[0.75rem]', on ? 'border-ink bg-ink text-white' : 'border-line')}>{b.label}</button>;
               })}
             </div>
+            <Field label="Premium Gift Packaging Available" className="mt-4">
+              <select className="field" value={p.giftPackaging ? 'yes' : 'no'} onChange={(e) => set('giftPackaging', e.target.value === 'yes')}>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </Field>
+            <p className="mt-2 text-[0.75rem] text-muted">Yes shows the optional packaging choice on this product. No hides it. The price is set under Gift packaging, not here.</p>
           </Card>
           <Card title="Organisation">
             <div className="space-y-4">

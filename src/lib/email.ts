@@ -21,7 +21,7 @@ export function orderConfirmationEmail(order: Order, items: OrderItem[], link: s
   const rows = items
     .map(
       (i) => `<tr>
-        <td style="padding:10px 0;border-bottom:1px solid #E6DCCF">${i.image ? `<img src="${absoluteUrl(i.image)}" alt="" width="48" height="60" style="width:48px;height:60px;object-fit:cover;vertical-align:middle;margin-right:8px">` : ''}${esc(i.name)}${i.variantTitle ? ` <span style="color:#8A7F74">(${esc(i.variantTitle)})</span>` : ''} × ${i.quantity}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #E6DCCF">${i.image ? `<img src="${absoluteUrl(i.image)}" alt="" width="48" height="60" style="width:48px;height:60px;object-fit:cover;vertical-align:middle;margin-right:8px">` : ''}${esc(i.name)}${i.variantTitle ? ` <span style="color:#8A7F74">(${esc(i.variantTitle)})</span>` : ''} × ${i.quantity}${i.giftPackaging ? `<br><span style="color:#8A7F74">Premium gift packaging ${formatMoney(i.giftUnitPrice)} × ${i.quantity}${i.giftImage ? ` · <img src="${absoluteUrl(i.giftImage)}" alt="" width="32" height="32" style="width:32px;height:32px;object-fit:contain;vertical-align:middle">` : ''}</span>` : ''}</td>
         <td style="padding:10px 0;border-bottom:1px solid #E6DCCF;text-align:right">${formatMoney(i.lineTotal)}</td>
       </tr>`,
     )
@@ -37,6 +37,7 @@ export function orderConfirmationEmail(order: Order, items: OrderItem[], link: s
      ${order.campaignDiscount ? `<p>Includes ${esc(order.campaignName || 'event sale')} savings of ${formatMoney(order.campaignDiscount)}.</p>` : ''}
      <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:14px">${rows}
        ${order.discountTotal ? `<tr><td style="padding:8px 0">Discount${order.discountCode ? ` (${esc(order.discountCode)})` : ''}</td><td style="text-align:right">−${formatMoney(order.discountTotal)}</td></tr>` : ''}
+       ${order.giftTotal ? `<tr><td style="padding:8px 0">Gift packaging</td><td style="text-align:right">${formatMoney(order.giftTotal)}</td></tr>` : ''}
        <tr><td style="padding:12px 0 0">Total</td><td style="padding:12px 0 0;text-align:right"><strong>${formatMoney(order.total)}</strong></td></tr>
      </table>
      ${emailButton(link, 'VIEW YOUR ORDER')}`,

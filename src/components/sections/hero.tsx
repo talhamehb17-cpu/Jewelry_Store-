@@ -35,8 +35,8 @@ function Media({ s, priority, sizes = '100vw', className, slot }: { s: Slide; pr
         <video className={cn('absolute inset-0 h-full w-full object-cover', className)} src={s.video} poster={s.image} autoPlay muted loop playsInline preload="metadata" aria-hidden />
       ) : (
         <>
-          <Img slot={slot} src={publicImage(s.image, LOOK.hero)} alt={s.heading ?? ''} priority={priority} sizes={sizes} className={cn('slide-img', s.mobileImage && 'max-md:hidden', className)} />
-          {s.mobileImage && <Img slot={slot ? 'mobile' : undefined} src={publicImage(s.mobileImage, LOOK.hero)} alt="" priority={priority} sizes="100vw" className={cn('slide-img md:hidden', className)} />}
+          <Img slot={slot} src={publicImage(s.image, LOOK.hero)} alt={s.heading ?? ''} priority={priority} sizes={sizes} className={cn('slide-img hero-subject', (s.mobileImage || slot === 'hero') && 'max-md:hidden', className)} />
+          {(s.mobileImage || slot === 'hero') && <Img slot="mobile" src={publicImage(s.mobileImage || s.image, LOOK.hero)} alt="" priority={priority} sizes="100vw" className={cn('slide-img hero-subject md:hidden', className)} />}
         </>
       )}
     </>
@@ -94,8 +94,9 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
               </ul>
             </div>
             <div className="order-1 min-w-0 md:order-2">
-              <div className="relative mx-auto aspect-[4/5] max-h-[58svh] w-full overflow-hidden bg-surface md:aspect-[5/4] md:max-h-[72vh]">
-                <Img src={publicImage(first.image, LOOK.hero)} alt="Gold necklace and pearl earrings in window light" priority sizes="(max-width:768px) 100vw, 54vw" className="hero-drift !object-cover !object-[center_40%]" />
+              <div className="hero-stage relative mx-auto aspect-[3/4] w-full overflow-hidden bg-surface md:aspect-[5/4] md:max-h-[72vh]">
+                <Img slot="hero" src={publicImage(first.image, LOOK.hero)} alt="Gold necklace and pearl earrings in window light" priority sizes="(max-width:768px) 100vw, 54vw" className="hero-drift hero-subject max-md:hidden" />
+                <Img slot="mobile" src={publicImage(first.mobileImage || first.image, LOOK.hero)} alt="" priority sizes="100vw" className="hero-drift hero-subject md:hidden" />
               </div>
             </div>
           </div>
@@ -105,7 +106,7 @@ export function HeroSection({ section, config }: { section: SectionInstance; con
     case 'split':
       return (
         <section className="grid border-b border-line md:min-h-[var(--hero-h)] md:grid-cols-2" style={vars}>
-          <div className="relative order-1 aspect-[4/5] max-h-[68svh] overflow-hidden bg-surface md:order-2 md:aspect-auto md:max-h-none">
+          <div className="hero-stage relative order-1 aspect-[3/4] overflow-hidden bg-surface md:order-2 md:aspect-auto md:max-h-none">
             <Media s={first} priority sizes="(max-width:768px) 100vw, 50vw" slot="hero" />
           </div>
           <div className="order-2 flex items-center px-[var(--pad-x)] py-14 md:order-1 md:px-[max(var(--pad-x),5vw)]">

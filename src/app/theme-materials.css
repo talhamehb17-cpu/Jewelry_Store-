@@ -1,0 +1,218 @@
+/* Phone hero: show the subject. Cover is reserved for desktop frames that have room. */
+.hero-subject {
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: var(--c-surface);
+}
+.hero-stage {
+  min-height: 16rem;
+}
+@media (min-width: 768px) {
+  .hero-subject {
+    object-fit: cover !important;
+    object-position: center 18% !important;
+    background: transparent;
+  }
+  .hero-stage {
+    min-height: 0;
+  }
+}
+.gift-still {
+  object-fit: contain !important;
+  background: var(--c-surface);
+}
+
+/* Narrow storefront: keep chrome inside the viewport without clipping type. */
+.container-x,
+main,
+header,
+footer {
+  min-width: 0;
+}
+@media (max-width: 390px) {
+  article.group .whitespace-nowrap {
+    white-space: normal;
+  }
+  .btn {
+    max-width: 100%;
+  }
+}
+
+/* Glass is frost: translucent fill, a light edge, and a short blur.
+   Neu is clay: the same surface pushed out or pressed in. No blur. */
+[data-theme='glassmorphism'] {
+  --glass-fill: rgba(251, 248, 244, 0.78);
+  --glass-edge: rgba(255, 255, 255, 0.78);
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+@supports (color: color-mix(in srgb, white, black)) {
+  [data-theme='glassmorphism'] {
+    --glass-fill: color-mix(in srgb, var(--c-surface) 58%, transparent);
+    --glass-edge: color-mix(in srgb, white 78%, var(--c-border));
+    background:
+      radial-gradient(ellipse 70% 36% at 0% 0%, color-mix(in srgb, var(--c-accent) 22%, transparent), transparent 58%),
+      radial-gradient(ellipse 48% 32% at 100% 0%, color-mix(in srgb, var(--c-secondary) 70%, white), transparent 52%),
+      var(--c-bg);
+  }
+}
+[data-theme='glassmorphism'] header,
+[data-theme='glassmorphism'] .backdrop-blur-xl,
+[data-theme='glassmorphism'] footer,
+[data-theme='glassmorphism'] article.group,
+[data-theme='glassmorphism'] .rounded-theme.border,
+[data-theme='glassmorphism'] .gift-pack,
+[data-theme='glassmorphism'] [role='dialog'],
+[data-theme='glassmorphism'] .review-sheet-panel {
+  background-color: var(--glass-fill);
+  color: var(--c-text);
+  border-color: var(--glass-edge);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 14px 30px -22px rgba(36, 28, 20, 0.45);
+}
+@supports ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+  [data-theme='glassmorphism'] header,
+  [data-theme='glassmorphism'] .backdrop-blur-xl,
+  [data-theme='glassmorphism'] footer,
+  [data-theme='glassmorphism'] article.group,
+  [data-theme='glassmorphism'] .rounded-theme.border,
+  [data-theme='glassmorphism'] .gift-pack,
+  [data-theme='glassmorphism'] [role='dialog'],
+  [data-theme='glassmorphism'] .review-sheet-panel {
+    background-color: color-mix(in srgb, var(--c-surface) 42%, transparent);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    backdrop-filter: blur(12px) saturate(1.2);
+  }
+}
+[data-theme='glassmorphism'] .field {
+  background-color: color-mix(in srgb, var(--c-surface) 78%, transparent);
+  border-color: color-mix(in srgb, var(--c-text) 28%, transparent);
+  color: var(--c-text);
+}
+[data-theme='glassmorphism'] .field:focus {
+  border-color: var(--c-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 35%, transparent);
+}
+[data-theme='glassmorphism'] .btn-primary {
+  background: var(--c-primary);
+  color: var(--c-primary-text);
+  border-color: var(--c-primary);
+}
+[data-theme='glassmorphism'] .btn-secondary,
+[data-theme='glassmorphism'] a.rounded-full.border:not(:hover) {
+  background-color: color-mix(in srgb, var(--c-surface) 55%, transparent);
+  color: var(--c-text);
+  border-color: color-mix(in srgb, var(--c-text) 36%, transparent);
+}
+[data-theme='glassmorphism'] .ratio-product,
+[data-theme='glassmorphism'] .media-fill,
+[data-theme='glassmorphism'] .media-fill-img,
+[data-theme='glassmorphism'] .hero-drift,
+[data-theme='glassmorphism'] .gift-still {
+  filter: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+[data-theme='neumorphism'] {
+  --neu-hi: #f7f3ee;
+  --neu-lo: #cfc6b8;
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+@supports (color: color-mix(in srgb, white, black)) {
+  [data-theme='neumorphism'] {
+    --neu-hi: color-mix(in srgb, var(--c-bg) 62%, white);
+    --neu-lo: color-mix(in srgb, var(--c-bg) 72%, #6d645b);
+  }
+}
+[data-theme='neumorphism'] header,
+[data-theme='neumorphism'] footer,
+[data-theme='neumorphism'] article.group,
+[data-theme='neumorphism'] .rounded-theme.border,
+[data-theme='neumorphism'] .gift-pack,
+[data-theme='neumorphism'] .btn-secondary,
+[data-theme='neumorphism'] a.rounded-full.border:not(:hover):not(:active),
+[data-theme='neumorphism'] [role='dialog'],
+[data-theme='neumorphism'] .review-sheet-panel {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  border-color: transparent;
+  box-shadow: 6px 6px 14px var(--neu-lo), -6px -6px 14px var(--neu-hi);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-theme='neumorphism'] .field {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  border-color: transparent;
+  box-shadow: inset 3px 3px 7px var(--neu-lo), inset -3px -3px 7px var(--neu-hi);
+}
+[data-theme='neumorphism'] .field:focus {
+  border-color: var(--c-accent);
+  box-shadow: inset 2px 2px 5px var(--neu-lo), 0 0 0 3px color-mix(in srgb, var(--c-accent) 32%, transparent);
+}
+[data-theme='neumorphism'] .btn-primary {
+  background: var(--c-primary);
+  color: var(--c-primary-text);
+  border-color: var(--c-primary);
+  box-shadow: 4px 4px 10px var(--neu-lo);
+}
+[data-theme='neumorphism'] .btn-secondary:active,
+[data-theme='neumorphism'] a.rounded-full.border:active,
+[data-theme='neumorphism'] .field:active {
+  box-shadow: inset 3px 3px 7px var(--neu-lo), inset -2px -2px 5px var(--neu-hi);
+}
+[data-theme='neumorphism'] .btn-primary:active {
+  background: var(--c-primary);
+  color: var(--c-primary-text);
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.4);
+}
+[data-theme='neumorphism'] .ratio-product,
+[data-theme='neumorphism'] .media-fill,
+[data-theme='neumorphism'] .media-fill-img,
+[data-theme='neumorphism'] .gift-still {
+  filter: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-theme='neumorphism'] article.group .ratio-product {
+  background-color: var(--c-surface);
+  box-shadow: 4px 4px 10px var(--neu-lo), -4px -4px 10px var(--neu-hi);
+}
+
+@media (max-width: 767px) {
+  [data-theme='glassmorphism'] header,
+  [data-theme='glassmorphism'] .backdrop-blur-xl,
+  [data-theme='glassmorphism'] footer,
+  [data-theme='glassmorphism'] article.group,
+  [data-theme='glassmorphism'] .rounded-theme.border,
+  [data-theme='glassmorphism'] .gift-pack,
+  [data-theme='glassmorphism'] [role='dialog'],
+  [data-theme='glassmorphism'] .review-sheet-panel {
+    -webkit-backdrop-filter: blur(8px) saturate(1.08);
+    backdrop-filter: blur(8px) saturate(1.08);
+  }
+  [data-theme='neumorphism'] header,
+  [data-theme='neumorphism'] footer,
+  [data-theme='neumorphism'] article.group,
+  [data-theme='neumorphism'] .rounded-theme.border,
+  [data-theme='neumorphism'] .gift-pack,
+  [data-theme='neumorphism'] .btn-secondary,
+  [data-theme='neumorphism'] [role='dialog'],
+  [data-theme='neumorphism'] .review-sheet-panel,
+  [data-theme='neumorphism'] article.group .ratio-product {
+    box-shadow: 3px 3px 7px var(--neu-lo), -3px -3px 7px var(--neu-hi);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='glassmorphism'] header,
+  [data-theme='glassmorphism'] .backdrop-blur-xl,
+  [data-theme='glassmorphism'] article.group,
+  [data-theme='glassmorphism'] .gift-pack,
+  [data-theme='glassmorphism'] [role='dialog'] {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  }
+}

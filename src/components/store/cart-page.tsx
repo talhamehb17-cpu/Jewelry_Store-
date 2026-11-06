@@ -38,7 +38,7 @@ export function CartPageView() {
         <div>
           {quote && <div className="mb-2 rounded-theme-sm bg-surface/60 p-5"><FreeShippingBar remaining={quote.freeShippingRemaining} threshold={quote.freeShippingThreshold} /></div>}
           {quote?.issues.map((i) => <p key={i} className="mt-3 rounded-theme-sm bg-surface px-3 py-2 text-[0.82rem] text-sale">{i}</p>)}
-          <CartLines />
+          <CartLines quote={quote} />
           <div className="mt-10 border-t border-line pt-10"><Recommendations exclude={cart.map((c) => c.productId)} title="Complete your look" limit={3} /></div>
         </div>
         <aside>
@@ -78,6 +78,7 @@ export function CartPageView() {
                 <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(quote.catalogSubtotal || quote.subtotal)}</dd></div>
                 {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name}</dt><dd>−{formatMoney(quote.campaign.amount)}</dd></div>}
                 {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Discount</dt><dd>−{formatMoney(quote.discount.amount)}</dd></div>}
+                {quote.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Gift packaging</dt><dd>{formatMoney(quote.giftTotal)}</dd></div>}
                 <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{quote.shipping ? formatMoney(quote.shipping) : 'Complimentary'}</dd></div>
                 <div className="flex items-baseline justify-between border-t border-line pt-4"><dt>Estimated total</dt><dd className="font-heading text-[1.5rem]">{formatMoney(quote.total)}</dd></div>
               </dl>

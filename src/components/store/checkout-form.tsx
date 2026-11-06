@@ -159,7 +159,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
         discountCode: discountToSubmit(codeInput, code),
         note,
         saveAddress: loggedIn && saveAddress,
-        lines: cart.map((c) => ({ variantId: c.variantId, quantity: c.quantity })),
+        lines: cart.map((c) => ({ variantId: c.variantId, quantity: c.quantity, giftPackaging: !!c.giftPackaging, giftImageId: c.giftImageId || null })),
       });
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {});
@@ -179,7 +179,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
   const summary = (
     <div className="space-y-5">
       <ul className="space-y-4">
-        {(quote?.lines ?? cart.map((c) => ({ variantId: c.variantId, name: c.name, variantTitle: c.variantTitle, image: c.image, quantity: c.quantity, lineTotal: c.price * c.quantity }))).map((l) => (
+        {(quote?.lines ?? cart.map((c) => ({ variantId: c.variantId, name: c.name, variantTitle: c.variantTitle, image: c.image, quantity: c.quantity, lineTotal: c.price * c.quantity, giftLineTotal: 0 }))).map((l) => (
           <li key={l.variantId} className="flex items-center gap-4">
             <span className="relative h-20 w-16 shrink-0 overflow-hidden rounded-theme-sm bg-surface">
               <Img src={l.image} alt={l.name} sizes="64px" />
@@ -188,6 +188,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[0.9rem]">{l.name}</span>
               {l.variantTitle && <span className="block text-[0.78rem] text-muted">{l.variantTitle}</span>}
+              {l.giftLineTotal > 0 && <span className="block text-[0.75rem] text-accent">Gift packaging {formatMoney(l.giftLineTotal)}</span>}
             </span>
             <span className="text-[0.9rem]">{formatMoney(l.lineTotal)}</span>
           </li>
@@ -214,6 +215,7 @@ export function CheckoutForm({ prefill, provinces, payments, loggedIn, cancelled
           <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(quote.catalogSubtotal || quote.subtotal)}</dd></div>
           {quote.campaign && quote.campaign.amount > 0 && <div className="flex justify-between text-accent"><dt>{quote.campaign.name} ({quote.campaign.percent}%)</dt><dd>−{formatMoney(quote.campaign.amount)}</dd></div>}
           {quote.discount && quote.discount.amount > 0 && <div className="flex justify-between text-accent"><dt>Code ({quote.discount.code})</dt><dd>−{formatMoney(quote.discount.amount)}</dd></div>}
+          {quote.giftTotal > 0 && <div className="flex justify-between"><dt className="text-muted">Gift packaging</dt><dd>{formatMoney(quote.giftTotal)}</dd></div>}
           <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd>{quote.shipping === 0 ? 'Complimentary' : formatMoney(quote.shipping)}</dd></div>
           {quote.codFee > 0 && <div className="flex justify-between"><dt className="text-muted">COD fee</dt><dd>{formatMoney(quote.codFee)}</dd></div>}
           {quote.tax > 0 && <div className="flex justify-between"><dt className="text-muted">{quote.taxLabel}</dt><dd>{formatMoney(quote.tax)}</dd></div>}

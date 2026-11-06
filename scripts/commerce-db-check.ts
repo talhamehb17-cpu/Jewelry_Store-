@@ -38,7 +38,7 @@ async function main() {
   const hidden = await listSubscriberOffers(email);
   if (hidden.some((offer) => offer.code === code)) throw new Error('An unsubscribed email still received the code.');
 
-  const line = { variantId: 1, productId: 1, slug: 'test', name: 'Test', variantTitle: null, image: null, unitPrice: 100000, catalogUnitPrice: 100000, compareAtPrice: null, categoryId: null, campaignHit: false, quantity: 1, lineTotal: 100000, stock: 1, sku: null };
+  const line = { variantId: 1, productId: 1, slug: 'test', name: 'Test', variantTitle: null, image: null, unitPrice: 100000, catalogUnitPrice: 100000, compareAtPrice: null, categoryId: null, campaignHit: false, quantity: 1, lineTotal: 100000, stock: 1, sku: null, giftEligible: false, giftSelected: false, giftUnitPrice: 0, giftLineTotal: 0, giftImage: null, giftImageId: null };
   const denied = await validateDiscount(code, { lines: [line], subtotal: 100000, email });
   if (!('error' in denied)) throw new Error('Unsubscribed validation should fail.');
   await db.update(newsletterSubscribers).set({ status: 'subscribed', unsubscribedAt: null }).where(eq(newsletterSubscribers.email, email));

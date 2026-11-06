@@ -76,7 +76,7 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
         className={compact ? 'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.72rem] uppercase tracking-[0.12em]' : 'inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-[0.78rem]'}
       >
         <span aria-hidden>{current?.flag}</span>
-        <span>{current?.code}</span>
+        <span className={compact ? 'max-[359px]:sr-only' : undefined}>{current?.code}</span>
         {pending ? <span className="text-muted">…</span> : null}
       </button>
       {open && (

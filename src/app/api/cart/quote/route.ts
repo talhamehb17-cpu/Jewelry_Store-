@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 const schema = z.object({
-  lines: z.array(z.object({ variantId: z.number().int().positive(), quantity: z.number().int().min(1).max(20) })).max(50),
+  lines: z.array(z.object({ variantId: z.number().int().positive(), quantity: z.number().int().min(1).max(20), giftPackaging: z.boolean().optional(), giftImageId: z.string().max(40).nullish() })).max(50),
   discountCode: z.string().max(60).nullish(),
   shippingMethod: z.string().max(40).nullish(),
   paymentMethod: z.string().max(20).nullish(),

@@ -8,6 +8,7 @@ import { Img } from '@/components/ui/img';
 import { QtyStepper } from './variant-picker';
 import { useStore, type CartItem } from './providers';
 import { formatMoney } from '@/lib/money';
+import { cn } from '@/lib/utils';
 import type { Quote } from '@/lib/pricing';
 import type { CardProduct } from '@/lib/catalog';
 
@@ -16,7 +17,7 @@ export function useQuote(extra: { discountCode?: string | null; shippingMethod?:
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(false);
   const seq = useRef(0);
-  const key = JSON.stringify({ l: cart.map((c) => [c.variantId, c.quantity]), ...extra });
+  const key = JSON.stringify({ l: cart.map((c) => [c.variantId, c.quantity, c.giftPackaging ? 1 : 0, c.giftImageId || '']), ...extra });
   useEffect(() => {
     if (!enabled || !cartReady) return;
     if (!cart.length) {
@@ -29,15 +30,15 @@ export function useQuote(extra: { discountCode?: string | null; shippingMethod?:
       fetch('/api/cart/quote', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ lines: cart.map((c) => ({ variantId: c.variantId, quantity: c.quantity })), ...extra }),
+        body: JSON.stringify({ lines: cart.map((c) => ({ variantId: c.variantId, quantity: c.quantity, giftPackaging: !!c.giftPackaging, giftImageId: c.giftImageId || null })), ...extra }),
       })
         .then((r) => (r.ok ? r.json() : null))
         .then((q: Quote | null) => {
           if (id !== seq.current || !q) return;
           setQuote(q);
           // Reconcile local cart with server truth (removed/sold-out items, stock caps, current prices).
-          const next: CartItem[] = q.lines.map((l) => ({ variantId: l.variantId, productId: l.productId, slug: l.slug, name: l.name, variantTitle: l.variantTitle, image: l.image, price: l.unitPrice, quantity: l.quantity }));
-          const changed = next.length !== cart.length || next.some((n) => { const c = cart.find((x) => x.variantId === n.variantId); return !c || c.quantity !== n.quantity || c.price !== n.price; });
+          const next: CartItem[] = q.lines.map((l) => ({ variantId: l.variantId, productId: l.productId, slug: l.slug, name: l.name, variantTitle: l.variantTitle, image: l.image, price: l.unitPrice, quantity: l.quantity, giftPackaging: l.giftSelected, giftImageId: l.giftImageId }));
+          const changed = next.length !== cart.length || next.some((n) => { const c = cart.find((x) => x.variantId === n.variantId); return !c || c.quantity !== n.quantity || c.price !== n.price || !!c.giftPackaging !== !!n.giftPackaging || (c.giftImageId || null) !== (n.giftImageId || null); });
           if (changed) replaceCart(next);
         })
         .catch(() => {})
@@ -70,11 +71,13 @@ export function FreeShippingBar({ remaining, threshold }: { remaining: number; t
   );
 }
 
-export function CartLines({ compact }: { compact?: boolean }) {
-  const { cart, updateQty, removeFromCart } = useStore();
+export function CartLines({ compact, quote }: { compact?: boolean; quote?: Quote | null }) {
+  const { cart, updateQty, removeFromCart, setGiftPackaging } = useStore();
   return (
     <ul className="divide-y divide-line">
-      {cart.map((item) => (
+      {cart.map((item) => {
+        const line = quote?.lines.find((l) => l.variantId === item.variantId);
+        return (
         <li key={item.variantId} className="flex gap-4 py-5">
           <Link href={`/products/${item.slug}`} className="relative block h-28 w-[5.5rem] shrink-0 overflow-hidden rounded-theme-sm bg-surface">
             <Img src={item.image} alt={item.name} sizes="90px" />
@@ -82,11 +85,31 @@ export function CartLines({ compact }: { compact?: boolean }) {
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <Link href={`/products/${item.slug}`} className="font-heading text-[1.05rem] leading-snug">{item.name}</Link>
+                <Link href={`/products/${item.slug}`} className="break-words font-heading text-[1.05rem] leading-snug">{item.name}</Link>
                 {item.variantTitle && <p className="mt-0.5 text-[0.78rem] text-muted">{item.variantTitle}</p>}
               </div>
               <p className="shrink-0 text-[0.9rem]">{formatMoney(item.price * item.quantity)}</p>
             </div>
+            {line?.giftEligible && (
+              <label className="mt-2 flex min-w-0 items-start gap-2 text-[0.78rem]">
+                <input type="checkbox" className="checkbox mt-0.5" checked={!!line.giftSelected} onChange={(event) => setGiftPackaging(item.variantId, event.target.checked, quote?.giftImages[0]?.id ?? null)} />
+                <span className="min-w-0">Premium gift packaging · {formatMoney(quote?.giftUnitPrice || 0)} each{line.giftSelected ? ` · ${formatMoney(line.giftLineTotal)}` : ''}</span>
+              </label>
+            )}
+            {line?.giftSelected && (quote?.giftImages.length ?? 0) > 1 && (
+              <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Packaging style">
+                {quote!.giftImages.map((img) => (
+                  <button key={img.id} type="button" aria-pressed={line.giftImageId === img.id} onClick={() => setGiftPackaging(item.variantId, true, img.id)} className={cn('relative h-11 w-11 overflow-hidden rounded-theme-sm border', line.giftImageId === img.id ? 'border-ink' : 'border-line')}>
+                    <Img src={img.url} alt={img.alt} sizes="44px" className="gift-still" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {line?.giftSelected && line.giftImage && (quote?.giftImages.length ?? 0) < 2 && (
+              <span className="relative mt-2 block h-12 w-12 overflow-hidden rounded-theme-sm bg-surface">
+                <Img src={line.giftImage} alt="" sizes="48px" className="gift-still" />
+              </span>
+            )}
             <div className="mt-auto flex items-center justify-between pt-3">
               <QtyStepper value={item.quantity} onChange={(n) => updateQty(item.variantId, n)} small={compact} />
               <button onClick={() => removeFromCart(item.variantId)} className="inline-flex items-center gap-1.5 text-[0.75rem] text-muted transition hover:text-sale" aria-label={`Remove ${item.name}`}>
@@ -95,7 +118,8 @@ export function CartLines({ compact }: { compact?: boolean }) {
             </div>
           </div>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
@@ -159,6 +183,7 @@ export function CartDrawer() {
               <span className={loading ? 'opacity-50' : ''}>{formatMoney(subtotal)}</span>
             </div>
             {quote?.campaign && <p className="text-[0.75rem] text-accent">{quote.campaign.name} · {quote.campaign.percent}% off is included (−{formatMoney(quote.campaign.amount)}).</p>}
+            {quote && quote.giftTotal > 0 && <div className="flex items-center justify-between text-[0.85rem]"><span>Gift packaging</span><span>{formatMoney(quote.giftTotal)}</span></div>}
             <p className="text-[0.75rem] text-muted">Shipping and codes are calculated at checkout.</p>
             <div className="grid grid-cols-2 gap-3">
               <Link href="/cart" onClick={() => setCartOpen(false)} className="btn btn-secondary">View bag</Link>
@@ -186,7 +211,7 @@ export function CartDrawer() {
           {quote?.issues.map((i) => (
             <p key={i} className="mt-4 rounded-theme-sm bg-surface px-3 py-2 text-[0.8rem] text-sale">{i}</p>
           ))}
-          <CartLines compact />
+          <CartLines compact quote={quote} />
           <div className="border-t border-line py-6">
             <Recommendations exclude={cart.map((c) => c.productId)} />
           </div>

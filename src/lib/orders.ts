@@ -105,6 +105,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         displayCurrency: input.displayCurrency || null,
         displayRate: input.displayRate && input.displayRate > 0 ? input.displayRate : null,
         paymentPlan,
+        giftTotal: quote.giftTotal,
         deliveryCode: service?.code ?? quote.shippingMethod,
         deliveryMinutes: plan?.durationMinutes ?? null,
         deliveryPlan: plan,
@@ -128,6 +129,10 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
         originalUnitPrice: l.catalogUnitPrice,
         quantity: l.quantity,
         lineTotal: l.lineTotal,
+        giftPackaging: l.giftSelected,
+        giftUnitPrice: l.giftUnitPrice,
+        giftLineTotal: l.giftLineTotal,
+        giftImage: l.giftImage,
       })),
     );
     await tx.insert(inventoryMovements).values(
